@@ -1,0 +1,6 @@
+[submodule "lib/MDM-HTMLReport-py"]
+	path = lib/MDM-HTMLReport-py
+	url = https://github.com/andreyputilovmaterial/MDM-HTMLReport-py.git
+[submodule "lib/MDD-read-py"]
+	path = lib/MDD-Read-py
+	url = https://github.com/andreyputilovmaterial/MDD-read-py.git
