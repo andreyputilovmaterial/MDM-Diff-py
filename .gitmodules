@@ -4,3 +4,6 @@
 [submodule "lib/MDD-read-py"]
 	path = lib/MDD-Read-py
 	url = https://github.com/andreyputilovmaterial/MDD-read-py.git
+[submodule "lib/diff-lib"]
+	path = lib/difflib
+	url = https://github.com/andreyputilovmaterial/diff-lib.git
