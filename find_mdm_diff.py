@@ -95,14 +95,15 @@ def find_diff(inp_mdd_l,inp_mdd_r):
             mdd_r_sectiondata = ( ( mdd_r_sections_allmatches[0]['content'] if 'content' in mdd_r_sections_allmatches[0] else [] ) if len(mdd_r_sections_allmatches)>0 else [] )
             rows_l = [ ( item['name'] if 'name' in item else '???' ) for item in mdd_l_sectiondata ]
             rows_r = [ ( item['name'] if 'name' in item else '???' ) for item in mdd_r_sectiondata ]
-            report_rows = [ item.line for item in Myers.to_records(Myers.diff(rows_l,rows_r),rows_l,rows_r) ]
-            performance_counter_total_rows = len(report_rows)
+            report_rows_diff = Myers.to_records(Myers.diff(rows_l,rows_r),rows_l,rows_r) # [ item.line for item in Myers.to_records(Myers.diff(rows_l,rows_r),rows_l,rows_r) ]
+            performance_counter_total_rows = len(report_rows_diff)
             performance_counter_rows_processed = 0
             performance_counter_time_started = time.time()
             performance_counter_time_lastreported = time.time()
             performance_counter_lastreported = -1
-            for row_name in report_rows:
+            for row_diff_item in report_rows_diff:
                 try:
+                    row_name = row_diff_item.line
                     performance_counter_rows_processed = performance_counter_rows_processed+ 1
                     if performance_counter_rows_processed - performance_counter_lastreported > 200:
                         performance_time_now = time.time()
@@ -113,8 +114,15 @@ def find_diff(inp_mdd_l,inp_mdd_r):
                     row = {}
                     row['name'] = row_name
                     flag = '???'
-                    if( (row_name in rows_l) and (row_name in rows_r) ):
+                    if row_diff_item.flag == 'keep':
                         flag = '(keep)'
+                    elif( (row_name in rows_l) and (row_name in rows_r) ):
+                        if row_diff_item.flag == 'remove':
+                            flag = '(moved from here)'
+                        elif row_diff_item.flag == 'insert':
+                            flag = '(moved here)'
+                        else:
+                            raise AttributeError('Please check diff flag!!!')
                     elif( row_name in rows_l ):
                         flag = '(removed)'
                     elif( row_name in rows_r ):
@@ -122,14 +130,18 @@ def find_diff(inp_mdd_l,inp_mdd_r):
                     row['flagdiff'] = flag
                     mdd_l_rowdata = {}
                     mdd_r_rowdata = {}
-                    if( row_name in rows_l ):
-                        mdd_l_rowdata_allrowsmatching = [ row for row in mdd_l_sectiondata if row['name']==row_name ]
-                        if len(mdd_l_rowdata_allrowsmatching)>0:
-                            mdd_l_rowdata = mdd_l_rowdata_allrowsmatching[0]
-                    if( row_name in rows_r ):
-                        mdd_r_rowdata_allrowsmatching = [ row for row in mdd_r_sectiondata if row['name']==row_name ]
-                        if len(mdd_r_rowdata_allrowsmatching)>0:
-                            mdd_r_rowdata = mdd_r_rowdata_allrowsmatching[0]
+                    if( ( (row_name in rows_l) and (row_name in rows_r) ) and (row_diff_item.flag == 'remove') ):
+                        # skip for rows moved at their old position
+                        pass
+                    else:
+                        if( row_name in rows_l ):
+                            mdd_l_rowdata_allrowsmatching = [ row for row in mdd_l_sectiondata if row['name']==row_name ]
+                            if len(mdd_l_rowdata_allrowsmatching)>0:
+                                mdd_l_rowdata = mdd_l_rowdata_allrowsmatching[0]
+                        if( row_name in rows_r ):
+                            mdd_r_rowdata_allrowsmatching = [ row for row in mdd_r_sectiondata if row['name']==row_name ]
+                            if len(mdd_r_rowdata_allrowsmatching)>0:
+                                mdd_r_rowdata = mdd_r_rowdata_allrowsmatching[0]
                     for col in columns_list_check:
                         mdd_l_coldata = mdd_l_rowdata[col] if col in mdd_l_rowdata else None
                         mdd_r_coldata = mdd_r_rowdata[col] if col in mdd_r_rowdata else None
