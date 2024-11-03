@@ -2,6 +2,7 @@
 
 import time
 
+import pdb
 
 class PerformanceMonitor:
     def __init__(self,config={}):
@@ -23,7 +24,8 @@ class PerformanceMonitor:
     
     def __next__(self):
         self.progress = self.progress + 1
-        if (self.config_frequency_records is None) or (self.progress - self.time_last_reported > self.config_frequency_records):
+        #pdb.set_trace()
+        if (self.config_frequency_records is None) or (self.progress - self.progress_last_reported > self.config_frequency_records):
             time_now = time.time()
             if (self.config_frequency_timeinterval is None) or ((time_now - self.time_last_reported)>self.config_frequency_timeinterval):
                 print( 'progress: processing {nline}{display_out_total}{display_percents}'.format(
@@ -32,6 +34,6 @@ class PerformanceMonitor:
                     display_percents=' ({per}%)'.format(per=round(self.progress*100/self.userprovideddata_totalrecords,1)) if (self.userprovideddata_totalrecords is not None) else ''
                 ))
                 self.progress_last_reported = self.progress
-                self.performance_counter_time_lastreported = time_now
+                self.time_last_reported = time_now
         return None
 

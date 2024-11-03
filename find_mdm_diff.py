@@ -70,8 +70,8 @@ def find_diff(inp_mdd_l,inp_mdd_r):
             report_rows_diff = helper_diff_wrappers.diff_row_names_respecting_groups( rows_l if '' in rows_l else ['']+rows_l, rows_r if '' in rows_r else ['']+rows_r )
             performance_counter = iter(helper_utility_wrappers.PerformanceMonitor(config={
                 'total_records': len(report_rows_diff),
-                'report_frequency_records_count': 200,
-                'report_frequency_timeinterval': 9
+                'report_frequency_records_count': 150,
+                'report_frequency_timeinterval': 6
             }))
             for row_diff_item in report_rows_diff:
                 try:
