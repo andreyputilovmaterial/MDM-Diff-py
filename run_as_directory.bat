@@ -15,34 +15,34 @@ ECHO -
 ECHO 1. read MDD A
 ECHO read from: %MDD_A%
 ECHO write to: .json
-python lib\MDD-Read-py\read_mdd.py --mdd "%MDD_A%" --config-features label,properties --config-section mdmproperties,languages,shared_lists,fields
+python src\run_universal.py --program read --mdd "%MDD_A%" --config-features label,properties --config-section mdmproperties,languages,shared_lists,fields
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && exit /b %errorlevel% )
 
 ECHO -
 ECHO 2. generate html
-python lib\MDD-Read-py\lib\MDM-Report-py\report_create.py --inpfile "%MDD_A_JSON%"
+python src\run_universal.py --program report --inpfile "%MDD_A_JSON%"
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && exit /b %errorlevel% )
 
 ECHO -
 ECHO 3. read MDD B
 ECHO read from: %MDD_B%
 ECHO write to: .json
-python lib\MDD-Read-py\read_mdd.py --mdd "%MDD_B%" --config-features label,properties --config-section mdmproperties,languages,shared_lists,fields
+python src\run_universal.py --program read --mdd "%MDD_B%" --config-features label,properties --config-section mdmproperties,languages,shared_lists,fields
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && exit /b %errorlevel% )
 
 ECHO -
 ECHO 4. generate html
-python lib\MDD-Read-py\lib\MDM-Report-py\report_create.py --inpfile "%MDD_B_JSON%"
+python src\run_universal.py --program report --inpfile "%MDD_B_JSON%"
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && exit /b %errorlevel% )
 
 ECHO -
 ECHO 5. diff
-python find_mdm_diff.py --mdd_scheme_left "%MDD_A_JSON%" --mdd_scheme_right "%MDD_B_JSON%"
+python src\run_universal.py --program diff --mdd_scheme_left "%MDD_A_JSON%" --mdd_scheme_right "%MDD_B_JSON%"
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && exit /b %errorlevel% )
 
 ECHO -
 ECHO 6. final html with diff!
-python lib\MDD-Read-py\lib\MDM-Report-py\report_create.py --inpfile "%MDD_FINAL_DIFF_JSON%"
+python src\run_universal.py --program report --inpfile "%MDD_FINAL_DIFF_JSON%"
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && exit /b %errorlevel% )
 
 ECHO done!

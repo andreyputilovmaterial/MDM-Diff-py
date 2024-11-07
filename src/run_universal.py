@@ -1,27 +1,29 @@
 
 import argparse
 
-# module_mdmdiff = __import__('find_mdm_diff')
-# module_mdmread = __import__('lib.MDD-Read-py.read_mdd')
-# module_mdmreport = __import__('lib.MDD-Read-py.lib.MDM-Report-py.report_create')
-
-import importlib
-import sys
 from pathlib import Path
 
-path_root = Path(__file__).resolve()
-path_mdmread = path_root / 'lib/MDD-Read-py'
-path_mdmreport = path_mdmread / 'lib/MDD-Read-py'
 
-sys.path.append(path_mdmread)
-sys.path.append(path_mdmreport)
 
-module_mdmdiff = importlib.import_module('find_mdm_diff')
-module_mdmread = importlib.import_module('lib.MDD-Read-py.read_mdd')
-module_mdmreport = importlib.import_module('lib.MDD-Read-py.lib.MDM-Report-py.report_create')
-# module_mdmdiff = importlib.import_module('find_mdm_diff')
-# module_mdmread = importlib.import_module('read_mdd')
-# module_mdmreport = importlib.import_module('report_create')
+
+if __name__ == '__main__':
+    # run as a program
+    import find_mdm_diff
+    from lib.mdmreadpy import read_mdd
+    from lib.mdmreadpy.lib.mdmreportpy import report_create
+elif '.' in __name__:
+    # package
+    from . import find_mdm_diff
+    from .lib.mdmreadpy import read_mdd
+    from .lib.mdmreadpy.lib.mdmreportpy import report_create
+else:
+    # included with no parent package
+    import find_mdm_diff
+    from lib.mdmreadpy import read_mdd
+    from lib.mdmreadpy.lib.mdmreportpy import report_create
+
+
+
 
 
 import json, re
@@ -68,7 +70,7 @@ def call_diff_program():
     
     print('MDM diff script: script started at {dt}'.format(dt=time_start))
 
-    result = module_mdmdiff.find_diff(inp_mdd_l,inp_mdd_r)
+    result = find_mdm_diff.find_diff(inp_mdd_l,inp_mdd_r)
     
     result_json = json.dumps(result, indent=4)
     report_part_mdd_left_filename = re.sub( r'\.mdd\.json', '.mdd', Path(inp_mdd_l).name )
@@ -142,7 +144,7 @@ def call_mddread_program():
 
     print('MDM read script: script started at {dt}'.format(dt=time_start))
 
-    with module_mdmread.MDMDocument(inp_mdd,method,config) as doc:
+    with read_mdd.MDMDocument(inp_mdd,method,config) as doc:
 
         result = doc.read()
         
@@ -180,7 +182,7 @@ def call_report_program():
     with open(input_map_filename, encoding="utf8") as input_map_file:
         mdd_map_in_json = json.load(input_map_file)
 
-    result = module_mdmreport.produce_html(mdd_map_in_json)
+    result = report_create.produce_html(mdd_map_in_json)
     
     result_fname = ( Path(input_map_filename).parents[0] / '{basename}{ext}'.format(basename=Path(input_map_filename).name,ext='.html') if Path(input_map_filename).is_file() else re.sub(r'^\s*?(.*?)\s*?$',lambda m: '{base}{added}'.format(base=m[1],added='.html'),'{path}'.format(path=input_map_filename)) )
     print('MDM report script: saving as "{fname}"'.format(fname=result_fname))
@@ -195,9 +197,7 @@ def call_report_program():
 
 
 
-
-
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(
         description="Universal caller of mdm-py utilities"
     )
@@ -214,10 +214,16 @@ if __name__ == '__main__':
             call_mddread_program()
         elif args.program=='report':
             call_report_program()
+        elif args.program=='test':
+            print('test!')
         else:
             print('program to run not recognized: {program}'.format(program=args.program))
             raise AttributeError('program to run not recognized: {program}'.format(program=args.program))
     else:
         print('program to run not specified')
         raise AttributeError('program to run not specified')
+
+
+if __name__ == '__main__':
+    main()
 

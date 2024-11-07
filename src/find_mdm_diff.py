@@ -7,8 +7,19 @@ import re
 import json
 
 
-import helper_diff_wrappers
-import helper_utility_wrappers
+
+if __name__ == '__main__':
+    # run as a program
+    import helper_diff_wrappers
+    import helper_utility_wrappers
+elif '.' in __name__:
+    # package
+    from . import helper_diff_wrappers
+    from . import helper_utility_wrappers
+else:
+    # included with no parent package
+    import helper_diff_wrappers
+    import helper_utility_wrappers
 
 
 

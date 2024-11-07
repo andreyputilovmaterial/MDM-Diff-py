@@ -6,7 +6,20 @@ import re
 from dataclasses import dataclass
 
 
-from lib.difflib.diff import Myers
+
+
+
+if __name__ == '__main__':
+    # run as a program
+    from lib.difflib.diff import Myers
+elif '.' in __name__:
+    # package
+    from .lib.difflib.diff import Myers
+else:
+    # included with no parent package
+    from lib.difflib.diff import Myers
+
+
 
 
 def splitwords(s):
