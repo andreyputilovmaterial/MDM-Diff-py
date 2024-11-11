@@ -1,0 +1,865 @@
+
+' -----------------------------------------------------------------------
+' Author Notes (optional):
+' -
+' -----------------------------------------------------------------------
+
+#define SCRIPT_NAME     "mddreport.mrs"
+#define MDMREP_SCRIPT_VER "latest"
+' AP 2022
+
+' -----------------------------------------------------------------------
+
+
+
+'set INPUT file locations:
+#if !defined(INPUT_MDD)
+#define INPUT_MDD				"p221365_v10_from_LI.mdd"
+#endif
+
+
+' features
+' list comma-separated
+' possible values:
+' - label (not a feature, included by default, always included)
+' - translations (to Diff translations); note if there is just one translation overlay and it's ENU it's not displayed
+' - properties
+#if !defined(RUN_FEATURES)
+#define RUN_FEATURES "label,properties,translations"
+#endif
+
+
+' report sections
+' numeric, and parts are bitwise flags
+' default is 23
+' possible values:
+' - RUN_SECTION_LANGUAGES 1
+' - RUN_SECTION_SHAREDLISTS 2
+' - RUN_SECTION_FIELDS 4
+' - RUN_SECTION_VARIABLES 8
+' - RUN_SECTION_PAGES 16
+#if !defined(RUN_SECTIONS)
+#define RUN_SECTIONS 23
+#endif
+#define RUN_SECTION_MDMPROPERTIES true ' always true, for now
+#if (RUN_SECTIONS&1)
+#define RUN_SECTION_LANGUAGES true
+#else
+#define RUN_SECTION_LANGUAGES false
+#endif
+#if (RUN_SECTIONS&2)
+#define RUN_SECTION_SHAREDLISTS true
+#else
+#define RUN_SECTION_SHAREDLISTS false
+#endif
+#if (RUN_SECTIONS&4)
+#define RUN_SECTION_FIELDS true
+#else
+#define RUN_SECTION_FIELDS false
+#endif
+#if (RUN_SECTIONS&8)
+#define RUN_SECTION_VARIABLES true
+#else
+#define RUN_SECTION_VARIABLES false
+#endif
+#if (RUN_SECTIONS&16)
+#define RUN_SECTION_PAGES true
+#else
+#define RUN_SECTION_PAGES false
+#endif
+
+
+' a setting to show label from a different context than the default (aka "current") context; usually the current is "Analysis"
+#if !defined(RUN_FEATURES_LABEL_FORCE_CONTEXT)
+'#define RUN_FEATURES_LABEL_FORCE_CONTEXT "Analysis"
+#define RUN_FEATURES_LABEL_FORCE_CONTEXT "Question"
+#endif
+' a setting to choose contexts to grab properties from; Analysis,Question should be ok here
+#if !defined(RUN_FEATURES_PROPERTIES_CONTEXTS)
+#define RUN_FEATURES_PROPERTIES_CONTEXTS "Analysis,Question"
+#endif
+
+
+' RUN_REPORT_FMT: report format
+' 1 = html (outdated, soon to be deprecated)
+' 2 = json (+html)
+' - don't override, 2 is ok. It will then create an html report as well
+#if !defined(RUN_REPORT_FMT)
+#define RUN_REPORT_FMT 2
+#endif
+
+
+
+' helper defines
+#define MARKER_BEGINLINE_REPLACEMENT "<<BEGIN>>mdm"
+#define MARKER_HIDDENLINEBREAK "<<HIDDENLINEBREAK>>"
+
+
+#if (RUN_REPORT_FMT==1)
+	'REPORT file location:
+	#define REPORT_HTML_FILE "report."+INPUT_MDD+".html"
+#elif (RUN_REPORT_FMT==2)
+	'REPORT file location:
+	#define REPORT_HTML_FILE "report."+INPUT_MDD+".html"
+	#define REPORT_JSON_FILE "report."+INPUT_MDD+".json"
+#endif
+
+
+
+' ***************************************
+' Beginning execution
+' ***************************************
+
+	Debug.Echo("Beginning execution of " +SCRIPT_NAME + " at " + ctext(now()))
+	Debug.Log("Beginning execution of " +SCRIPT_NAME)
+
+	' Open input files
+	dim mdm, objReportHtmlFile, objReportJsonFile, oFSO
+
+	set mdm = CreateObject("MDM.Document")
+	set oFSO = CreateObject("Scripting.FileSystemObject")
+
+	' Open MDD
+	if not(oFSO.FileExists(INPUT_MDD)) then
+		ErrorRaise("Source MDD (" + INPUT_MDD + ") could not be found.")
+	else
+		mdm.Join(INPUT_MDD, "{..}", 1, BitOr(32, 16, 512))
+	end if
+
+	' Init the output file
+	#if defined(REPORT_HTML_FILE)
+    if (oFSO.FileExists(REPORT_HTML_FILE)) then
+        oFSO.DeleteFile(REPORT_HTML_FILE)
+    end if
+    #endif
+	#if defined(REPORT_JSON_FILE)
+    if (oFSO.FileExists(REPORT_JSON_FILE)) then
+        oFSO.DeleteFile(REPORT_JSON_FILE)
+    end if
+    #endif
+	#if defined(REPORT_FILE)
+    if (oFSO.FileExists(REPORT_FILE)) then
+        oFSO.DeleteFile(REPORT_FILE)
+    end if
+    #endif
+    #if (RUN_REPORT_FMT==1)
+    ' working in HTML report
+	ErrorRaise("Direct html ecport is no longer supported, please change RUN_REPORT_FMT to 2")
+	set objReportHtmlFile = CreateObject("Scripting.FileSystemObject").OpenTextFile(REPORT_HTML_FILE,2,true)
+	#endif
+    #if (RUN_REPORT_FMT==2)
+    ' for now, we are working with json report only; we'll open and update HTML report when we complete the JSON report
+	set objReportJsonFile = CreateObject("Scripting.FileSystemObject").OpenTextFile(REPORT_JSON_FILE,2,true)
+	#endif
+	set oFSO = null
+
+
+' ***************************************
+' Working
+' ***************************************
+
+	dim Report, Options, isFirstSection
+
+	Debug.Log("Processing "+ctext(INPUT_MDD))
+	Debug.Log("Working...")
+
+	' iterate through all fields
+
+	#if (RUN_REPORT_FMT==1)
+	set Report = objReportHtmlFile
+	#elif (RUN_REPORT_FMT==2)
+	set Report = objReportJsonFile
+	#endif
+	#if defined(RUN_FEATURES_LABEL_FORCE_CONTEXT)
+	dim sCtx, sCtxSelect
+	sCtxSelect = Null
+	for each sCtx in mdm.Contexts
+		if lcase(trim(RUN_FEATURES_LABEL_FORCE_CONTEXT))=lcase(ctext(sCtx)) then
+			sCtxSelect = sCtx
+		end if
+	next
+	set sCtx = null
+	if sCtxSelect is not null then
+		mdm.contexts.current = sCtxSelect
+	else
+		ErrorRaise("Failed to set RUN_FEATURES_LABEL_FORCE_CONTEXT option: can't set context to "+ctext(RUN_FEATURES_LABEL_FORCE_CONTEXT)+", no such context")
+	end if
+	#endif
+	Options = Run_SanitizeOptions(mdm,RUN_FEATURES)
+	Document_Begin(Report)
+
+		Document_NamedCollection_Insert(Report,"ReportType","MDDFields",true)
+		Document_NamedCollection_Insert(Report,"MDMREPSCRIPT","true",false)
+		Document_NamedCollection_Insert(Report,"MDD",ctext(INPUT_MDD),false)
+		Document_NamedCollection_Insert(Report,"DateTimeReportGenerated",ctext(now()),false)
+		Document_NamedCollection_Insert(Report,"MDMREP_SCRIPT_VER",ctext(MDMREP_SCRIPT_VER),false)
+
+		Document_NamedCollection_Insert(Report,"FileProperties",null,false)
+		Document_NamedCollection_Begin(Report)
+			Document_NamedCollection_Insert(Report,"ReportTitle",ctext("MDM Report "+ctext(INPUT_MDD)+""),true)
+			Document_NamedCollection_Insert(Report,"ReportHeading",ctext("MDM fields and labels report "+ctext(INPUT_MDD)+""),false)
+			Document_NamedCollection_Insert(Report,"ReportInfo",null,false)
+			Document_OrderedCollection_Begin(Report,true)
+				Document_OrderedCollection_insert(Report,"Hi! Please see the field list below.",true)
+				Document_OrderedCollection_insert(Report,"MDD file: "+ctext(INPUT_MDD),false)
+				Document_OrderedCollection_insert(Report,"Run: "+ctext(now()),false)
+			Document_OrderedCollection_End(Report)
+		Document_NamedCollection_End(Report)
+		
+		Document_NamedCollection_Insert(Report,"ColumnHeaders",null,false)
+		Run_AddHeaderLineToReport(mdm,Report,Options)
+		
+		Document_NamedCollection_Insert(Report,"Records",null,false)
+		Document_OrderedCollection_Begin(Report,true)
+			
+			isFirstSection = true
+			
+#if RUN_SECTION_MDMPROPERTIES
+			Document_OrderedCollection_Begin(Report,isFirstSection)
+			isFirstSection = false
+			Document_OrderedCollection_insert(Report,"Info: MDM properties are listed below",true)
+			Document_OrderedCollection_End(Report)
+			Run_LoopThroughMDMProperties(mdm,mdm,"HDATA."+MARKER_BEGINLINE_REPLACEMENT+"",Report,Options)
+#endif
+			
+#if RUN_SECTION_LANGUAGES
+			Document_OrderedCollection_Begin(Report,isFirstSection)
+			isFirstSection = false
+			Document_OrderedCollection_insert(Report,"Info: Translation overlays are listed below",true)
+			Document_OrderedCollection_End(Report)
+			Run_LoopThroughLanguages(mdm,mdm,"Languages."+MARKER_BEGINLINE_REPLACEMENT+"",Report,Options)
+#endif
+
+#if RUN_SECTION_SHAREDLISTS
+			Document_OrderedCollection_Begin(Report,isFirstSection)
+			isFirstSection = false
+			Document_OrderedCollection_insert(Report,"Info: Shared lists are listed below",true)
+			Document_OrderedCollection_End(Report)
+			Run_LoopThroughTypes(mdm.Types,mdm,"Types."+MARKER_BEGINLINE_REPLACEMENT+"",Report,Options)
+#endif
+			
+#if RUN_SECTION_FIELDS
+			Document_OrderedCollection_Begin(Report,isFirstSection)
+			isFirstSection = false
+			Document_OrderedCollection_insert(Report,"Info: MDM Fields are listed below",true)
+			Document_OrderedCollection_End(Report)
+			Run_LoopThroughVariables(mdm.Fields,mdm,"Fields."+MARKER_BEGINLINE_REPLACEMENT+"",Report,Options)
+#endif
+			
+#if RUN_SECTION_VARIABLES
+			Document_OrderedCollection_Begin(Report,isFirstSection)
+			isFirstSection = false
+			Document_OrderedCollection_insert(Report,"Info: MDM Variables are listed below",true)
+			Document_OrderedCollection_End(Report)
+			Run_LoopThroughVariables(mdm.Variables,mdm,"Variables."+MARKER_BEGINLINE_REPLACEMENT+"",Report,Options)
+#endif
+			
+#if RUN_SECTION_PAGES
+			Document_OrderedCollection_Begin(Report,isFirstSection)
+			isFirstSection = false
+			Document_OrderedCollection_insert(Report,"Info: Pages are listed below",true)
+			Document_OrderedCollection_End(Report)
+			Run_LoopThroughPages(mdm.Pages,mdm,"Pages."+MARKER_BEGINLINE_REPLACEMENT+"",Report,Options)
+#endif
+			
+		Document_OrderedCollection_End(Report)
+	Document_End(Report)
+	set Report = Null
+
+	'mdm.Save(TEMP_MDD)
+	mdm.Close()
+	set mdm = Null
+
+	' Save
+    #if (RUN_REPORT_FMT==1)
+	ErrorRaise("Direct html ecport is no longer supported, please change RUN_REPORT_FMT to 2")
+    ' close HTML, the only report file that was open
+	objReportHtmlFile.Close()
+	set objReportHtmlFile = Null
+	#endif
+    #if (RUN_REPORT_FMT==2)
+    ' TODO: avoid reading and writing to the same file several times; anyway we are storing the contents later in memory, and mdm takes a lot more in memory, so we can store json as a string
+    ' close JSON; HTML was not yet open
+	objReportJsonFile.Close()
+	set objReportJsonFile = Null
+
+	' ' Fix an issue, we added a lot of trailing commas that are not needed
+	' set objReportJsonFile = CreateObject("Scripting.FileSystemObject").OpenTextFile(REPORT_JSON_FILE,1)
+	' Report = objReportJsonFile.ReadAll()
+	' objReportJsonFile.Close()
+	' set objReportJsonFile = Null
+	' Report = Document_JsonDropGarbageCommas(Report)
+	' set objReportJsonFile = CreateObject("Scripting.FileSystemObject").OpenTextFile(REPORT_JSON_FILE,2,true)
+	' objReportJsonFile.WriteLine(Report)
+	' objReportJsonFile.Close()
+	' set objReportJsonFile = Null
+
+	'' generate html report
+	'set objReportHtmlFile = CreateObject("Scripting.FileSystemObject").OpenTextFile(REPORT_HTML_FILE,2,true)
+	'set objReportJsonFile = CreateObject("Scripting.FileSystemObject").OpenTextFile(REPORT_JSON_FILE,1)
+	'set Report = null
+	'Report = objReportJsonFile.ReadAll()
+	'Document_BuildHtmlReportFromJson(objReportHtmlFile,Report)
+	'objReportHtmlFile.Close()
+	'set objReportHtmlFile = Null
+	'objReportJsonFile.Close()
+	'set objReportJsonFile = Null
+	#endif
+
+
+
+' ***************************************
+' The end
+' ***************************************
+
+	Debug.Echo("FINISH!")
+	Debug.Log("FINISH!")
+	Debug.Echo("Ending execution of " +SCRIPT_NAME + " at " + CText(Now()))
+	Debug.Log("Ending execution of " +SCRIPT_NAME)
+
+
+
+
+
+
+
+' ***************************************
+' Formatting functions
+' ***************************************
+
+function EscapeHtml(sVal)
+	dim sReturn, isAChar, CharCodes, i, ch
+    sReturn = ""
+    CharCodes = split( "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z a b c d e f g h i j k l m n o p q r s t u v w x y z 0 1 2 3 4 5 6 7 8 9 .", " " )
+    'if ((TypeName(sVal)="String") And (not IsNull(sVal)) And (sVal<>"")) then
+    if true then
+        for i=0 To Len(sVal)-1
+            ch = Mid(sVal, i, 1)
+            isAChar = ( Find( CharCodes, ch ) >= 0 )
+            if (not isAChar) AND AscW(ch)>0 then
+                ch = "&#" + ctext(AscW(ch)) + ";"
+            end if
+            sReturn = sReturn + ch
+         Next
+    end if
+    EscapeHtml = sReturn
+end function
+
+function validateId(sVal)
+	' just to make everything smooth and fine; actually not needed; you can just replace it with "return true" to speed execution up
+	dim i, isGood, isNotEmpty, ch
+	isGood = true
+	isNotEmpty = false
+	for i=0 To Len(sVal)-1
+		ch = Mid(sVal, i, 1)
+		if AscW(ch)>0 then
+			isGood = isGood AND (((ch>="0")AND(ch<="9"))OR((ch>="A")AND(ch<="Z"))OR((ch>="a")AND(ch<="z"))OR(ch="_")OR(ch="-"))
+			isNotEmpty = true
+			if not isGood then exit for
+		end if
+	next
+	validateId = isGood AND isNotEmpty
+end function
+
+function SanitizeId(sVal)
+	' just to make everything smooth and fine; actually not needed; you can just replace it with "return sVal" to speed execution up
+	'
+	''SanitizeId = ErrorRaise("SanitizeId: not impolemented")
+	'if validateId(sVal) then
+	'	SanitizeId = sVal
+	'else
+	'	ErrorRaise("failed validation to alphanumeric identifier, possibly for some html class: "+ctext(sVal)+"")
+	'	SanitizeId = null
+	'end if
+	dim i, ch, isGood, result
+	result = ""
+	for i=0 To Len(sVal)-1
+		ch = Mid(sVal, i, 1)
+		if AscW(ch)>0 then
+			isGood = (((ch>="0")AND(ch<="9"))OR((ch>="A")AND(ch<="Z"))OR((ch>="a")AND(ch<="z"))OR(ch="_")OR(ch="-"))
+			if isGood then
+				result = result + ch
+			else
+				result = result + "-"
+			end if
+		end if
+	next
+	if len(result)>0 then
+		SanitizeId = result
+	else
+		ErrorRaise("failed to sanitize id, it's empty")
+	end if
+end function
+
+function SanitizeQuestionName(QuestionNameRaw)
+	dim QuestionName
+	QuestionName = replace(QuestionNameRaw,""+MARKER_BEGINLINE_REPLACEMENT+".","")
+	if (find(QuestionName,"""")>=0) or (find(QuestionName,"<")>=0) or (find(QuestionName,">")>=0) then
+		ErrorRaise("JSON validation failed, the item name (first cell) is not escaped and cannot contain quotation marks, ""<"" or "">"": "+ctext(QuestionName)+"")
+	end if
+	SanitizeQuestionName = QuestionName
+end function
+
+sub ErrorRaise(msg)
+	' does not make sense to make it a function, it can't be called in expressions or in ternary expression because of stupid vbscript where everything is evaluated first
+	Debug.Log("Error: "+ctext(msg)+"")
+	Debug.Log("Error: "+ctext(msg)+"")
+	err.Raise(-999999,SCRIPT_NAME,ctext(msg))
+end sub
+
+
+
+
+
+
+
+
+
+
+
+' ***************************************
+' Working functions, looping through fields, etc...
+' ***************************************
+
+'Sub Diff(TextA, TextB,Report,Options)
+'	' ...
+'	' use RegEx to validate translations here - validate text inserts, formatting, etc...
+'	'  TextA is
+'end Sub
+
+sub Run_ProcessMDMItem(Item,mdm,Path,Report,Options,isFirstEntityInCollection)
+	' 1. get label
+	dim sLabelDefault, FeatureType
+	'sLabelDefault = Item.Labels["Label"].Text["Question"]["ENU"]
+	Document_OrderedCollection_Begin(Report,isFirstEntityInCollection)
+	dim isFirst
+	isFirst = true
+	Document_OrderedCollection_Insert(Report,SanitizeQuestionName(Path),isFirst)
+	isFirst = false
+	for each FeatureType in split(Options,",")
+		'select case FeatureType
+		'case "label"
+		if FeatureType="label" then
+			sLabelDefault = Item.Label
+			Document_OrderedCollection_Insert(Report,sLabelDefault,isFirst)
+			isFirst = false
+		'case "langcode-a" to "langcode-Z"
+		elseif left(FeatureType,9)="langcode-" then
+			dim sLabelLocalized, sLangCode
+			sLangCode = replace(FeatureType,"langcode-","")
+			sLabelLocalized = Item.Labels["Label"].Text["Question"][sLangCode]
+			Document_OrderedCollection_Insert(Report,sLabelLocalized,isFirst)
+			isFirst = false
+		'case "properties"
+		elseif FeatureType="properties" then
+			dim sPropName, sPropI, sPropResultText, sPreserveContext, sCtx, sPropList
+			sPropList = "<<BEGIN>>" ' first we build a list of items (item names) to have it sorted
+			sPreserveContext = mdm.contexts.current
+			for each sCtx in mdm.Contexts
+				if find(split(lcase(replace(RUN_FEATURES_PROPERTIES_CONTEXTS," ","")),","),lcase(ctext(sCtx)))>=0 then
+					mdm.contexts.current = sCtx
+					for sPropI=0 to Item.properties.count-1
+						sPropName = ctext(Item.properties.name[sPropI])
+						sPropList = sPropList + "<<DELIMITER>>" + sPropName
+					next
+				end if
+			next
+			mdm.contexts.current = sPreserveContext
+			sPropList = replace(sPropList,"<<BEGIN>><<DELIMITER>>","")
+			sPropList = replace(sPropList,"<<BEGIN>>","")
+			sPropList = SortAsc(split(sPropList,"<<DELIMITER>>"))
+			' now we iteratre through the sorted list
+			sPropResultText = "<<BEGIN>>"
+			for each sPropName in sPropList
+				sPropResultText = sPropResultText + ", "+MARKER_HIDDENLINEBREAK+"" + replace( replace( "<<PROPNAME>> = ""<<PROPVALUEQUOTESDOUBLED>>""", "<<PROPNAME>>", sPropName ), "<<PROPVALUEQUOTESDOUBLED>>", replace(ctext(Item.properties[sPropName]),"""","""""") )
+			next
+			sPropResultText = replace(sPropResultText,"<<BEGIN>>, "+MARKER_HIDDENLINEBREAK+"","")
+			sPropResultText = replace(sPropResultText,"<<BEGIN>>","")
+			Document_OrderedCollection_Insert(Report,sPropResultText,isFirst)
+			isFirst = false
+		'case else
+		else
+			ErrorRaise("options param is not supported: "+ctext(FeatureType))
+		'end select
+		end if
+	next
+	Document_OrderedCollection_End(Report)
+end sub
+
+sub Run_LoopThroughVariables(Fields,mdm,Path,Report,Options)
+   dim Question, isFirst
+	 isFirst = false ' true
+   for each Question in Fields
+      Select Case Question.ObjectTypeValue
+         Case 0 ' Regular variable
+            Run_ProcessMDMItem(Question,mdm,Path+"."+Question.Name,Report,Options,isFirst)
+						isFirst = false
+            if Question.DataType = '!dataTypeConstants.mtCategorical!'3 then
+            	Run_LoopThroughCategories(Question,mdm,Path+"."+Question.Name,Report,Options)
+            end if
+         Case 1 'Array (Loop)
+         	Run_ProcessMDMItem(Question,mdm,Path+"."+Question.Name,Report,Options,isFirst)
+					isFirst = false
+         	Run_LoopThroughCategories(Question,mdm,Path+"."+Question.Name,Report,Options)
+            Run_LoopThroughVariables(Question.Fields,mdm,Path+"."+Question.Name,Report,Options)
+         Case 2 'Grid (it seems it's something different than Array, but I can't understand their logic; maybe it's different because it has a different db setup in case data, I don't know)
+         	' Execute Error: The '<Object>.IGrid' type does not support the 'categories' property
+         	Run_ProcessMDMItem(Question,mdm,Path+"."+Question.Name,Report,Options,isFirst)
+					isFirst = false
+         	Run_LoopThroughElements(Question,mdm,Path+"."+Question.Name,Report,Options)
+            Run_LoopThroughVariables(Question.Fields,mdm,Path+"."+Question.Name,Report,Options)
+         Case 3 ' Class (Block)
+         	Run_ProcessMDMItem(Question,mdm,Path+"."+Question.Name,Report,Options,isFirst)
+					isFirst = false
+            Run_LoopThroughVariables(Question.Fields,mdm,Path+"."+Question.Name,Report,Options)
+         case 16
+         	' not sure what is it, an example is Respondent.Serial
+            Run_ProcessMDMItem(Question,mdm,Path+"."+Question.Name,Report,Options,isFirst)
+						isFirst = false
+            if Question.DataType = '!dataTypeConstants.mtCategorical!'3 then
+            	Run_LoopThroughCategories(Question,mdm,Path+"."+Question.Name,Report,Options)
+            end if
+         Case else
+         	mdm.Close()
+         	Report.Close()
+            ErrorRaise("Other ObjectTypeValue: ("+ctext(Question.ObjectTypeValue)+") at question """+Question.name+"""")
+      end Select
+   Next
+end sub
+
+sub Run_LoopThroughTypes(Fields,mdm,Path,Report,Options)
+	dim Question, isFirst
+	dim sTempList, sTempIter ' first we build a list of items (item names) to have it sorted
+	sTempList = "<<BEGIN>>"
+	for each sTempIter in Fields
+		sTempList = sTempList + ","+sTempIter.name
+	next
+	sTempList = replace(replace(sTempList,"<<BEGIN>>,",""),"<<BEGIN>>","")
+	sTempList = split(sTempList,",")
+	sTempList = SortAsc(sTempList)
+	isFirst = false ' true ' always false
+	' now we iterate through the sorted list
+	for each sTempIter in sTempList
+		set Question = Fields[sTempIter]
+		Run_ProcessMDMItem(Question,mdm,Path+"."+Question.Name,Report,Options,isFirst)
+		isFirst = false
+		Run_LoopThroughElements(Question,mdm,Path+"."+Question.Name,Report,Options)
+	Next
+end sub
+
+sub Run_LoopThroughPages(Fields,mdm,Path,Report,Options)
+	dim Question, isFirst
+	isFirst = false ' true
+	for each Question in Fields
+		Run_ProcessMDMItem(Question,mdm,Path+"."+Question.Name,Report,Options,isFirst)
+		isFirst = false
+		Run_LoopThroughItem(Question,mdm,Path+"."+Question.Name,Report,Options)
+	Next
+end sub
+
+sub Run_LoopThroughLanguages(Fields,mdm,Path,Report,Options)
+	dim Question, FeatureType, isFirst, sCellValueWrite
+	isFirst = false ' true
+	for each Question in mdm.languages
+		Document_OrderedCollection_Begin(Report,false)
+		isFirst = true
+		Document_OrderedCollection_Insert(Report,SanitizeQuestionName(Path+"."+Question),isFirst)
+		isFirst = false
+		for each FeatureType in split(Options,",")
+			sCellValueWrite = ""
+			if lcase(trim(FeatureType))="label" then 
+				sCellValueWrite = Question.LongName
+			end if
+			Document_OrderedCollection_Insert(Report,sCellValueWrite,isFirst)
+		next
+		Document_OrderedCollection_End(Report)
+	Next
+end sub
+
+sub Run_LoopThroughMDMProperties(Fields,mdm,Path,Report,Options)
+	dim Question, Item, FeatureType, isFirst, sCellValueWrite
+	isFirst = false ' true
+	for each Question in split("Default",",")
+		Document_OrderedCollection_Begin(Report,false)
+		isFirst = true
+		Document_OrderedCollection_Insert(Report,"Properties",isFirst)
+		isFirst = false
+		for each FeatureType in split(Options,",")
+			sCellValueWrite = ""
+			if lcase(trim(FeatureType))="label" then 
+				sCellValueWrite = "" ' skip too, as any other column except properties
+			elseif FeatureType="properties" then
+				dim sPropName, sPropI, sPropResultText, sPreserveContext, sCtx, sPropList
+				set Item = mdm
+				sPropList = "<<BEGIN>>" ' first we build a list of items (item names) to have it sorted
+				sPreserveContext = mdm.contexts.current
+				for each sCtx in mdm.Contexts
+					if find(split(lcase(replace(RUN_FEATURES_PROPERTIES_CONTEXTS," ","")),","),lcase(ctext(sCtx)))>=0 then
+						mdm.contexts.current = sCtx
+						for sPropI=0 to Item.properties.count-1
+							sPropName = ctext(Item.properties.name[sPropI])
+							sPropList = sPropList + "<<DELIMITER>>" + sPropName
+						next
+					end if
+				next
+				mdm.contexts.current = sPreserveContext
+				sPropList = replace(sPropList,"<<BEGIN>><<DELIMITER>>","")
+				sPropList = replace(sPropList,"<<BEGIN>>","")
+				sPropList = SortAsc(split(sPropList,"<<DELIMITER>>"))
+				' now we iteratre through the sorted list
+				sPropResultText = "<<BEGIN>>"
+				for each sPropName in sPropList
+					sPropResultText = sPropResultText + ", "+MARKER_HIDDENLINEBREAK+"" + replace( replace( "<<PROPNAME>> = ""<<PROPVALUEQUOTESDOUBLED>>""", "<<PROPNAME>>", sPropName ), "<<PROPVALUEQUOTESDOUBLED>>", replace(ctext(Item.properties[sPropName]),"""","""""") )
+				next
+				sPropResultText = replace(sPropResultText,"<<BEGIN>>, "+MARKER_HIDDENLINEBREAK+"","")
+				sPropResultText = replace(sPropResultText,"<<BEGIN>>","")
+				Document_OrderedCollection_Insert(Report,sPropResultText,isFirst)
+				isFirst = false
+			end if
+			Document_OrderedCollection_Insert(Report,sCellValueWrite,isFirst)
+		next
+		Document_OrderedCollection_End(Report)
+	Next
+end sub
+
+sub Run_LoopThroughCategories(Question,mdm,Path,Report,Options)
+	dim cat, isFirst
+	isFirst = false ' true
+	for each cat in Question.categories
+		Run_ProcessMDMItem(cat,mdm,""+Path+".categories["+cat.name+"]",Report,Options,isFirst)
+		isFirst = false
+	next
+end sub
+
+sub Run_LoopThroughElements(Question,mdm,Path,Report,Options)
+	dim cat, isFirst
+	isFirst = false ' true
+	for each cat in Question.elements
+		Run_ProcessMDMItem(cat,mdm,""+Path+".elements["+cat.name+"]",Report,Options,isFirst)
+		isFirst = false
+	next
+end sub
+
+sub Run_LoopThroughItem(Question,mdm,Path,Report,Options)
+	dim cat, isFirst
+	isFirst = false ' true
+	for each cat in Question
+		Run_ProcessMDMItem(cat,mdm,""+Path+".items["+cat.name+"]",Report,Options,isFirst)
+		isFirst = false
+	next
+end sub
+
+function Run_SanitizeOptions(Mdm,Options)
+	dim FeatureDef, FeatureDefUncleaned, ii, Result
+	Result = "<<BEGIN>>"
+	Result = Result + ",label"
+	for each FeatureDefUncleaned in split(Options,",")
+		FeatureDef = trim(FeatureDefUncleaned)
+		select case FeatureDef
+			case "label"
+				if find(split(Result,","),FeatureDef)<0 then
+					Result = Result + "," + FeatureDef
+				end if
+			case "properties"
+				if find(split(Result,","),FeatureDef)<0 then
+					Result = Result + "," + FeatureDef
+				end if
+			case "translations"
+				dim sResultAdd
+				for each ii in mdm.languages
+					if (find(split(Result,","),"langcode-"+ii)<0) AND (find(split(sResultAdd,","),"langcode-"+ii)<0) then
+						sResultAdd = sResultAdd + "," + "langcode-"+ii
+					end if
+				next
+				if sResultAdd=",langcode-ENU" then
+					' the only translation overlay is ENU - do not add, skip
+				else
+					Result = Result + sResultAdd
+				end if
+			case else
+				ErrorRaise("wrong options: "+ctext(FeatureDef))
+		end select
+	next
+	Result = replace(Result,"<<BEGIN>>,","")
+	Run_SanitizeOptions = Result
+end function
+
+sub Run_AddHeaderLineToReport(mdm,Report,Options)
+	dim FeatureType, isFirst
+	Document_OrderedCollection_Begin(Report,true)
+	isFirst = true
+	Document_OrderedCollection_Insert(Report,"Item name, or path",isFirst)
+	isFirst = false
+	for each FeatureType in split(Options,",")
+		'select case FeatureType
+		'case "label"
+		if FeatureType="label" then
+			Document_OrderedCollection_Insert(Report,"Label ("+ctext(mdm.Contexts.Current)+" context)",isFirst)
+			isFirst = false
+		'case "langcode-a" to "langcode-Z"
+		elseif left(FeatureType,9)="langcode-" then
+			Document_OrderedCollection_Insert(Report,"Translate ("+replace(FeatureType,"langcode-","")+")",isFirst)
+			isFirst = false
+		'case "properties"
+		elseif FeatureType="properties" then
+			dim sCtx, sHelperVar
+			sHelperVar = "<<BEGIN>>"
+			for each sCtx in mdm.Contexts
+				if find(split(lcase(replace(RUN_FEATURES_PROPERTIES_CONTEXTS," ","")),","),lcase(ctext(sCtx)))>=0 then
+					sHelperVar = sHelperVar + " + " + trim(ctext(sCtx))
+				end if
+			next
+			sHelperVar = replace(sHelperVar,"<<BEGIN>> + ","")
+			sHelperVar = replace(sHelperVar,"<<BEGIN>>","")
+			if trim(sHelperVar)="" then
+				sHelperVar = "No"
+			end if
+			Document_OrderedCollection_Insert(Report,"Custom properties ("+sHelperVar+" contexts)",isFirst)
+			isFirst = false
+		'case else
+		else
+			ErrorRaise("options param is not supported: "+ctext(FeatureType))
+		'end select
+		end if
+	next
+	Document_OrderedCollection_End(Report)
+end sub
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+sub Document_JSON_Begin(Report)
+	Document_JSON_NamedCollection_Begin(Report)
+end sub
+
+sub Document_JSON_NamedCollection_Begin(Report)
+	'Report.WriteLine(""""+SanitizeQuestionName(BlockName)+""":")
+	Report.WriteLine("{")
+end sub
+
+sub Document_JSON_NamedCollection_Insert(Report,PropertyName,PropertyValue,isFirstEntityInCollection)
+	'Report.WriteLine(""""+SanitizeQuestionName(BlockName)+""":")
+	Report.WriteLine(""+iif(isFirstEntityInCollection,"",",")+""""+SanitizeQuestionName(PropertyName)+""": "+iif(((PropertyValue is null)or((PropertyValue=null)and(not (PropertyValue="")))),"",""""+escapeHtml(PropertyValue)+"""")+"")
+end sub
+
+sub Document_JSON_OrderedCollection_Begin(Report,isFirstEntityInCollection)
+	Report.WriteLine(""+iif(isFirstEntityInCollection,"",",")+"[")
+end sub
+
+sub Document_JSON_OrderedCollection_Insert(Report,Content,isFirstEntityInCollection)
+	Report.WriteLine(""+iif(isFirstEntityInCollection,"",",")+""""+escapeHtml(Content)+"""")
+end sub
+
+sub Document_JSON_OrderedCollection_End(Report)
+	Report.WriteLine("]")
+end sub
+
+sub Document_JSON_NamedCollection_End(Report)
+	Report.WriteLine("}")
+end sub
+
+sub Document_JSON_End(Report)
+	Document_JSON_NamedCollection_End(Report)
+end sub
+
+
+
+'sub Document_BuildHtmlReportFromJson(Report,TextJson)
+'	Report.WriteLine(TEMPLATE_HTML_BEGIN)
+'	Report.WriteLine(TEMPLATE_HTML_JSONCREATESCRIPTS)
+'	Report.WriteLine("<script>window.mdmreportDataStr = `"+TextJson+"`;</script>")
+'	Report.WriteLine(TEMPLATE_HTML_END)
+'end sub
+
+' function Document_JsonDropGarbageCommas(Json)
+' 	' TODO: do we need it anymore?
+' 	dim GarbageCommas_RegEx
+' 	set GarbageCommas_RegEx = CreateObject("VBScript.RegExp")
+' 	GarbageCommas_RegEx.Pattern = "\s*,\s*(?:\s*?Dummy\s*?\:\s*?)?\s*?null\b"
+' 	GarbageCommas_RegEx.IgnoreCase = True
+' 	GarbageCommas_RegEx.Global = True
+' 	Document_JsonDropGarbageCommas = GarbageCommas_RegEx.Replace(Json,"")
+' end function
+
+
+
+
+
+
+#if (RUN_REPORT_FMT==1)
+
+ErrorRaise("Direct html ecport is no longer supported, please change RUN_REPORT_FMT to 2")
+
+' sub Document_Begin(Report)
+' 	'Document_HTML_Begin(Report)
+' end sub
+'
+' sub Document_NamedCollection_Begin(Report)
+' 	'Document_HTML_NamedCollection_Begin(Report)
+' end sub
+'
+' sub Document_OrderedCollection_Begin(Report,FirstCell)
+' 	'Document_HTML_OrderedCollection_Begin(Report,FirstCell)
+' end sub
+'
+' sub Document_OrderedCollection_End(Report)
+' 	'Document_HTML_OrderedCollection_End(Report)
+' end sub
+'
+' sub Document_OrderedCollection_Insert(Report,Content,HtmlTypeClass)
+' 	'Document_HTML_OrderedCollection_Insert(Report,Content,HtmlTypeClass)
+' end sub
+'
+' sub Document_NamedCollection_End(Report)
+' 	'Document_HTML_NamedCollection_End(Report)
+' end sub
+'
+' sub Document_End(Report)
+' 	'Document_HTML_End(Report)
+' end sub
+
+#elif (RUN_REPORT_FMT==2)
+
+sub Document_Begin(Report)
+	Document_JSON_Begin(Report)
+end sub
+
+sub Document_NamedCollection_Begin(Report)
+	Document_JSON_NamedCollection_Begin(Report)
+end sub
+
+sub Document_NamedCollection_Insert(Report,PropertyName,PropertyValue,isFirstEntityInCollection)
+	Document_JSON_NamedCollection_Insert(Report,PropertyName,PropertyValue,isFirstEntityInCollection)
+end sub
+
+sub Document_OrderedCollection_Begin(Report,isFirstEntityInCollection)
+	Document_JSON_OrderedCollection_Begin(Report,isFirstEntityInCollection)
+end sub
+
+sub Document_OrderedCollection_Insert(Report,Content,isFirstEntityInCollection)
+	Document_JSON_OrderedCollection_Insert(Report,Content,isFirstEntityInCollection)
+end sub
+
+sub Document_OrderedCollection_End(Report)
+	Document_JSON_OrderedCollection_End(Report)
+end sub
+
+sub Document_NamedCollection_End(Report)
+	Document_JSON_NamedCollection_End(Report)
+end sub
+
+sub Document_End(Report)
+	Document_JSON_End(Report)
+end sub
+
+#endif

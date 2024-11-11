@@ -1,0 +1,19 @@
+## Ignore everything in this directory
+# *
+*.mdd
+*.ddf
+**/[Tt]est*
+[Tt]est*
+[Tt]est*/
+ref.py
+**/__pycache__/
+__pycache__
+__pycache__/
+/__pycache__/
+*.pyc
+report.*
+# Except this file
+!.gitignore
+
+examples/
+dist/
