@@ -4,12 +4,14 @@ ECHO Clear up dist\...
 DEL /F /Q dist\*
 
 ECHO Calling pinliner...
+REM REM :: comment: please delete .pyc files before every call of the bundle - this is implemented in my fork of the pinliner
 pinliner src -o dist/bundle.py
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && exit /b %errorlevel% )
 ECHO Done
 
 ECHO Pathcing bundle.py...
 ECHO # print('within bundle') >> dist/bundle.py
+REM REM :: no need for this, the root package is loaded automatically
 @REM ECHO # import bundle >> dist/bundle.py
 ECHO from src import run_universal >> dist/bundle.py
 ECHO run_universal.main() >> dist/bundle.py
