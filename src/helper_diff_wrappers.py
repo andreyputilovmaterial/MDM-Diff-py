@@ -245,6 +245,8 @@ def diff_values_text( mdd_l_coldata, mdd_r_coldata ):                           
         mdd_r_coldata = splitwords(mdd_r_coldata)
         diff_data = Myers.to_records(Myers.diff(mdd_l_coldata,mdd_r_coldata),mdd_l_coldata,mdd_r_coldata)
         diff_data = combine_similar_records(diff_data)
+        result_this_col_left = ''
+        result_this_col_right = ''
         for part in diff_data:
             if part.flag=='keep':
                 result_this_col_left = result_this_col_left + part.line
