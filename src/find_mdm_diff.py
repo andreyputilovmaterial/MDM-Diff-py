@@ -78,7 +78,7 @@ def find_diff(inp_mdd_l,inp_mdd_r):
             mdd_r_sectiondata = ( ( mdd_r_sections_allmatches[0]['content'] if 'content' in mdd_r_sections_allmatches[0] else [] ) if len(mdd_r_sections_allmatches)>0 else [] )
             rows_l = [ ( item['name'] if 'name' in item else '???' ) for item in mdd_l_sectiondata ]
             rows_r = [ ( item['name'] if 'name' in item else '???' ) for item in mdd_r_sectiondata ]
-            report_rows_diff = helper_diff_wrappers.diff_row_names_respecting_groups( rows_l if '' in rows_l else ['']+rows_l, rows_r if '' in rows_r else ['']+rows_r )
+            report_rows_diff = helper_diff_wrappers.finddiff_row_names_respecting_groups( rows_l if '' in rows_l else ['']+rows_l, rows_r if '' in rows_r else ['']+rows_r )
             performance_counter = iter(helper_utility_wrappers.PerformanceMonitor(config={
                 'total_records': len(report_rows_diff),
                 'report_frequency_records_count': 150,
@@ -132,7 +132,7 @@ def find_diff(inp_mdd_l,inp_mdd_r):
                                 mdd_l_coldata = []
                             if mdd_r_coldata is None:
                                 mdd_r_coldata = []
-                            result_this_col_left, result_this_col_right = helper_diff_wrappers.diff_values_structural( mdd_l_coldata, mdd_r_coldata )
+                            result_this_col_left, result_this_col_right = helper_diff_wrappers.finddiff_values_structural( mdd_l_coldata, mdd_r_coldata )
                         else:
                             mdd_l_coldata = '' if mdd_l_coldata is None else ( json.dumps(mdd_l_coldata) if mdd_l_is_structural else '{fmt}'.format(fmt=mdd_l_coldata) )
                             mdd_r_coldata = '' if mdd_r_coldata is None else ( json.dumps(mdd_r_coldata) if mdd_r_is_structural else '{fmt}'.format(fmt=mdd_r_coldata) )
@@ -140,7 +140,7 @@ def find_diff(inp_mdd_l,inp_mdd_r):
                                 return re.sub('\r?\n','\n',re.sub('\r','\n',t))
                             mdd_l_coldata = normalize_linebreaks(mdd_l_coldata)
                             mdd_r_coldata = normalize_linebreaks(mdd_r_coldata)
-                            result_this_col_left, result_this_col_right = helper_diff_wrappers.diff_values_text( mdd_l_coldata, mdd_r_coldata )
+                            result_this_col_left, result_this_col_right = helper_diff_wrappers.finddiff_values_text( mdd_l_coldata, mdd_r_coldata )
                         row['{col_name}{suffix}'.format(col_name = col,suffix='_left')] = result_this_col_left
                         row['{col_name}{suffix}'.format(col_name = col,suffix='_right')] = result_this_col_right
                     result_this_section.append(row)

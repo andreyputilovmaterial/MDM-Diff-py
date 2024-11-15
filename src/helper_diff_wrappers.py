@@ -22,29 +22,36 @@ else:
 
 
 
-def splitwords(s):
+def text_split_words(s):
     return re.sub(r'((?:\w+)|(?:\r?\n)|(?:\s+))',lambda m:'{delimiter}{preserve}{delimiter}'.format(preserve=m[1],delimiter='<<MDMAPSPLIT>>'),s).split('<<MDMAPSPLIT>>')
+
+def text_split_lines(s):
+    return s.split("\n")
+
 
 
 # temporary repeating similar definitions from diff.py so that I can combine rows and it looks similar
-@dataclass(frozen=True)
+@dataclass(frozen=False)
 class DiffItemKeep:
     line: str
     flag = 'keep'
     def __str__(self):
         return '{flag}: {line}'.format(flag=self.flag,line=self.line)
-@dataclass(frozen=True)
+
+@dataclass(frozen=False)
 class DiffItemInsert:
     line: str
     flag = 'insert'
     def __str__(self):
         return 'insert: {line}'.format(flag=self.flag,line=self.line)
-@dataclass(frozen=True)
+
+@dataclass(frozen=False)
 class DiffItemRemove:
     line: str
     flag = 'remove'
     def __str__(self):
         return 'remove: {line}'.format(flag=self.flag,line=self.line)
+
 
 
 def diff_make_combined_list(list_l,list_r):
@@ -55,7 +62,7 @@ def diff_make_combined_list(list_l,list_r):
     return results
 
 
-def diff_row_names_respecting_groups(rows_l,rows_r):
+def finddiff_row_names_respecting_groups(rows_l,rows_r):
     # TODO: debug
     if( ( (len(rows_l)>1) and (rows_l[0]!='')) or ( (len(rows_r)>1) and (rows_r[0]!='') ) ):
         print('wrong comparing rows_l and rows_r ("{aaa}..." vs "{bbb}...")'.format(aaa=', '.join(rows_l[:4]),bbb=', '.join(rows_r[:4])))
@@ -124,13 +131,13 @@ def diff_row_names_respecting_groups(rows_l,rows_r):
                 else:
                     rows_subgroup_l = groups_l_defs[diff_item.line] if diff_item.line in dict.keys(groups_l_defs) else ['']
                     rows_subgroup_r = groups_r_defs[diff_item.line] if diff_item.line in dict.keys(groups_r_defs) else ['']
-                    diff_within_group_missing_parent_part = diff_row_names_respecting_groups(rows_subgroup_l,rows_subgroup_r)
+                    diff_within_group_missing_parent_part = finddiff_row_names_respecting_groups(rows_subgroup_l,rows_subgroup_r)
                     diff_within_group = []
                     item_first_meaning_parent_group = True
                     for diff_item_within_group in diff_within_group_missing_parent_part:
                         item_add = None
                         name_with_parent_part_added = '{parent}.{field}'.format(parent=diff_item.line,field=diff_item_within_group.line) if len(diff_item_within_group.line)>0 else diff_item.line
-                        # TODOL debug
+                        # TODO: debug
                         if( ( item_first_meaning_parent_group and (len(diff_item_within_group.line)>0) ) or ( not item_first_meaning_parent_group and (len(diff_item_within_group.line)==0) )):
                             print('wrong at {aaa}, parent part = {aaap}, field part = {aaaf}, parent flag = {aaapf}, field flag = {aaaff}'.format(
                                 aaa=name_with_parent_part_added,
@@ -156,7 +163,7 @@ def diff_row_names_respecting_groups(rows_l,rows_r):
 
 
 
-def combine_similar_records( diff_data ):
+def diff_combine_similar_records( diff_data ):
     for i in range(len(diff_data)):
         if i>0:
             if (diff_data[i].flag=='keep') and (diff_data[i-1].flag=='keep'):
@@ -172,7 +179,21 @@ def combine_similar_records( diff_data ):
     return diff_data
 
 
-def diff_values_structural( mdd_l_coldata, mdd_r_coldata ):
+# def diff_update_records(diff_data,update_cb):
+#     data_upd = []
+#     for part in diff_data:
+#         if (part.flag=='keep'):
+#             data_upd.append(DiffItemKeep(update_cb(part.line)))
+#         elif (part.flag=='insert'):
+#             data_upd.append(DiffItemInsert(update_cb(part.line)))
+#         elif (part.flag=='remove'):
+#             data_upd.append(DiffItemRemove(update_cb(part.line)))
+#         else:
+#             raise ValueError('diff flag not recognized: "{flag}"'.format(flag=part.flag))
+#     return data_upd
+
+
+def finddiff_values_structural( mdd_l_coldata, mdd_r_coldata ):
     mdd_l_prop_names = [ prop['name'] for prop in mdd_l_coldata ]
     mdd_r_prop_names = [ prop['name'] for prop in mdd_r_coldata ]
     prop_names_list_combined = diff_make_combined_list(mdd_l_prop_names,mdd_r_prop_names)
@@ -200,12 +221,12 @@ def diff_values_structural( mdd_l_coldata, mdd_r_coldata ):
                 prop_val_left = ''
                 prop_val_right = '<<ADDED>>' + value_right + '<<ENDADDED>>'
             else:
-                def splitwords(s):
+                def text_split_words(s):
                     return re.sub(r'((?:\w+)|(?:\r?\n)|(?:\s+))',lambda m:'{delimiter}{preserve}{delimiter}'.format(preserve=m[1],delimiter='<<MDMAPSPLIT>>'),s).split('<<MDMAPSPLIT>>')
-                value_left = splitwords(value_left)
-                value_right = splitwords(value_right)
+                value_left = text_split_words(value_left)
+                value_right = text_split_words(value_right)
                 diff_data = Myers.to_records(Myers.diff(value_left,value_right),value_left,value_right)
-                diff_data = combine_similar_records( diff_data )
+                diff_data = diff_combine_similar_records( diff_data )
                 for part in diff_data:
                     if part.flag=='keep':
                         prop_val_left = prop_val_left + part.line
@@ -227,8 +248,7 @@ def diff_values_structural( mdd_l_coldata, mdd_r_coldata ):
     return result_this_col_left, result_this_col_right
 
 
-def diff_values_text( mdd_l_coldata, mdd_r_coldata ):                            # TODO: performance issues when finding diff in routing
-    # TODO: performance issues when finding diff in routing
+def finddiff_values_text( mdd_l_coldata, mdd_r_coldata ):
     result_this_col_left = mdd_l_coldata
     result_this_col_right = mdd_r_coldata
     if mdd_l_coldata==mdd_r_coldata:
@@ -241,29 +261,53 @@ def diff_values_text( mdd_l_coldata, mdd_r_coldata ):                           
         result_this_col_left = ''
         result_this_col_right = '<<ADDED>>' + mdd_r_coldata + '<<ENDADDED>>'
     else:
-        mdd_l_coldata = splitwords(mdd_l_coldata)
-        mdd_r_coldata = splitwords(mdd_r_coldata)
-        diff_data = Myers.to_records(Myers.diff(mdd_l_coldata,mdd_r_coldata),mdd_l_coldata,mdd_r_coldata)
-        diff_data = combine_similar_records(diff_data)
+        mdd_l_coldata_into_lines = text_split_lines(mdd_l_coldata)
+        mdd_r_coldata_into_lines = text_split_lines(mdd_r_coldata)
+        diff_data = Myers.diff(mdd_l_coldata_into_lines,mdd_r_coldata_into_lines)
+        diff_data = Myers.to_records(diff_data,mdd_l_coldata_into_lines,mdd_r_coldata_into_lines)
+        # diff_data = diff_update_records(diff_data,lambda l: '{line}{lineending}'.format(line=l,lineending='\n')) # aaaah is this slow? needs testing # TODO:
+        for part in diff_data:
+            part.line = part.line + '\n'
+        diff_data = diff_combine_similar_records(diff_data)
+        diff_data_l_and_r = []
+        for part in diff_data:
+            diff_data_l_and_r_last_index = len(diff_data_l_and_r)-1
+            if part.flag=='keep':
+                diff_data_l_and_r.append({'l':part.line,'r':part.line})
+            elif part.flag=='insert':
+                if( (diff_data_l_and_r_last_index>=0) and (diff_data_l_and_r[diff_data_l_and_r_last_index]['r']=='') ):
+                    diff_data_l_and_r[diff_data_l_and_r_last_index]['r'] = part.line
+                else:
+                    diff_data_l_and_r.append({'l':'','r':part.line})
+            elif part.flag=='remove':
+                if( (diff_data_l_and_r_last_index>=0) and (diff_data_l_and_r[diff_data_l_and_r_last_index]['l']=='') ):
+                    diff_data_l_and_r[diff_data_l_and_r_last_index]['l'] = part.line
+                else:
+                    diff_data_l_and_r.append({'l':part.line,'r':''})
         result_this_col_left = ''
         result_this_col_right = ''
-        for part in diff_data:
-            if part.flag=='keep':
-                result_this_col_left = result_this_col_left + part.line
-                result_this_col_right = result_this_col_right + part.line
-            elif part.flag=='insert':
-                text = '' + part.line + ''
-                text_lines = re.split(r'\n',text)
-                result_this_col_left = result_this_col_left + '\n'.join( ' ' for piece in text_lines )
-                result_this_col_right = result_this_col_right + '\n'.join( '<<ADDED>>{a}<<ENDADDED>>'.format(a=piece) for piece in text_lines )
-            elif part.flag=='remove':
-                text = '' + part.line + ''
-                text_lines = re.split(r'\n',text)
-                result_this_col_left = result_this_col_left + '\n'.join( '<<REMOVED>>{a}<<ENDREMOVED>>'.format(a=piece) for piece in text_lines )
-                result_this_col_right = result_this_col_right + '\n'.join( ' ' for piece in text_lines )
-            # const_test_l_before = len(re.findall(r'\n',result_this_col_left))
-            # const_test_r_before = len(re.findall(r'\n',result_this_col_right))
-            # if const_test_l_before!=const_test_r_before:
-            #     pdb.set_trace() # TODO:
-            # print('linebreaks: {nl} (left), {nr} (right), processing part: {p}'.format(nl=const_test_l_before,nr=const_test_r_before,p=part.line))
+        for part in diff_data_l_and_r:
+            mdd_l_coldata_into_pieces = text_split_words(part['l'])
+            mdd_r_coldata_into_pieces = text_split_words(part['r'])
+            diff_data = Myers.to_records(Myers.diff(mdd_l_coldata_into_pieces,mdd_r_coldata_into_pieces),mdd_l_coldata_into_pieces,mdd_r_coldata_into_pieces)
+            diff_data = diff_combine_similar_records(diff_data)
+            for part in diff_data:
+                if part.flag=='keep':
+                    result_this_col_left = result_this_col_left + part.line
+                    result_this_col_right = result_this_col_right + part.line
+                elif part.flag=='insert':
+                    text = '' + part.line + ''
+                    text_lines = re.split(r'\n',text)
+                    result_this_col_left = result_this_col_left + '\n'.join( ' ' for piece in text_lines )
+                    result_this_col_right = result_this_col_right + '\n'.join( '<<ADDED>>{a}<<ENDADDED>>'.format(a=piece) for piece in text_lines )
+                elif part.flag=='remove':
+                    text = '' + part.line + ''
+                    text_lines = re.split(r'\n',text)
+                    result_this_col_left = result_this_col_left + '\n'.join( '<<REMOVED>>{a}<<ENDREMOVED>>'.format(a=piece) for piece in text_lines )
+                    result_this_col_right = result_this_col_right + '\n'.join( ' ' for piece in text_lines )
+                # const_test_l_before = len(re.findall(r'\n',result_this_col_left))
+                # const_test_r_before = len(re.findall(r'\n',result_this_col_right))
+                # if const_test_l_before!=const_test_r_before:
+                #     pdb.set_trace() # TODO:
+                # print('linebreaks: {nl} (left), {nr} (right), processing part: {p}'.format(nl=const_test_l_before,nr=const_test_r_before,p=part.line))
     return result_this_col_left, result_this_col_right
