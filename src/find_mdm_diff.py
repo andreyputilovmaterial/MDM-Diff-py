@@ -156,7 +156,7 @@ def find_diff(inp_mdd_l,inp_mdd_r):
 
 
 
-if __name__ == '__main__':
+def entry_point(config={}):
     time_start = datetime.now()
     parser = argparse.ArgumentParser(
         description="Find Diff"
@@ -173,7 +173,12 @@ if __name__ == '__main__':
         help='JSON with fields data from Input MDD B',
         required=True
     )
-    args = parser.parse_args()
+    args = None
+    args_rest = None
+    if( ('arglist_strict' in config) and (not config['arglist_strict']) ):
+        args, args_rest = parser.parse_known_args()
+    else:
+        args = parser.parse_args()
     inp_mdd_l = ''
     if args.mdd_scheme_left:
         inp_mdd_l = Path(args.mdd_scheme_left)
@@ -198,8 +203,8 @@ if __name__ == '__main__':
     result = find_diff(inp_mdd_l,inp_mdd_r)
     
     result_json = json.dumps(result, indent=4)
-    report_part_mdd_left_filename = re.sub( r'\.mdd\.json', '.mdd', Path(inp_mdd_l).name )
-    report_part_mdd_right_filename = re.sub( r'\.mdd\.json', '.mdd', Path(inp_mdd_r).name )
+    report_part_mdd_left_filename = re.sub( r'\.json\s*?$', '', Path(inp_mdd_l).name )
+    report_part_mdd_right_filename = re.sub( r'\.json\s*?$', '', Path(inp_mdd_r).name )
     report_filename = 'report.diff.{mdd_l}-{mdd_r}.json'.format(mdd_l=report_part_mdd_left_filename,mdd_r=report_part_mdd_right_filename)
     result_json_fname = ( Path(inp_mdd_l).parents[0] / report_filename )
     print('MDM diff script: saving as "{fname}"'.format(fname=result_json_fname))
@@ -208,3 +213,8 @@ if __name__ == '__main__':
 
     time_finish = datetime.now()
     print('MDM diff script: finished at {dt} (elapsed {duration})'.format(dt=time_finish,duration=time_finish-time_start))
+
+
+
+if __name__ == '__main__':
+    entry_point({'arglist_strict':True})

@@ -24,7 +24,6 @@ class PerformanceMonitor:
     
     def __next__(self):
         self.progress = self.progress + 1
-        #pdb.set_trace()
         if (self.config_frequency_records is None) or (self.progress - self.progress_last_reported > self.config_frequency_records):
             time_now = time.time()
             if (self.config_frequency_timeinterval is None) or ((time_now - self.time_last_reported)>self.config_frequency_timeinterval):
