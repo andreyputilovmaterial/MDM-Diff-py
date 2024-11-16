@@ -63,9 +63,6 @@ def diff_make_combined_list(list_l,list_r):
 
 
 def finddiff_row_names_respecting_groups(rows_l,rows_r):
-    # TODO: debug
-    if( ( (len(rows_l)>1) and (rows_l[0]!='')) or ( (len(rows_r)>1) and (rows_r[0]!='') ) ):
-        print('wrong comparing rows_l and rows_r ("{aaa}..." vs "{bbb}...")'.format(aaa=', '.join(rows_l[:4]),bbb=', '.join(rows_r[:4])))
     rows_inp_l = [ r for r in rows_l ]
     rows_inp_r = [ r for r in rows_r ]
     #grouping_found = False
@@ -137,15 +134,6 @@ def finddiff_row_names_respecting_groups(rows_l,rows_r):
                     for diff_item_within_group in diff_within_group_missing_parent_part:
                         item_add = None
                         name_with_parent_part_added = '{parent}.{field}'.format(parent=diff_item.line,field=diff_item_within_group.line) if len(diff_item_within_group.line)>0 else diff_item.line
-                        # TODO: debug
-                        if( ( item_first_meaning_parent_group and (len(diff_item_within_group.line)>0) ) or ( not item_first_meaning_parent_group and (len(diff_item_within_group.line)==0) )):
-                            print('wrong at {aaa}, parent part = {aaap}, field part = {aaaf}, parent flag = {aaapf}, field flag = {aaaff}'.format(
-                                aaa=name_with_parent_part_added,
-                                aaap=diff_item.line,
-                                aaaf=diff_item_within_group.line,
-                                aaapf=diff_item.flag,
-                                aaaff=diff_item_within_group.flag,
-                            ))
                         diff_item_which_flag_we_grab = diff_item if item_first_meaning_parent_group else diff_item_within_group
                         if diff_item_which_flag_we_grab.flag=='keep':
                             item_add = DiffItemKeep(name_with_parent_part_added)
@@ -308,6 +296,6 @@ def finddiff_values_text( mdd_l_coldata, mdd_r_coldata ):
                 # const_test_l_before = len(re.findall(r'\n',result_this_col_left))
                 # const_test_r_before = len(re.findall(r'\n',result_this_col_right))
                 # if const_test_l_before!=const_test_r_before:
-                #     pdb.set_trace() # TODO:
+                #     # assert line break counts
                 # print('linebreaks: {nl} (left), {nr} (right), processing part: {p}'.format(nl=const_test_l_before,nr=const_test_r_before,p=part.line))
     return result_this_col_left, result_this_col_right

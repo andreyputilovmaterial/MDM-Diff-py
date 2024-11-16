@@ -45,5 +45,13 @@ ECHO 6. final html with diff!
 python src\run_universal.py --program report --inpfile "%MDD_FINAL_DIFF_JSON%"
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && exit /b %errorlevel% )
 
+ECHO -
+ECHO 7 del .json temporary files
+DEL "%MDD_A%.json"
+@REM DEL "%MDD_A%.json.html"
+DEL "%MDD_B%.json"
+@REM DEL "%MDD_B%.json.html"
+DEL "%MDD_FINAL_DIFF_JSON%"
+
 ECHO done!
 

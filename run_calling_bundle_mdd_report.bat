@@ -11,13 +11,21 @@ ECHO -
 ECHO 1. read MDD A
 ECHO read from: %MDD_A%
 ECHO write to: .json
-python dist/mdmtoolsap_bundle.py --program read --mdd "%MDD_A%" --config-features label,properties --config-section mdmproperties,languages,shared_lists,fields
+python dist/mdmtoolsap_bundle.py --program read --mdd "%MDD_A%" --config-features label,attributes,properties,translations --config-section languages,shared_lists,fields,pages
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b %errorlevel% )
 
 ECHO -
 ECHO 2. generate html
 python dist/mdmtoolsap_bundle.py --program report --inpfile "%MDD_A_JSON%"
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b %errorlevel% )
+
+ECHO -
+ECHO 7 del .json temporary files
+DEL "%MDD_A%.json"
+@REM DEL "%MDD_A%.json.html"
+DEL "%MDD_B%.json"
+@REM DEL "%MDD_B%.json.html"
+DEL "%MDD_FINAL_DIFF_JSON%"
 
 ECHO -
 :CLEANUP
