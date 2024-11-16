@@ -30,7 +30,7 @@ def entry_point(config={}):
     data['report_datetime_utc']='{f}'.format(f=(datetime.now()).astimezone(tz=timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),)
     data['report_datetime_local']='{f}'.format(f=(datetime.now()).strftime('%Y-%m-%dT%H:%M:%SZ'))
 
-    inp_file_obj = open(inp_file,'r')
+    inp_file_obj = open(inp_file,'r',encoding='utf-8')
     filecontents = inp_file_obj.read()
     data['sections'][0]['content'][0]['rawtextcontents'] = filecontents
 
