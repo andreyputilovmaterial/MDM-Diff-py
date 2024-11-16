@@ -4,6 +4,28 @@ import argparse
 import json
 from datetime import datetime, timezone
 
+
+
+
+if __name__ == '__main__':
+    # run as a program
+    import reader_plain
+    import reader_tablescripts
+elif '.' in __name__:
+    # package
+    from . import reader_plain
+    from . import reader_tablescripts
+else:
+    # included with no parent package
+    import reader_plain
+    import reader_tablescripts
+
+
+
+
+
+
+
 def entry_point(config={}):
     # time_start = datetime.now()
     parser = argparse.ArgumentParser(
@@ -21,18 +43,26 @@ def entry_point(config={}):
     else:
         args = parser.parse_args()
     inp_file = Path(args.inpfile)
+    inp_filename = '{f}'.format(f=inp_file)
 
     # print('reading file {fname}, script started at {dt}'.format(dt=time_start,fname=inp_file))
 
-    data=json.loads('{ "report_type": "TextFile", "source_file": "insert", "report_datetime_utc": "insert", "report_datetime_local": "insert", "source_file_metadata": [ ], "report_scheme": { "columns": [ "rawtextcontents" ], "column_headers": { "rawtextcontents": "File Contents" }, "flags": [] }, "sections": [ { "name": "filecontents", "content": [ { "name": "", "rawtextcontents": "insert" } ] } ] }')
-    
-    data['source_file']='{f}'.format(f=inp_file)
-    data['report_datetime_utc']='{f}'.format(f=(datetime.now()).astimezone(tz=timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),)
-    data['report_datetime_local']='{f}'.format(f=(datetime.now()).strftime('%Y-%m-%dT%H:%M:%SZ'))
-
     inp_file_obj = open(inp_file,'r',encoding='utf-8')
-    filecontents = inp_file_obj.read()
-    data['sections'][0]['content'][0]['rawtextcontents'] = filecontents
+    textfilecontents = inp_file_obj.read()
+
+    format_detect = None
+    if re.match(r'^\s*?TabScripts.*?\.mrs',inp_filename,flags=re.I):
+        format_detect = 'da_tablescrips'
+    elif re.match(r'^\s*?PrepDataDMS.*?\.txt',inp_filename,flags=re.I):
+        format_detect = 'da_dms'
+
+    read = None
+    if format_detect=='da_tablescrips':
+        read = reader_tablescripts.read
+    else:
+        read = reader_plain.read
+
+    data = read(textfilecontents,{'filename':inp_filename})
 
     result_json_fname = ( Path(inp_file).parents[0] / '{basename}{ext}'.format(basename=Path(inp_file).name,ext='.json') if Path(inp_file).is_file() else re.sub(r'^\s*?(.*?)\s*?$',lambda m: '{base}{added}'.format(base=m[1],added='.json'),'{path}'.format(path=inp_file)) )
     outfile = open(result_json_fname, 'w')
