@@ -11,7 +11,7 @@ ECHO -
 ECHO 1. read MDD A
 ECHO read from: %MDD_A%
 ECHO write to: .json
-python dist/mdmtoolsap_bundle.py --program read --mdd "%MDD_A%" --config-features label,attributes,properties,translations --config-section languages,shared_lists,fields,pages
+python dist/mdmtoolsap_bundle.py --program read_mdd --mdd "%MDD_A%" --config-features label,attributes,properties,translations --config-section languages,shared_lists,fields,pages
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b %errorlevel% )
 
 ECHO -
