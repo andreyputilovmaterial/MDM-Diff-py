@@ -49,7 +49,7 @@ def find_diff(inp_mdd_l,inp_mdd_r):
             if not( '{name}'.format(name=key) in column_headers_combined ):
                 column_headers_combined['{name}'.format(name=key)] = '{basename}'.format(basename=d_r['report_scheme']['column_headers'][key])
             column_headers_combined['{name}_right'.format(name=key)] = '{basename} (Right MDD)'.format(basename=d_r['report_scheme']['column_headers'][key])
-    flags_list_combined = helper_diff_wrappers.diff_make_combined_list( d_l['report_scheme']['flags'], d_r['report_scheme']['flags'] )
+    flags_list_combined = helper_diff_wrappers.diff_make_combined_list( d_l['report_scheme']['flags'] if 'flags' in d_l['report_scheme'] else [], d_r['report_scheme']['flags'] if 'flags' in d_r['report_scheme'] else [] )
     section_list_combined = helper_diff_wrappers.diff_make_combined_list( [ item['name'] for item in d_l['sections']], [ item['name'] for item in d_r['sections']])
     result = {
         'report_type': 'diff',
