@@ -1,7 +1,9 @@
 
 import argparse
+# from pathlib import Path
+import traceback
 
-from pathlib import Path
+
 
 
 
@@ -58,36 +60,57 @@ def call_report_program():
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Universal caller of mdm-py utilities"
-    )
-    parser.add_argument(
-        '-1',
-        '--program',
-        required=True
-    )
-    args, args_rest = parser.parse_known_args()
-    if args.program:
-        if args.program=='diff':
-            call_diff_program()
-        elif args.program=='read_mdd':
-            call_read_mdd_program()
-        elif args.program=='read_txt':
-            call_read_txt_program()
-        elif args.program=='read_excel':
-            call_read_excel_program()
-        elif args.program=='report':
-            call_report_program()
-        elif args.program=='test':
-            print('test!')
+    try:
+        parser = argparse.ArgumentParser(
+            description="Universal caller of mdm-py utilities"
+        )
+        parser.add_argument(
+            '-1',
+            '--program',
+            required=True
+        )
+        args, args_rest = parser.parse_known_args()
+        if args.program:
+            if args.program=='diff':
+                call_diff_program()
+            elif args.program=='read_mdd':
+                call_read_mdd_program()
+            elif args.program=='read_txt':
+                call_read_txt_program()
+            elif args.program=='read_excel':
+                call_read_excel_program()
+            elif args.program=='report':
+                call_report_program()
+            elif args.program=='test':
+                print('hello, world!')
+            else:
+                print('program to run not recognized: {program}'.format(program=args.program))
+                raise AttributeError('program to run not recognized: {program}'.format(program=args.program))
         else:
-            print('program to run not recognized: {program}'.format(program=args.program))
-            raise AttributeError('program to run not recognized: {program}'.format(program=args.program))
-    else:
-        print('program to run not specified')
-        raise AttributeError('program to run not specified')
+            print('program to run not specified')
+            raise AttributeError('program to run not specified')
+    except Exception as e:
+        # the program is designed to be user-friendly
+        # that's why we reformat error messages a little bit
+        # stack trace is still printed (I even made it longer to 20 steps!)
+        # but the error message itself is separated and printed as the last message again
+
+        # for example, I don't write "print('File Not Found!');exit(1);", I just write "raise FileNotFoundErro()"
+        print('')
+        print('Stack trace:')
+        print('')
+        traceback.print_exception(e,limit=20)
+        print('')
+        print('')
+        print('')
+        print('Error:')
+        print('')
+        print('{e}'.format(e=e))
+        print('')
+        exit(1)
 
 
 if __name__ == '__main__':
     main()
+
 
