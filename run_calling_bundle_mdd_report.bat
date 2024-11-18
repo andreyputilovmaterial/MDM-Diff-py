@@ -25,7 +25,7 @@ DEL "%MDD_A%.json"
 @REM DEL "%MDD_A%.json.html"
 DEL "%MDD_B%.json"
 @REM DEL "%MDD_B%.json.html"
-DEL "%MDD_FINAL_DIFF_JSON%"
+@REM DEL "%MDD_FINAL_DIFF_JSON%"
 
 ECHO -
 :CLEANUP

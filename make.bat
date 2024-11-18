@@ -40,6 +40,7 @@ powershell -Command "(gc 'run_diff_excel.bat' -encoding 'Default') -replace '(di
 COPY .\run_mdd_diff.bat .\run_mdd_diff_routing.bat
 powershell -Command "(gc 'run_mdd_diff_routing.bat' -encoding 'Default') -replace '--config-features\s+\w[\w,]*\w', '--config-features label' | Out-File -encoding 'Default' 'run_mdd_diff_routing.bat'"
 powershell -Command "(gc 'run_mdd_diff_routing.bat' -encoding 'Default') -replace '--config-section\s+\w[\w,]*\w', '--config-section routing' | Out-File -encoding 'Default' 'run_mdd_diff_routing.bat'"
+powershell -Command "(gc 'run_mdd_diff_routing.bat' -encoding 'Default') -replace '--program diff', '--program diff --output-filename-suffix .routing' | Out-File -encoding 'Default' 'run_mdd_diff_routing.bat'"
 COPY .\run_mdd_diff.bat .\run_mdd_diff_with_translations.bat
 powershell -Command "(gc 'run_mdd_diff_with_translations.bat' -encoding 'Default') -replace '--config-features\s+\w[\w,]*\w', '--config-features label,attributes,properties,translations' | Out-File -encoding 'Default' 'run_mdd_diff_with_translations.bat'"
 POPD

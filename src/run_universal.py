@@ -54,37 +54,42 @@ def call_read_txt_program():
 def call_report_program():
     return report_create.entry_point({'arglist_strict':False})
 
+def call_test_program():
+    print('hello, world!')
+    return True
 
 
+
+
+run_programs = {
+    'diff': call_diff_program,
+    'read_mdd': call_read_mdd_program,
+    'read_txt': call_read_txt_program,
+    'read_excel': call_read_excel_program,
+    'report': call_report_program,
+    'test': call_test_program,
+}
 
 
 
 def main():
     try:
         parser = argparse.ArgumentParser(
-            description="Universal caller of mdm-py utilities"
+            description="Universal caller of mdmtoolsap-py utilities"
         )
         parser.add_argument(
-            '-1',
+            #'-1',
             '--program',
+            choices=dict.keys(run_programs),
+            type=str,
             required=True
         )
         args, args_rest = parser.parse_known_args()
         if args.program:
-            if args.program=='diff':
-                call_diff_program()
-            elif args.program=='read_mdd':
-                call_read_mdd_program()
-            elif args.program=='read_txt':
-                call_read_txt_program()
-            elif args.program=='read_excel':
-                call_read_excel_program()
-            elif args.program=='report':
-                call_report_program()
-            elif args.program=='test':
-                print('hello, world!')
+            program = '{arg}'.format(arg=args.program)
+            if program in run_programs:
+                run_programs[program]()
             else:
-                print('program to run not recognized: {program}'.format(program=args.program))
                 raise AttributeError('program to run not recognized: {program}'.format(program=args.program))
         else:
             print('program to run not specified')

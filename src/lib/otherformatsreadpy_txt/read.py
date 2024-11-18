@@ -29,11 +29,13 @@ else:
 def entry_point(config={}):
     # time_start = datetime.now()
     parser = argparse.ArgumentParser(
-        description="Create a JSON suitable for mdmtoolsap tool, reading a file as text"
+        description="Create a JSON suitable for mdmtoolsap tool, reading a file as text",
+        prog='mdmtoolsap --program read_txt'
     )
     parser.add_argument(
         '--inpfile',
         help='Input file',
+        type=str,
         required=True
     )
     args = None

@@ -8,7 +8,8 @@ SET "TEXTFILE_B=prepdatadms.txt"
 set "TEXTFILE_A_JSON=%TEXTFILE_A%.json"
 set "TEXTFILE_B_JSON=%TEXTFILE_B%.json"
 
-FOR /F "delims=" %%i IN ('python -c "import sys;from pathlib import Path;import re;inp_mdd_l = sys.argv[1];inp_mdd_r = sys.argv[2];report_part_mdd_left_filename = re.sub( r'\.mdd\.json', '.mdd', Path(inp_mdd_l).name );report_part_mdd_right_filename = re.sub( r'\.mdd\.json', '.mdd', Path(inp_mdd_r).name );report_filename = 'report.diff.{mdd_l}-{mdd_r}.json'.format(mdd_l=report_part_mdd_left_filename,mdd_r=report_part_mdd_right_filename);result_json_fname = ( Path(inp_mdd_l).parents[0] / report_filename );print(result_json_fname)" "%TEXTFILE_A%" "%TEXTFILE_B%"') DO SET "TEXTFILE_FINAL_DIFF_JSON=%%i"
+@REM FOR /F "delims=" %%i IN ('python -c "import sys;from pathlib import Path;import re;inp_mdd_l = sys.argv[1];inp_mdd_r = sys.argv[2];report_part_mdd_left_filename = re.sub( r'\.mdd\.json', '.mdd', Path(inp_mdd_l).name );report_part_mdd_right_filename = re.sub( r'\.mdd\.json', '.mdd', Path(inp_mdd_r).name );report_filename = 'report.diff.{mdd_l}-{mdd_r}.json'.format(mdd_l=report_part_mdd_left_filename,mdd_r=report_part_mdd_right_filename);result_json_fname = ( Path(inp_mdd_l).parents[0] / report_filename );print(result_json_fname)" "%TEXTFILE_A%" "%TEXTFILE_B%"') DO SET "TEXTFILE_FINAL_DIFF_JSON=%%i"
+FOR /F "delims=" %%i IN ('python dist/mdmtoolsap_bundle.py --program diff --cmp-scheme-left "%TEXTFILE_A_JSON%" --cmp-scheme-right "%TEXTFILE_B_JSON%" --norun-special-onlyprintoutputfilename') DO SET "TEXTFILE_FINAL_DIFF_JSON=%%i"
 
 
 ECHO -
@@ -39,7 +40,7 @@ if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b 
 
 ECHO -
 ECHO 5. diff
-python dist/mdmtoolsap_bundle.py --program diff --mdd_scheme_left "%TEXTFILE_A_JSON%" --mdd_scheme_right "%TEXTFILE_B_JSON%"
+python dist/mdmtoolsap_bundle.py --program diff --cmp-scheme-left "%TEXTFILE_A_JSON%" --cmp-scheme-right "%TEXTFILE_B_JSON%"
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b %errorlevel% )
 
 ECHO -

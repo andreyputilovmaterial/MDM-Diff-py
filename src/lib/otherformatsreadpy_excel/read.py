@@ -40,7 +40,7 @@ def read_excel(filename):
 
     rows = [ df_mainpage.iloc[idx,0] for idx in range(0,len(df_mainpage)) ]
     section_currentlyreading = 'preface'
-    print('reading excel: processing index sheet')
+    print('reading excel: reading table names')
     for rownumber,row in enumerate(rows):
         row_txt = row
         if re.match(r'^\s*?$',row_txt):
@@ -84,6 +84,7 @@ def read_excel(filename):
                 else:
                     table_name_override_counter = table_name_override_counter + 1
             section_def['name'] = table_name_override_suggest
+            print('WARNING: duplicate table names: renaming a table to "{tabtitle}"'.format(tabtitle=table_name_override_suggest))
         table_names_already_used.append(table_name)
 
 
@@ -283,11 +284,13 @@ def read_excel(filename):
 def entry_point(config={}):
     time_start = datetime.now()
     parser = argparse.ArgumentParser(
-        description="Create a JSON suitable for mdmtoolsap tool, reading a file as text"
+        description="Create a JSON suitable for mdmtoolsap tool, reading a file as text",
+        prog='mdmtoolsap --program read_excel'
     )
     parser.add_argument(
         '--inpfile',
         help='Input file',
+        type=str,
         required=True
     )
     args = None
