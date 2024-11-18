@@ -306,6 +306,7 @@ def entry_point(config={}):
     data = read_excel(inp_file)
 
     result_json_fname = ( Path(inp_file).parents[0] / '{basename}{ext}'.format(basename=Path(inp_file).name,ext='.json') if Path(inp_file).is_file() else re.sub(r'^\s*?(.*?)\s*?$',lambda m: '{base}{added}'.format(base=m[1],added='.json'),'{path}'.format(path=inp_file)) )
+    print('reading Excel: saving as "{fname}"'.format(fname=result_json_fname))
     outfile = open(result_json_fname, 'w')
     outfile.write(json.dumps(data))
 

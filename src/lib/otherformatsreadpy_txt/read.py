@@ -27,7 +27,7 @@ else:
 
 
 def entry_point(config={}):
-    # time_start = datetime.now()
+    time_start = datetime.now()
     parser = argparse.ArgumentParser(
         description="Create a JSON suitable for mdmtoolsap tool, reading a file as text",
         prog='mdmtoolsap --program read_txt'
@@ -47,7 +47,7 @@ def entry_point(config={}):
     inp_file = Path(args.inpfile)
     inp_filename = '{f}'.format(f=inp_file)
 
-    # print('reading file {fname}, script started at {dt}'.format(dt=time_start,fname=inp_file))
+    print('reading file: opening {fname}, script started at {dt}'.format(dt=time_start,fname=inp_file))
 
     inp_file_obj = open(inp_file,'r',encoding='utf-8')
     textfilecontents = inp_file_obj.read()
@@ -67,11 +67,12 @@ def entry_point(config={}):
     data = read(textfilecontents,{'filename':inp_filename})
 
     result_json_fname = ( Path(inp_file).parents[0] / '{basename}{ext}'.format(basename=Path(inp_file).name,ext='.json') if Path(inp_file).is_file() else re.sub(r'^\s*?(.*?)\s*?$',lambda m: '{base}{added}'.format(base=m[1],added='.json'),'{path}'.format(path=inp_file)) )
+    print('reading file: saving as "{fname}"'.format(fname=result_json_fname))
     outfile = open(result_json_fname, 'w')
     outfile.write(json.dumps(data))
 
-    # time_finish = datetime.now()
-    # print('MDM read script: finished at {dt} (elapsed {duration})'.format(dt=time_finish,duration=time_finish-time_start))
+    time_finish = datetime.now()
+    print('MDM read script: finished at {dt} (elapsed {duration})'.format(dt=time_finish,duration=time_finish-time_start))
 
 if __name__ == '__main__':
     entry_point({'arglist_strict':True})
