@@ -270,7 +270,8 @@ def read(textfilecontents,added_data):
 
         table_def['name'] = table_def['title_comment']
         if not table_def['title_comment'] and (table_number==0):
-            table_def['name'] = 'preparation_code'
+            # table_def['name'] = 'preparation_code'
+            table_def['name'] = ''
         else:
             table_def['table_number'] = table_number + 1
             table_number = table_number + 1

@@ -53,9 +53,10 @@ def entry_point(config={}):
     textfilecontents = inp_file_obj.read()
 
     format_detect = None
-    if re.match(r'^\s*?TabScripts.*?\.mrs',inp_filename,flags=re.I):
+    inp_filename_namepart = '{f}'.format(f=Path(inp_filename).name)
+    if re.match(r'^\s*?TabScripts.*?\.mrs',inp_filename_namepart,flags=re.I):
         format_detect = 'da_tablescrips'
-    elif re.match(r'^\s*?PrepDataDMS.*?\.txt',inp_filename,flags=re.I):
+    elif re.match(r'^\s*?PrepDataDMS.*?\.txt',inp_filename_namepart,flags=re.I):
         format_detect = 'da_dms'
 
     read = None
@@ -69,7 +70,7 @@ def entry_point(config={}):
     result_json_fname = ( Path(inp_file).parents[0] / '{basename}{ext}'.format(basename=Path(inp_file).name,ext='.json') if Path(inp_file).is_file() else re.sub(r'^\s*?(.*?)\s*?$',lambda m: '{base}{added}'.format(base=m[1],added='.json'),'{path}'.format(path=inp_file)) )
     print('reading file: saving as "{fname}"'.format(fname=result_json_fname))
     outfile = open(result_json_fname, 'w')
-    outfile.write(json.dumps(data))
+    outfile.write(json.dumps(data, indent=4))
 
     time_finish = datetime.now()
     print('MDM read script: finished at {dt} (elapsed {duration})'.format(dt=time_finish,duration=time_finish-time_start))

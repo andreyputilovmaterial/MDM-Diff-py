@@ -23,7 +23,15 @@ else:
 
 
 def text_split_words(s):
-    return re.sub(r'((?:\w+)|(?:\r?\n)|(?:\s+))',lambda m:'{delimiter}{preserve}{delimiter}'.format(preserve=m[1],delimiter='<<MDMAPSPLIT>>'),s).split('<<MDMAPSPLIT>>')
+    addcounter = 0
+    delimiter = '<<@{cnt}>>'.format(cnt=addcounter)
+    while True:
+        if not(delimiter in s):
+            break
+        else:
+            addcounter = addcounter + 1
+            delimiter = '<<@{cnt}>>'.format(cnt=addcounter)
+    return re.sub(r'((?:\w+)|(?:\r?\n)|(?:\s+))',lambda m:'{delimiter}{preserve}{delimiter}'.format(preserve=m[1],delimiter=delimiter),s).split(delimiter)
 
 def text_split_lines(s):
     return s.split("\n")
@@ -181,121 +189,404 @@ def diff_combine_similar_records( diff_data ):
 #     return data_upd
 
 
-def finddiff_values_structural( mdd_l_coldata, mdd_r_coldata ):
-    mdd_l_prop_names = [ prop['name'] for prop in mdd_l_coldata ]
-    mdd_r_prop_names = [ prop['name'] for prop in mdd_r_coldata ]
-    prop_names_list_combined = diff_make_combined_list(mdd_l_prop_names,mdd_r_prop_names)
+def check_if_includes_addedremoved_marker(data):
+    if not data:
+        return False
+    if isinstance(data,list) and ([(True if 'name' in dict.keys(item) else False) for item in data].count(True)==len(data)):
+        result = False
+        for prop in data:
+            result = result or check_if_includes_addedremoved_marker(prop['value'])
+        return result
+    elif isinstance(data,dict) and ('role' in dict.keys(data)) and re.match(r'^\s*?(?:role-)?(add|remove|change).*?$',data['role'],flags=re.I):
+        return True
+    elif isinstance(data,dict) and ('parts' in dict.keys(data)):
+        result = False
+        for part in data['parts']:
+            result = result or check_if_includes_addedremoved_marker(part)
+        return result
+    elif isinstance(data,dict) and 'text' in dict.keys(data):
+        return check_if_includes_addedremoved_marker(data['text'])
+    elif isinstance(data,str):
+        # TODO: drop support of <<ADDED>>, <<REMOVED>> markers
+        if ('<<ADDED>>' in '{fmt}'.format(fmt=data)) or ('<<REMOVED>>' in '{fmt}'.format(fmt=data)):
+            return True
+        return False
+    elif isinstance(data,dict) or isinstance(data,list):
+        # raise ValueError('Can\'t handle this type of data: {d}'.format(d=data))
+        #return check_if_includes_addedremoved_marker(json.dumps(data))
+        return check_if_includes_addedremoved_marker('{d}'.format(d=data))
+    elif ('{fmt}'.format(fmt=data)==data):
+        # TODO: drop support of <<ADDED>>, <<REMOVED>> markers
+        if ('<<ADDED>>' in '{fmt}'.format(fmt=data)) or ('<<REMOVED>>' in '{fmt}'.format(fmt=data)):
+            return True
+        return False
+    else:
+        # raise ValueError('Can\'t handle this type of data: {d}'.format(d=data))
+        #return check_if_includes_addedremoved_marker(json.dumps(data))
+        return check_if_includes_addedremoved_marker('{d}'.format(d=data))
+
+
+
+
+def finddiff_values_propertylist_formatsidebyside( cmpdata_l, cmpdata_r ):
+    if not cmpdata_l:
+        cmpdata_l = []
+    if not cmpdata_r:
+        cmpdata_r = []
+    cmpdata_l_prop_names = [ prop['name'] for prop in cmpdata_l ]
+    cmpdata_r_prop_names = [ prop['name'] for prop in cmpdata_r ]
+    prop_names_list_combined = diff_make_combined_list(cmpdata_l_prop_names,cmpdata_r_prop_names)
     result_this_col_left = []
     result_this_col_right = []
-    mdd_l_coldata_structural = {}
-    for r in mdd_l_coldata:
-        mdd_l_coldata_structural[r['name']] = r['value']
-    mdd_r_coldata_structural = {}
-    for r in mdd_r_coldata:
-        mdd_r_coldata_structural[r['name']] = r['value']
+    cmpdata_l_structural = {}
+    for r in cmpdata_l:
+        cmpdata_l_structural[r['name']] = r['value']
+    cmpdata_r_structural = {}
+    for r in cmpdata_r:
+        cmpdata_r_structural[r['name']] = r['value']
     for propname in prop_names_list_combined:
-        prop_val_left = ''
-        prop_val_right = ''
-        if( ( propname in mdd_l_prop_names ) and ( propname in mdd_r_prop_names ) ):
-            value_left = mdd_l_coldata_structural[propname]
-            value_right = mdd_r_coldata_structural[propname]
+        prop_val_left = {'parts':[]}
+        prop_val_right = {'parts':[]}
+        if( ( propname in cmpdata_l_prop_names ) and ( propname in cmpdata_r_prop_names ) ):
+            value_left = cmpdata_l_structural[propname]
+            value_right = cmpdata_r_structural[propname]
             if value_left==value_right:
                 prop_val_left = value_left
                 prop_val_right = value_right
             elif( (len(value_left)>0) and (len(value_right)==0) ):
-                prop_val_left = '<<REMOVED>>' + value_left + '<<ENDREMOVED>>'
+                # prop_val_left = '<<REMOVED>>' + value_left + '<<ENDREMOVED>>'
+                prop_val_left = {'text':value_left,'role':'removed'}
                 prop_val_right = ''
             elif( (len(value_left)==0) and (len(value_right)>0) ):
                 prop_val_left = ''
-                prop_val_right = '<<ADDED>>' + value_right + '<<ENDADDED>>'
+                # prop_val_right = '<<ADDED>>' + value_right + '<<ENDADDED>>'
+                prop_val_right = {'text':value_right,'role':'added'}
             else:
-                def text_split_words(s):
-                    return re.sub(r'((?:\w+)|(?:\r?\n)|(?:\s+))',lambda m:'{delimiter}{preserve}{delimiter}'.format(preserve=m[1],delimiter='<<MDMAPSPLIT>>'),s).split('<<MDMAPSPLIT>>')
-                value_left = text_split_words(value_left)
-                value_right = text_split_words(value_right)
-                diff_data = Myers.to_records(Myers.diff(value_left,value_right),value_left,value_right)
-                diff_data = diff_combine_similar_records( diff_data )
-                for part in diff_data:
-                    if part.flag=='keep':
-                        prop_val_left = prop_val_left + part.line
-                        prop_val_right = prop_val_right + part.line
-                    elif part.flag=='insert':
-                        prop_val_right = prop_val_right + '<<ADDED>>' + part.line + '<<ENDADDED>>'
-                    elif part.flag=='remove':
-                        prop_val_left = prop_val_left + '<<REMOVED>>' + part.line + '<<ENDREMOVED>>'
-        elif( propname in mdd_l_prop_names ):
-            value_left = mdd_l_coldata_structural[propname]
-            prop_val_left = prop_val_left + '<<REMOVED>>' + value_left + '<<ENDREMOVED>>'
-        elif( propname in mdd_r_prop_names ):
-            value_right = mdd_r_coldata_structural[propname]
-            prop_val_right = prop_val_right + '<<ADDED>>' + value_right + '<<ENDADDED>>'
-        if propname in mdd_l_prop_names:
+                prop_val_left, prop_val_right = finddiff_values_text_formatsidebyside(value_left,value_right)
+        elif( propname in cmpdata_l_prop_names ):
+            value_left = cmpdata_l_structural[propname]
+            prop_val_left = {'text':value_left,'role':'removed'}
+        elif( propname in cmpdata_r_prop_names ):
+            value_right = cmpdata_r_structural[propname]
+            prop_val_right = {'text':value_right,'role':'added'}
+        if propname in cmpdata_l_prop_names:
             result_this_col_left.append({'name':propname,'value':prop_val_left})
-        if propname in mdd_r_prop_names:
+        if propname in cmpdata_r_prop_names:
             result_this_col_right.append({'name':propname,'value':prop_val_right})
     return result_this_col_left, result_this_col_right
 
 
-def finddiff_values_text( mdd_l_coldata, mdd_r_coldata ):
-    result_this_col_left = mdd_l_coldata
-    result_this_col_right = mdd_r_coldata
-    if mdd_l_coldata==mdd_r_coldata:
-        result_this_col_left = mdd_l_coldata
-        result_this_col_right = mdd_r_coldata
-    elif( (len(mdd_l_coldata)>0) and (len(mdd_r_coldata)==0) ):
-        result_this_col_left = '<<REMOVED>>' + mdd_l_coldata + '<<ENDREMOVED>>'
-        result_this_col_right = ''
-    elif( (len(mdd_l_coldata)==0) and (len(mdd_r_coldata)>0) ):
-        result_this_col_left = ''
-        result_this_col_right = '<<ADDED>>' + mdd_r_coldata + '<<ENDADDED>>'
+def finddiff_values_text_formatsidebyside( cmpdata_l, cmpdata_r ):
+    if not cmpdata_l:
+        cmpdata_l = ''
+    if not cmpdata_r:
+        cmpdata_r = ''
+    result_this_col_left = cmpdata_l
+    result_this_col_right = cmpdata_r
+    if cmpdata_l==cmpdata_r:
+        result_this_col_left = cmpdata_l
+        result_this_col_right = cmpdata_r
+    elif( (len(cmpdata_l)>0) and (len(cmpdata_r)==0) ):
+        # result_this_col_left = '<<REMOVED>>' + cmpdata_l + '<<ENDREMOVED>>'
+        # result_this_col_right = ''
+        result_this_col_left = {'parts':[{'text':cmpdata_l,'role':'removed'}]}
+        result_this_col_right = {'parts':[]}
+    elif( (len(cmpdata_l)==0) and (len(cmpdata_r)>0) ):
+        # result_this_col_left = ''
+        # result_this_col_right = '<<ADDED>>' + cmpdata_r + '<<ENDADDED>>'
+        result_this_col_left = {'parts':[]}
+        result_this_col_right = {'parts':[{'text':cmpdata_r,'role':'added'}]}
     else:
-        mdd_l_coldata_into_lines = text_split_lines(mdd_l_coldata)
-        mdd_r_coldata_into_lines = text_split_lines(mdd_r_coldata)
-        diff_data = Myers.diff(mdd_l_coldata_into_lines,mdd_r_coldata_into_lines)
-        diff_data = Myers.to_records(diff_data,mdd_l_coldata_into_lines,mdd_r_coldata_into_lines)
+        cmpdata_l_into_lines = [ ('' if linenumber==0 else '\n') + (line if len(line)>0 else ' ') for linenumber,line in enumerate(text_split_lines(cmpdata_l)) ]
+        cmpdata_r_into_lines = [ ('' if linenumber==0 else '\n') + (line if len(line)>0 else ' ') for linenumber,line in enumerate(text_split_lines(cmpdata_r)) ]
+        diff_data = Myers.diff(cmpdata_l_into_lines,cmpdata_r_into_lines)
+        diff_data = Myers.to_records(diff_data,cmpdata_l_into_lines,cmpdata_r_into_lines)
         # diff_data = diff_update_records(diff_data,lambda l: '{line}{lineending}'.format(line=l,lineending='\n')) # aaaah is this slow? needs testing # TODO:
-        for part in diff_data:
-            part.line = part.line + '\n'
+        # for part in diff_data:
+        #     if part.line=='':
+        #         part.line = ' '
+        # for linenumber,part in enumerate(diff_data):
+        #     if linenumber<len(diff_data)-1:
+        #         part.line = part.line + '\n'
         diff_data = diff_combine_similar_records(diff_data)
-        diff_data_l_and_r = []
+        diff_data_l_and_r_by_lines = []
         for part in diff_data:
-            diff_data_l_and_r_last_index = len(diff_data_l_and_r)-1
             if part.flag=='keep':
-                diff_data_l_and_r.append({'l':part.line,'r':part.line})
+                diff_data_l_and_r_by_lines.append({'l':part.line,'r':part.line})
             elif part.flag=='insert':
-                if( (diff_data_l_and_r_last_index>=0) and (diff_data_l_and_r[diff_data_l_and_r_last_index]['r']=='') ):
-                    diff_data_l_and_r[diff_data_l_and_r_last_index]['r'] = part.line
+                if( (len(diff_data_l_and_r_by_lines)>0) and (diff_data_l_and_r_by_lines[-1]['r']=='') ):
+                    diff_data_l_and_r_by_lines[-1]['r'] = part.line
                 else:
-                    diff_data_l_and_r.append({'l':'','r':part.line})
+                    diff_data_l_and_r_by_lines.append({'l':'','r':part.line})
             elif part.flag=='remove':
-                if( (diff_data_l_and_r_last_index>=0) and (diff_data_l_and_r[diff_data_l_and_r_last_index]['l']=='') ):
-                    diff_data_l_and_r[diff_data_l_and_r_last_index]['l'] = part.line
+                if( (len(diff_data_l_and_r_by_lines)>0) and (diff_data_l_and_r_by_lines[-1]['l']=='') ):
+                    diff_data_l_and_r_by_lines[-1]['l'] = part.line
                 else:
-                    diff_data_l_and_r.append({'l':part.line,'r':''})
-        result_this_col_left = ''
-        result_this_col_right = ''
-        for part in diff_data_l_and_r:
-            mdd_l_coldata_into_pieces = text_split_words(part['l'])
-            mdd_r_coldata_into_pieces = text_split_words(part['r'])
-            diff_data = Myers.to_records(Myers.diff(mdd_l_coldata_into_pieces,mdd_r_coldata_into_pieces),mdd_l_coldata_into_pieces,mdd_r_coldata_into_pieces)
+                    diff_data_l_and_r_by_lines.append({'l':part.line,'r':''})
+        result_this_col_left = {'parts':[]}
+        result_this_col_right = {'parts':[]}
+        for linenumber,part in enumerate(diff_data_l_and_r_by_lines):
+            # if linenumber>0:
+            #     result_this_col_left['parts'].append( '\n' )
+            #     result_this_col_right['parts'].append( '\n' )
+            cmpdata_l_into_pieces = text_split_words(part['l'])
+            cmpdata_r_into_pieces = text_split_words(part['r'])
+            diff_data = Myers.to_records(Myers.diff(cmpdata_l_into_pieces,cmpdata_r_into_pieces),cmpdata_l_into_pieces,cmpdata_r_into_pieces)
             diff_data = diff_combine_similar_records(diff_data)
             for part in diff_data:
                 if part.flag=='keep':
-                    result_this_col_left = result_this_col_left + part.line
-                    result_this_col_right = result_this_col_right + part.line
+                    result_this_col_left['parts'].append(part.line)
+                    result_this_col_right['parts'].append(part.line)
                 elif part.flag=='insert':
-                    text = '' + part.line + ''
-                    text_lines = re.split(r'\n',text)
-                    result_this_col_left = result_this_col_left + '\n'.join( ' ' for piece in text_lines )
-                    result_this_col_right = result_this_col_right + '\n'.join( '<<ADDED>>{a}<<ENDADDED>>'.format(a=piece) for piece in text_lines )
+                    txt_lines = part.line.split('\n')
+                    result_this_col_left['parts'].append( {'text':'\n '.join('' for p in txt_lines)} )
+                    result_this_col_right['parts'].append( {'text':'\n'.join((p if len(p)>0 else ' ') for p in txt_lines),'role':'added'} )
                 elif part.flag=='remove':
-                    text = '' + part.line + ''
-                    text_lines = re.split(r'\n',text)
-                    result_this_col_left = result_this_col_left + '\n'.join( '<<REMOVED>>{a}<<ENDREMOVED>>'.format(a=piece) for piece in text_lines )
-                    result_this_col_right = result_this_col_right + '\n'.join( ' ' for piece in text_lines )
+                    txt_lines = part.line.split('\n')
+                    result_this_col_left['parts'].append( {'text':'\n'.join((p if len(p)>0 else ' ') for p in txt_lines),'role':'removed'} )
+                    result_this_col_right['parts'].append( {'text':'\n '.join('' for p in txt_lines)} )
                 # const_test_l_before = len(re.findall(r'\n',result_this_col_left))
                 # const_test_r_before = len(re.findall(r'\n',result_this_col_right))
                 # if const_test_l_before!=const_test_r_before:
                 #     # assert line break counts
                 # print('linebreaks: {nl} (left), {nr} (right), processing part: {p}'.format(nl=const_test_l_before,nr=const_test_r_before,p=part.line))
+        # if result_this_col_left['parts'][-1]=='\n':
+        #     result_this_col_left['parts'] = result_this_col_left['parts'][:-1]
+        # else:
+        #     raise Exception('last part should be \\n, as per my understanding, please check')
+        # if result_this_col_right['parts'][-1]=='\n':
+        #     result_this_col_right['parts'] = result_this_col_right['parts'][:-1]
+        # else:
+        #     raise Exception('last part should be \\n, as per my understanding, please check')
     return result_this_col_left, result_this_col_right
+
+def finddiff_values_list_formatsidebyside( cmpdata_l, cmpdata_r ):
+    if not cmpdata_l:
+        cmpdata_l = []
+    if not cmpdata_r:
+        cmpdata_r = []
+    list_combined = diff_make_combined_list( cmpdata_l, cmpdata_r )
+    result_l = []
+    result_r = []
+    for item in list_combined:
+        if (item in cmpdata_l) and (item in cmpdata_r):
+            result_l.append({'text':item})
+            result_r.append({'text':item})
+        elif not (item in cmpdata_l) and (item in cmpdata_r):
+            result_r.append({'text':item,'role':'added'})
+        elif (item in cmpdata_l) and not (item in cmpdata_r):
+            result_l.append({'text':item,'role':'removed'})
+    return result_l, result_r
+
+def finddiff_values_dict_formatsidebyside( cmpdata_l, cmpdata_r ):
+    if not cmpdata_l:
+        cmpdata_l = {}
+    if not cmpdata_r:
+        cmpdata_r = {}
+    props_left = [prop for prop in dict.keys(cmpdata_l)]
+    props_right = [prop for prop in dict.keys(cmpdata_r)]
+    props_combined = diff_make_combined_list( props_left, props_right )
+    result_l = {}
+    result_r = {}
+    for prop in props_combined:
+        value_left = cmpdata_l[prop] if prop in cmpdata_l else None
+        value_right = cmpdata_r[prop] if prop in cmpdata_r else None
+        value_resulting = value_resulting = finddiff_values_general_formatcombined( value_left, value_right )
+        if prop in cmpdata_l:
+            result_l[prop] = value_resulting
+        if prop in cmpdata_r:
+            result_r[prop] = value_resulting
+    return result_l,result_r
+
+def finddiff_values_general_formatsidebyside( cmpdata_l, cmpdata_r ):
+    if not cmpdata_l and not cmpdata_r:
+        return '',''
+    else:
+        def detect_format(val):
+            if not val:
+                return 'none'
+            elif isinstance(val,list) and len(val)==0:
+                return 'none'
+            elif isinstance(val,list) and (len([v for v in val if isinstance(v,dict) and 'name' in v])==len(val)):
+                return 'propertylist'
+            elif isinstance(val,list) and (len([v for v in val if isinstance(v,str)])==len(val)):
+                return 'list'
+            elif isinstance(val,dict):
+                return 'dict'
+            elif isinstance(val,str):
+                return 'str'
+            else:
+                return 'unrecognized'
+        cmpdata_l_format = detect_format(cmpdata_l)
+        cmpdata_r_format = detect_format(cmpdata_r)
+        if cmpdata_l_format=='none':
+            cmpdata_l_format = cmpdata_r_format
+        if cmpdata_r_format=='none':
+            cmpdata_r_format = cmpdata_l_format
+        if (cmpdata_l_format==cmpdata_r_format):
+            if cmpdata_l_format=='str':
+                return finddiff_values_text_formatsidebyside( cmpdata_l, cmpdata_r )
+            elif cmpdata_l_format=='list':
+                return finddiff_values_list_formatsidebyside( cmpdata_l, cmpdata_r )
+            elif cmpdata_l_format=='dict':
+                return finddiff_values_dict_formatsidebyside( cmpdata_l, cmpdata_r )
+            elif cmpdata_l_format=='propertylist':
+                return finddiff_values_propertylist_formatsidebyside( cmpdata_l, cmpdata_r )
+            else:
+                return finddiff_values_general_formatsidebyside( '{f}'.format(f=cmpdata_l), '{f}'.format(f=cmpdata_r) )
+        else:
+            return finddiff_values_general_formatsidebyside( '{f}'.format(f=cmpdata_l), '{f}'.format(f=cmpdata_r) )
+
+
+
+
+
+
+def finddiff_values_propertylist_formatcombined( cmpdata_l, cmpdata_r ):
+    if not cmpdata_l:
+        cmpdata_l = []
+    if not cmpdata_r:
+        cmpdata_r = []
+    cmpdata_l_prop_names = [ prop['name'] for prop in cmpdata_l ]
+    cmpdata_r_prop_names = [ prop['name'] for prop in cmpdata_r ]
+    prop_names_list_combined = diff_make_combined_list(cmpdata_l_prop_names,cmpdata_r_prop_names)
+    result_this_col_combined = []
+    cmpdata_l_structural = {}
+    for r in cmpdata_l:
+        cmpdata_l_structural[r['name']] = r['value']
+    cmpdata_r_structural = {}
+    for r in cmpdata_r:
+        cmpdata_r_structural[r['name']] = r['value']
+    for propname in prop_names_list_combined:
+        value_left = cmpdata_l_structural[propname] if propname in cmpdata_l_structural else ''
+        value_right = cmpdata_r_structural[propname] if propname in cmpdata_r_structural else ''
+        result_this_col_combined.append({'name':propname,'value':finddiff_values_general_formatcombined(value_left,value_right)})
+    return result_this_col_combined
+
+def finddiff_values_text_formatcombined( cmpdata_l, cmpdata_r ):
+    if not cmpdata_l:
+        cmpdata_l = ''
+    if not cmpdata_r:
+        cmpdata_r = ''
+    result_this_col_combined = {'parts':[]}
+    if cmpdata_l==cmpdata_r:
+        result_this_col_combined = cmpdata_l
+    elif( (len(cmpdata_l)>0) and (len(cmpdata_r)==0) ):
+        result_this_col_combined = {'parts':[{'text':cmpdata_l,'role':'removed'}]}
+    elif( (len(cmpdata_l)==0) and (len(cmpdata_r)>0) ):
+        result_this_col_combined = {'parts':[{'text':cmpdata_r,'role':'added'}]}
+    else:
+        cmpdata_l_into_lines = [ ('' if linenumber==0 else '\n') + (line if len(line)>0 else ' ') for linenumber,line in enumerate(text_split_lines(cmpdata_l)) ]
+        cmpdata_r_into_lines = [ ('' if linenumber==0 else '\n') + (line if len(line)>0 else ' ') for linenumber,line in enumerate(text_split_lines(cmpdata_r)) ]
+        diff_data = Myers.diff(cmpdata_l_into_lines,cmpdata_r_into_lines)
+        diff_data = Myers.to_records(diff_data,cmpdata_l_into_lines,cmpdata_r_into_lines)
+        # diff_data = diff_update_records(diff_data,lambda l: '{line}{lineending}'.format(line=l,lineending='\n')) # aaaah is this slow? needs testing # TODO:
+        # for part in diff_data:
+        #     if part.line=='':
+        #         part.line = ' '
+        # for linenumber,part in enumerate(diff_data):
+        #     if linenumber<len(diff_data)-1:
+        #         part.line = part.line + '\n'
+        diff_data = diff_combine_similar_records(diff_data)
+        diff_data_l_and_r_by_lines = []
+        for part in diff_data:
+            if part.flag=='keep':
+                diff_data_l_and_r_by_lines.append({'l':part.line,'r':part.line})
+            elif part.flag=='insert':
+                if( (len(diff_data_l_and_r_by_lines)>0) and (diff_data_l_and_r_by_lines[-1]['r']=='') ):
+                    diff_data_l_and_r_by_lines[-1]['r'] = part.line
+                else:
+                    diff_data_l_and_r_by_lines.append({'l':'','r':part.line})
+            elif part.flag=='remove':
+                if( (len(diff_data_l_and_r_by_lines)>0) and (diff_data_l_and_r_by_lines[-1]['l']=='') ):
+                    diff_data_l_and_r_by_lines[-1]['l'] = part.line
+                else:
+                    diff_data_l_and_r_by_lines.append({'l':part.line,'r':''})
+        result_this_col_combined = {'parts':[]}
+        for linenumber,part in enumerate(diff_data_l_and_r_by_lines):
+            # if linenumber>0:
+            #     result_this_col_combined['parts'].append( '\n' )
+            cmpdata_l_into_pieces = text_split_words(part['l'])
+            cmpdata_r_into_pieces = text_split_words(part['r'])
+            diff_data = Myers.to_records(Myers.diff(cmpdata_l_into_pieces,cmpdata_r_into_pieces),cmpdata_l_into_pieces,cmpdata_r_into_pieces)
+            diff_data = diff_combine_similar_records(diff_data)
+            for part in diff_data:
+                if part.flag=='keep':
+                    result_this_col_combined['parts'].append(part.line)
+                elif part.flag=='insert':
+                    result_this_col_combined['parts'].append( {'text':part.line,'role':'added'} )
+                elif part.flag=='remove':
+                    result_this_col_combined['parts'].append( {'text':part.line,'role':'removed'} )
+    return result_this_col_combined
+
+def finddiff_values_list_formatcombined( cmpdata_l, cmpdata_r ):
+    if not cmpdata_l:
+        cmpdata_l = []
+    if not cmpdata_r:
+        cmpdata_r = []
+    list_combined = diff_make_combined_list( cmpdata_l, cmpdata_r )
+    result = []
+    for item in list_combined:
+        if (item in cmpdata_l) and (item in cmpdata_r):
+            result.append({'text':item})
+        elif not (item in cmpdata_l) and (item in cmpdata_r):
+            result.append({'text':item,'role':'added'})
+        elif (item in cmpdata_l) and not (item in cmpdata_r):
+            result.append({'text':item,'role':'removed'})
+    return result
+
+def finddiff_values_dict_formatcombined( cmpdata_l, cmpdata_r ):
+    if not cmpdata_l:
+        cmpdata_l = {}
+    if not cmpdata_r:
+        cmpdata_r = {}
+    props_left = [prop for prop in dict.keys(cmpdata_l)]
+    props_right = [prop for prop in dict.keys(cmpdata_r)]
+    props_combined = diff_make_combined_list( props_left, props_right )
+    result = {}
+    for prop in props_combined:
+        value_left = cmpdata_l[prop] if prop in cmpdata_l else None
+        value_right = cmpdata_r[prop] if prop in cmpdata_r else None
+        value_resulting = value_resulting = finddiff_values_general_formatcombined( value_left, value_right )
+        result[prop] = value_resulting
+    return result
+
+def finddiff_values_general_formatcombined( cmpdata_l, cmpdata_r ):
+    if not cmpdata_l and not cmpdata_r:
+        return ''
+    else:
+        def detect_format(val):
+            if not val:
+                return 'none'
+            elif isinstance(val,list) and len(val)==0:
+                return 'none'
+            elif isinstance(val,list) and (len([v for v in val if isinstance(v,dict) and 'name' in v])==len(val)):
+                return 'propertylist'
+            elif isinstance(val,list) and (len([v for v in val if isinstance(v,str)])==len(val)):
+                return 'list'
+            elif isinstance(val,dict):
+                return 'dict'
+            elif isinstance(val,str):
+                return 'str'
+            else:
+                return 'unrecognized'
+        cmpdata_l_format = detect_format(cmpdata_l)
+        cmpdata_r_format = detect_format(cmpdata_r)
+        if cmpdata_l_format=='none':
+            cmpdata_l_format = cmpdata_r_format
+        if cmpdata_r_format=='none':
+            cmpdata_r_format = cmpdata_l_format
+        if (cmpdata_l_format==cmpdata_r_format):
+            if cmpdata_l_format=='str':
+                return finddiff_values_text_formatcombined( cmpdata_l, cmpdata_r )
+            elif cmpdata_l_format=='list':
+                return finddiff_values_list_formatcombined( cmpdata_l, cmpdata_r )
+            elif cmpdata_l_format=='dict':
+                return finddiff_values_dict_formatcombined( cmpdata_l, cmpdata_r )
+            elif cmpdata_l_format=='propertylist':
+                return finddiff_values_propertylist_formatcombined( cmpdata_l, cmpdata_r )
+            else:
+                return finddiff_values_general_formatcombined( '{f}'.format(f=cmpdata_l), '{f}'.format(f=cmpdata_r) )
+        else:
+            return finddiff_values_general_formatcombined( '{f}'.format(f=cmpdata_l), '{f}'.format(f=cmpdata_r) )
+

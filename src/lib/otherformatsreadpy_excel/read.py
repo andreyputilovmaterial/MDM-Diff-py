@@ -28,12 +28,35 @@ def read_excel(filename):
         'report_datetime_utc': '{f}'.format(f=(datetime.now()).astimezone(tz=timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),),
         'report_datetime_local': '{f}'.format(f=(datetime.now()).strftime('%Y-%m-%dT%H:%M:%SZ')),
         'report_scheme': {
-            'columns': ['name','label'],
-            'column_headers': {'name':'Row ID','label':'First Column'}
+            'columns': [
+                'name',
+                # 'label'
+            ],
+            'column_headers': {
+                'name': 'Row unique indentifier',
+                # 'label': 'First Column'
+            }
         },
         'source_file_metadata': [],
         'sections': []
     }
+    global_columnid_lookup = {
+
+    }
+    column_zero = 'axis(side)'
+    def get_column_id(col,try_certain_id=None):
+        if try_certain_id:
+            name_preliminary = try_certain_id
+        else:
+            name_preliminary = re.sub(r'([^a-zA-Z])',lambda m: '_x{d}_'.format(d=ord(m[1])),re.sub(r'_+$','',re.sub(r'^_+','',re.sub(r'[\s_]+','_','col_'+col))),flags=re.I)
+        if not (name_preliminary in global_columnid_lookup):
+            global_columnid_lookup[name_preliminary] = col
+            return name_preliminary
+        elif name_preliminary in global_columnid_lookup and col==global_columnid_lookup[name_preliminary]:
+            return name_preliminary
+        else:
+            return get_column_id(col,name_preliminary+'_2')
+        
 
     print('reading excel: reading index sheet')
     df_mainpage = xls.parse(sheet_name='IndexSheet', index_col=None).fillna(0)
@@ -60,7 +83,7 @@ def read_excel(filename):
                 'number': tablenum,
                 'title': tabletitle,
                 'name': tabletitle,
-                'columns': [],
+                'columns': ['name'],
                 'column_headers': {},
                 'content': []
             })
@@ -171,10 +194,10 @@ def read_excel(filename):
 
             for linenumber in range(0,linenumber_banner_begins):
                 if len(trim(rows[linenumber]['col_1']))>0:
-                    tab_def['content'].append({'name':'Description Line #{d}'.format(d=linenumber+1),'label':trim(rows[linenumber]['col_1'])})
+                    tab_def['content'].append({'name':'Description Line #{d}'.format(d=linenumber+1),get_column_id(column_zero):trim(rows[linenumber]['col_1'])})
             for linenumber in range(linenumber_banner_begins,linenumber_banner_ends+1):
                 if len(trim(rows[linenumber]['col_1']))>0:
-                    tab_def['content'].append({'name':'Banner Line #{d}'.format(d=linenumber+1),'label':trim(rows[linenumber]['col_1'])+'\t'+trim(rows[linenumber]['col_rest'])})
+                    tab_def['content'].append({'name':'Banner Line #{d}'.format(d=linenumber+1),get_column_id(column_zero):trim(rows[linenumber]['col_1'])+'\t'+trim(rows[linenumber]['col_rest'])})
 
             # now load this sheet as data
 
@@ -185,9 +208,9 @@ def read_excel(filename):
 
             # check that columns have unique ids
             column_name_override = {}
-            col_0_name = 'axis(side)' # must be unique
+            col_0_name = column_zero # must be unique
             if col_0_name in df_thissheet_clean.columns:
-                raise ValueError('reading excel: Sorry this tool can\'t work if there is a banner point "axis(side)"; Please name your banner points differently')
+                raise ValueError('reading excel: Sorry this tool can\'t work if there is a banner point "{f}"; Please name your banner points differently'.format(f=column_zero))
             column_name_override[df_thissheet.columns[0]] = col_0_name
             for i,col in enumerate(df_thissheet_clean.columns):
                 if i>0:
@@ -242,23 +265,23 @@ def read_excel(filename):
                 #df_thissheet_clean.iloc[linenumber,0] = row_name_suggested
                 row_def_append = {
                     'name': row_name_suggested,
-                    'label': df_thissheet_clean.iloc[linenumber,0]
+                    # 'label': df_thissheet_clean.iloc[linenumber,0]
                 }
                 row = df_thissheet_clean.index[linenumber]
                 cols = df_thissheet_clean.columns
                 for col in cols:
                     cellvalue = df_thissheet_clean.loc[row,col]
-                    prop_add_name = 'col_{col}'.format(col=col)
-                    prop_add_label = col
+                    prop_add_name = get_column_id(col)
+                    prop_add_columntext = col
                     row_def_append[prop_add_name] = cellvalue
                     if not (prop_add_name in tab_def['columns']):
                         tab_def['columns'].append(prop_add_name)
                     if not (prop_add_name in tab_def['column_headers']):
-                        tab_def['column_headers'][prop_add_name] = prop_add_label
+                        tab_def['column_headers'][prop_add_name] = prop_add_columntext
                     if not (prop_add_name in data['report_scheme']['columns']):
                         data['report_scheme']['columns'].append(prop_add_name)
                     if not (prop_add_name in data['report_scheme']['column_headers']):
-                        data['report_scheme']['column_headers'][prop_add_name] = prop_add_label
+                        data['report_scheme']['column_headers'][prop_add_name] = prop_add_columntext
                 tab_def['content'].append(row_def_append)
                 
 
@@ -308,7 +331,7 @@ def entry_point(config={}):
     result_json_fname = ( Path(inp_file).parents[0] / '{basename}{ext}'.format(basename=Path(inp_file).name,ext='.json') if Path(inp_file).is_file() else re.sub(r'^\s*?(.*?)\s*?$',lambda m: '{base}{added}'.format(base=m[1],added='.json'),'{path}'.format(path=inp_file)) )
     print('reading Excel: saving as "{fname}"'.format(fname=result_json_fname))
     outfile = open(result_json_fname, 'w')
-    outfile.write(json.dumps(data))
+    outfile.write(json.dumps(data, indent=4))
 
     time_finish = datetime.now()
     print('reading Excel: finished at {dt} (elapsed {duration})'.format(dt=time_finish,duration=time_finish-time_start))

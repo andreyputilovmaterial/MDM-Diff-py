@@ -9,6 +9,33 @@
             "console": "integratedTerminal",
             "args": ["--program","read_excel","--inpfile","\"S:\\Trackers\\BES (BHS)\\FY25 Q1Q2 P2400814\\Tables_Temp_Branch_20241115\\Outputs\\20241025_172255_qa_and_delivered\\R2400814 WGT BannerMOC_Us_Total.xlsx\""],
             "justMyCode": true
+        },
+        {
+            "name": "Python: Diff Test",
+            "type": "python",
+            "request": "launch",
+            "program": "src/run_universal.py",
+            "console": "integratedTerminal",
+            "args": ["--program","diff","--cmp-scheme-left","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\test\\v2.004\\test_data\\R2401043STK WGT PCT Banner Main Market_FOP 1113.xlsx.json","--cmp-scheme-right","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\test\\v2.004\\test_data\\R2401043STK WGT PCT Banner Main Market_FOP 1115.xlsx.json"],
+            "justMyCode": true
+        },
+        {
+            "name": "Python: Excel Diff Report Test",
+            "type": "python",
+            "request": "launch",
+            "program": "src/run_universal.py",
+            "console": "integratedTerminal",
+            "args": ["--program","report","--inpfile","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\test\\v2.004\\test_data\\report.diff.R2401043STK WGT PCT Banner Main Market_FOP 1113.xlsx-R2401043STK WGT PCT Banner Main Market_FOP 1115.xlsx.json"],
+            "justMyCode": true
+        },
+        {
+            "name": "Python: MDD HTML Report Test",
+            "type": "python",
+            "request": "launch",
+            "program": "src/run_universal.py",
+            "console": "integratedTerminal",
+            "args": ["--program","report","--inpfile","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\test\\v2.004\\test_data\\report.diff.code - mdd - inline_css.mdd-code - mdd - inline_css changed.mdd.json"],
+            "justMyCode": true
         }
     ]
 }

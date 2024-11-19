@@ -30,21 +30,47 @@ def find_diff(data_left,data_right,config):
 
     datetime_start = datetime.now()
     config_default = {
-        'format': '2col'
+        'format': 'sidebyside'
     }
     config = {**config_default,**config}
-    config_diff_format = config['format']
+    config['format'] = config['format']
+    config_diff_format = None
+    if config['format']=='sidebyside':
+        config_diff_format = 'sidebyside'
+    elif config['format']=='sidebyside_distant':
+        config_diff_format = 'sidebyside'
+    elif config['format']=='combined':
+        config_diff_format = 'combined'
+    else:
+        raise Exception('diff format=="{fmt}": not supported, or not implemented'.format(fmt=config['format']))
+    
+    # if config_diff_format=='combined':
+    #     raise Exception('diff format=="combined": not implemented yet')
 
-    if not(config_diff_format=='2col'):
-        raise Exception('diff format=="{fmt}": not supported, or not implemented'.format(fmt=config_diff_format))
-
-    columns_list_combined = [
+    columns_list_combined_global = [
         'flagdiff', 'name'
     ]
-    columns_list_check = [ col for col in helper_diff_wrappers.diff_make_combined_list(data_left['report_scheme']['columns'],data_right['report_scheme']['columns']) if not re.match(r'^\s*?name\s*?$',col,flags=re.I) ]
-    for col in columns_list_check:
-        columns_list_combined.append('{basename}{suffix}'.format(basename=col,suffix='_left'))
-        columns_list_combined.append('{basename}{suffix}'.format(basename=col,suffix='_right'))
+    data_columns_global_left = data_left['report_scheme']['columns']
+    data_columns_global_right = data_right['report_scheme']['columns']
+    columns_list_check_global = [ col for col in helper_diff_wrappers.diff_make_combined_list(data_columns_global_left,data_columns_global_right) if not re.match(r'^\s*?name\s*?$',col,flags=re.I) ]
+    if config['format']=='sidebyside':
+        # add left and right, left and right...
+        for col in columns_list_check_global:
+            columns_list_combined_global.append('{basename}{suffix}'.format(basename=col,suffix='_left'))
+            columns_list_combined_global.append('{basename}{suffix}'.format(basename=col,suffix='_right'))
+    elif config['format']=='sidebyside_distant':
+        # add all left, then all right
+        for col in columns_list_check_global:
+            columns_list_combined_global.append('{basename}{suffix}'.format(basename=col,suffix='_left'))
+        for col in columns_list_check_global:
+            columns_list_combined_global.append('{basename}{suffix}'.format(basename=col,suffix='_right'))
+    elif config['format']=='combined':
+        # no left and right, just columns that contain diffs with added parts and removed
+        for col in columns_list_check_global:
+            columns_list_combined_global.append('{basename}{suffix}'.format(basename=col,suffix=''))
+    else:
+        raise Exception('diff format=="{fmt}": not supported, or not implemented'.format(fmt=config['format']))
+    
     column_headers_combined = {'name':'Item name','flagdiff':'Diff flag'}
     for key in dict.keys({**data_right['report_scheme']['column_headers'],**data_left['report_scheme']['column_headers']}):
         if key in data_left['report_scheme']['column_headers']:
@@ -68,7 +94,7 @@ def find_diff(data_left,data_right,config):
             { 'name': 'source_right', 'value': '{path}'.format(path=config['inp_filename_right']) },
         ],
         'report_scheme': {
-            'columns': columns_list_combined,
+            'columns': columns_list_combined_global,
             'column_headers': column_headers_combined,
             'flags': flags_list_combined
         },
@@ -76,15 +102,60 @@ def find_diff(data_left,data_right,config):
     }
     for section_name in section_list_combined:
         try:
+            
             print('processing section {name}'.format(name=section_name))
-            result_this_section = []
+            
             file_l_sections_allmatches = [ section for section in data_left['sections'] if section['name']==section_name ]
             file_r_sections_allmatches = [ section for section in data_right['sections'] if section['name']==section_name ]
-            file_l_sectiondata = ( ( file_l_sections_allmatches[0]['content'] if 'content' in file_l_sections_allmatches[0] else [] ) if len(file_l_sections_allmatches)>0 else [] )
-            file_r_sectiondata = ( ( file_r_sections_allmatches[0]['content'] if 'content' in file_r_sections_allmatches[0] else [] ) if len(file_r_sections_allmatches)>0 else [] )
+            file_l_section = file_l_sections_allmatches[0] if len(file_l_sections_allmatches)>0 else {}
+            file_r_section = file_r_sections_allmatches[0] if len(file_r_sections_allmatches)>0 else {}
+            file_l_sectiondata = file_l_section['content'] if 'content' in file_l_section else []
+            file_r_sectiondata = file_r_section['content'] if 'content' in file_r_section else []
+            
+            section_other_props = helper_diff_wrappers.finddiff_values_general_formatcombined( {**file_l_section,'content':None}, {**file_r_section,'content':None} )
+            # if 'columns' in file_l_section or 'columns' in file_r_section:
+            #     section_other_props['columns'] = [ column for column in helper_diff_wrappers.diff_make_combined_list(file_l_section['columns'] if 'columns' in file_l_section else [],file_r_section['columns'] if 'columns' in file_r_section else []) ]
+
+            if ('columns' in file_l_section) or ('columns' in file_r_section):
+                data_columns_left = file_l_section['columns'] if 'columns' in file_l_section else data_columns_global_left
+                data_columns_right = file_r_section['columns'] if 'columns' in file_r_section else data_columns_global_right
+                columns_list_combined = [
+                    'flagdiff', 'name'
+                ]
+                columns_list_check = [ col for col in helper_diff_wrappers.diff_make_combined_list(data_columns_left,data_columns_right) if not re.match(r'^\s*?name\s*?$',col,flags=re.I) ]
+                if config['format']=='sidebyside':
+                    # add left and right, left and right...
+                    for col in columns_list_check:
+                        columns_list_combined.append('{basename}{suffix}'.format(basename=col,suffix='_left'))
+                        columns_list_combined.append('{basename}{suffix}'.format(basename=col,suffix='_right'))
+                elif config['format']=='sidebyside_distant':
+                    # add all left, then all right
+                    for col in columns_list_check:
+                        columns_list_combined.append('{basename}{suffix}'.format(basename=col,suffix='_left'))
+                    for col in columns_list_check:
+                        columns_list_combined.append('{basename}{suffix}'.format(basename=col,suffix='_right'))
+                elif config['format']=='combined':
+                    # no left and right, just columns that contain diffs with added parts and removed
+                    for col in columns_list_check:
+                        columns_list_combined.append('{basename}{suffix}'.format(basename=col,suffix=''))
+                else:
+                    raise Exception('diff format=="{fmt}": not supported, or not implemented'.format(fmt=config['format']))
+            else:
+                columns_list_combined = columns_list_combined_global
+                columns_list_check = columns_list_check_global
+            section_other_props['columns'] = columns_list_combined
+
+            result_this_section = []
+
+            section_changed = False
+            rows_changed = 0
+            row_count = 0
+            
             rows_l = [ ( item['name'] if 'name' in item else '???' ) for item in file_l_sectiondata ]
             rows_r = [ ( item['name'] if 'name' in item else '???' ) for item in file_r_sectiondata ]
+            
             report_rows_diff = helper_diff_wrappers.finddiff_row_names_respecting_groups( rows_l if '' in rows_l else ['']+rows_l, rows_r if '' in rows_r else ['']+rows_r )
+            
             performance_counter = iter(helper_utility_wrappers.PerformanceMonitor(config={
                 'total_records': len(report_rows_diff),
                 'report_frequency_records_count': 150,
@@ -92,11 +163,16 @@ def find_diff(data_left,data_right,config):
             }))
             for row_diff_item in report_rows_diff:
                 try:
+                    
                     row_name = row_diff_item.line
                     next(performance_counter)
                     row = {}
                     row['name'] = row_name
+
                     flag = '???'
+
+                    row_changed = False
+
                     if row_diff_item.flag == 'keep':
                         flag = '(keep)'
                     elif( (row_name in rows_l) and (row_name in rows_r) ):
@@ -106,10 +182,13 @@ def find_diff(data_left,data_right,config):
                             flag = '(moved here)'
                         else:
                             raise AttributeError('Please check diff flag!!!')
+                        row_changed = True
                     elif( row_name in rows_l ):
                         flag = '(removed)'
+                        row_changed = True
                     elif( row_name in rows_r ):
                         flag = '(added)'
+                        row_changed = True
                     row['flagdiff'] = flag
                     file_l_rowdata = {}
                     file_r_rowdata = {}
@@ -126,30 +205,77 @@ def find_diff(data_left,data_right,config):
                             if len(file_r_rowdata_allrowsmatching)>0:
                                 file_r_rowdata = file_r_rowdata_allrowsmatching[0]
                     for col in columns_list_check:
+
                         file_l_coldata = file_l_rowdata[col] if col in file_l_rowdata else None
                         file_r_coldata = file_r_rowdata[col] if col in file_r_rowdata else None
-                        file_l_is_structural = isinstance(file_l_coldata,dict) or isinstance(file_l_coldata,list)
-                        file_r_is_structural = isinstance(file_r_coldata,dict) or isinstance(file_r_coldata,list)
-                        # col_diff = None
-                        result_this_col_left = ''
-                        result_this_col_right = ''
-                        if( file_l_is_structural and file_r_is_structural ) or ( file_l_is_structural and (file_r_coldata is None) ) or ( (file_l_coldata is None) and file_r_is_structural ):
-                            if file_l_coldata is None:
-                                file_l_coldata = []
-                            if file_r_coldata is None:
-                                file_r_coldata = []
-                            result_this_col_left, result_this_col_right = helper_diff_wrappers.finddiff_values_structural( file_l_coldata, file_r_coldata )
+
+                        col_changed = False
+
+                        # file_l_is_structural = isinstance(file_l_coldata,dict) or isinstance(file_l_coldata,list)
+                        # file_r_is_structural = isinstance(file_r_coldata,dict) or isinstance(file_r_coldata,list)
+                        
+                        if config_diff_format == 'sidebyside':
+
+                            # result_this_col_left = ''
+                            # result_this_col_right = ''
+                            # if( file_l_is_structural and file_r_is_structural ) or ( file_l_is_structural and (file_r_coldata is None) ) or ( (file_l_coldata is None) and file_r_is_structural ):
+                            #     if file_l_coldata is None:
+                            #         file_l_coldata = []
+                            #     if file_r_coldata is None:
+                            #         file_r_coldata = []
+                            #     result_this_col_left, result_this_col_right = helper_diff_wrappers.finddiff_values_propertylist_formatsidebyside( file_l_coldata, file_r_coldata )
+                            # else:
+                            #     file_l_coldata = '' if file_l_coldata is None else ( json.dumps(file_l_coldata) if file_l_is_structural else '{fmt}'.format(fmt=file_l_coldata) )
+                            #     file_r_coldata = '' if file_r_coldata is None else ( json.dumps(file_r_coldata) if file_r_is_structural else '{fmt}'.format(fmt=file_r_coldata) )
+                            #     def normalize_linebreaks(t):
+                            #         return re.sub('\r?\n','\n',re.sub('\r','\n',t))
+                            #     file_l_coldata = normalize_linebreaks(file_l_coldata)
+                            #     file_r_coldata = normalize_linebreaks(file_r_coldata)
+                            #     result_this_col_left, result_this_col_right = helper_diff_wrappers.finddiff_values_text_formatsidebyside( file_l_coldata, file_r_coldata )
+                            result_this_col_left, result_this_col_right = helper_diff_wrappers.finddiff_values_general_formatsidebyside( file_l_coldata, file_r_coldata )
+                            
+                            if helper_diff_wrappers.check_if_includes_addedremoved_marker(result_this_col_left) or helper_diff_wrappers.check_if_includes_addedremoved_marker(result_this_col_right):
+                                col_changed = True
+                            row['{col_name}{suffix}'.format(col_name = col,suffix='_left')] = result_this_col_left
+                            row['{col_name}{suffix}'.format(col_name = col,suffix='_right')] = result_this_col_right
+
+                        elif config_diff_format == 'combined':
+
+                            # result_this_col_combined = ''
+                            # if( file_l_is_structural and file_r_is_structural ) or ( file_l_is_structural and (file_r_coldata is None) ) or ( (file_l_coldata is None) and file_r_is_structural ):
+                            #     if file_l_coldata is None:
+                            #         file_l_coldata = []
+                            #     if file_r_coldata is None:
+                            #         file_r_coldata = []
+                            #     result_this_col_combined = helper_diff_wrappers.finddiff_values_propertylist_formatcombined( file_l_coldata, file_r_coldata )
+                            # else:
+                            #     file_l_coldata = '' if file_l_coldata is None else ( json.dumps(file_l_coldata) if file_l_is_structural else '{fmt}'.format(fmt=file_l_coldata) )
+                            #     file_r_coldata = '' if file_r_coldata is None else ( json.dumps(file_r_coldata) if file_r_is_structural else '{fmt}'.format(fmt=file_r_coldata) )
+                            #     def normalize_linebreaks(t):
+                            #         return re.sub('\r?\n','\n',re.sub('\r','\n',t))
+                            #     file_l_coldata = normalize_linebreaks(file_l_coldata)
+                            #     file_r_coldata = normalize_linebreaks(file_r_coldata)
+                            #     result_this_col_combined = helper_diff_wrappers.finddiff_values_text_formatcombined( file_l_coldata, file_r_coldata )
+                            result_this_col_combined = helper_diff_wrappers.finddiff_values_general_formatcombined( file_l_coldata, file_r_coldata )
+                            
+                            if helper_diff_wrappers.check_if_includes_addedremoved_marker(result_this_col_combined):
+                                col_changed = True
+                            row['{col_name}{suffix}'.format(col_name = col,suffix='')] = result_this_col_combined
+
                         else:
-                            file_l_coldata = '' if file_l_coldata is None else ( json.dumps(file_l_coldata) if file_l_is_structural else '{fmt}'.format(fmt=file_l_coldata) )
-                            file_r_coldata = '' if file_r_coldata is None else ( json.dumps(file_r_coldata) if file_r_is_structural else '{fmt}'.format(fmt=file_r_coldata) )
-                            def normalize_linebreaks(t):
-                                return re.sub('\r?\n','\n',re.sub('\r','\n',t))
-                            file_l_coldata = normalize_linebreaks(file_l_coldata)
-                            file_r_coldata = normalize_linebreaks(file_r_coldata)
-                            result_this_col_left, result_this_col_right = helper_diff_wrappers.finddiff_values_text( file_l_coldata, file_r_coldata )
-                        row['{col_name}{suffix}'.format(col_name = col,suffix='_left')] = result_this_col_left
-                        row['{col_name}{suffix}'.format(col_name = col,suffix='_right')] = result_this_col_right
-                    result_this_section.append(row)
+                            raise Exception('other diff format tyhat is not supported: {fmt}'.format(fmt=config_diff_format))
+                        
+                        if col_changed:
+                            row_changed = True
+                    if row_changed:
+                        section_changed = True
+                        rows_changed = rows_changed + 1
+                    row_count = row_count + 1
+                    if 'config_skip_rows_nochange' in config and config['config_skip_rows_nochange']:
+                        if row_changed:
+                            result_this_section.append(row)
+                    else:
+                        result_this_section.append(row)
                 except Exception as e:
                     print('ERROR: something happened when processing row {name}'.format(name=row_name))
                     raise e
@@ -163,10 +289,24 @@ def find_diff(data_left,data_right,config):
                 if 'title' in section_left:
                     section_title = section_left['title']
             section_add = {
-                'name': section_name,
                 'title': section_title,
+                **section_other_props,
+                'name': section_name,
+                'changed': section_changed,
+                'statistics': [
+                    { 'name': 'something changed', 'value': 'true' if section_changed else 'false' },
+                    { 'name': 'rows total', 'value': row_count },
+                    { 'name': 'rows changed', 'value': rows_changed },
+                ],
                 'content': result_this_section
             }
+            if 'config_skip_rows_nochange' in config and config['config_skip_rows_nochange']:
+                if not section_changed:
+                    cols = [ col for col in columns_list_combined_global if not (col in ['name','flagdiff'])]
+                    zero_column_name = cols[0] if len(cols)>0 else 'label'
+                    section_add['content'] = [
+                        {'name':'',zero_column_name:'(There is no difference to show)'}
+                    ]
             result['sections'].append(section_add)
         except Exception as e:
             print('ERROR: something happened when processing section {name}'.format(name=section_name))
@@ -206,8 +346,14 @@ def entry_point(runscript_config={}):
     )
     parser.add_argument(
         '--cmp-format',
-        help='Format: print results as 2 separate columns, or combine; possible values: 2col (default), 2col_distant, combined',
+        help='Format: print results as 2 separate columns, or combine; possible values: sidebyside (default), sidebyside_distant, combined',
         type=str,
+        required=False
+    )
+    parser.add_argument(
+        '--config-skip-rows-nochange',
+        help='Special flag to indicate that we should not add all rows to sections where nothing changed; I prefer to have this set to false in MDD - if nothing changed in shared lists we prefer to still see shared lists; but I prefer to have this set to true for Excel - having so many rows is unnecessary',
+        action='store_true',
         required=False
     )
     parser.add_argument(
@@ -255,10 +401,10 @@ def entry_point(runscript_config={}):
         raise FileNotFoundError('Right CMP Source: file not provided; please use --cmp-scheme-right option')
     # inp_file_specs = open(inp_file_specs_name, encoding="utf8")
 
-    diff_format = '2col'
+    diff_format = 'sidebyside'
     if args.cmp_format:
         diff_format = args.cmp_format
-        fmts_allowed = ['2col','2col_distant','combined']
+        fmts_allowed = ['sidebyside','sidebyside_distant','combined']
         if not (diff_format in fmts_allowed):
             raise ValueError('diff: unsupported config option: diff format: "{fmt}"; you can only use [ {allowed} ]'.format(fmt=diff_format,alowed=', '.join(fmts_allowed)))
 
@@ -267,6 +413,8 @@ def entry_point(runscript_config={}):
         'inp_filename_left': inp_filename_left,
         'inp_filename_right': inp_filename_right
     }
+    if args.config_skip_rows_nochange:
+        diff_config['config_skip_rows_nochange'] = True
 
     report_part_filename_left = re.sub( r'\.json\s*?$', '', Path(inp_filename_left).name )
     report_part_filename_right = re.sub( r'\.json\s*?$', '', Path(inp_filename_right).name )
