@@ -16,7 +16,7 @@
             "request": "launch",
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
-            "args": ["--program","diff","--cmp-scheme-left","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\test\\v2.004\\test_data\\R2401043STK WGT PCT Banner Main Market_FOP 1113.xlsx.json","--cmp-scheme-right","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\test\\v2.004\\test_data\\R2401043STK WGT PCT Banner Main Market_FOP 1115.xlsx.json"],
+            "args": ["--program","diff","--cmp-scheme-left","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.005\\test_data\\R2401043STK WGT PCT Banner Main Market_FOP 1113.xlsx.json","--cmp-scheme-right","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.005\\test_data\\R2401043STK WGT PCT Banner Main Market_FOP 1115.xlsx.json"],
             "justMyCode": true
         },
         {
@@ -25,7 +25,7 @@
             "request": "launch",
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
-            "args": ["--program","report","--inpfile","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\test\\v2.004\\test_data\\report.diff.R2401043STK WGT PCT Banner Main Market_FOP 1113.xlsx-R2401043STK WGT PCT Banner Main Market_FOP 1115.xlsx.json"],
+            "args": ["--program","report","--inpfile","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.005\\test_data\\report.diff.R2401043STK WGT PCT Banner Main Market_FOP 1113.xlsx-R2401043STK WGT PCT Banner Main Market_FOP 1115.xlsx.json"],
             "justMyCode": true
         },
         {
@@ -34,7 +34,7 @@
             "request": "launch",
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
-            "args": ["--program","report","--inpfile","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\test\\v2.004\\test_data\\report.diff.code - mdd - inline_css.mdd-code - mdd - inline_css changed.mdd.json"],
+            "args": ["--program","report","--inpfile","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.005\\test_data\\p2301763_prevauto_20240111_clean.mdd.json"],
             "justMyCode": true
         }
     ]
