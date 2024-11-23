@@ -2,12 +2,21 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Excel Read Test",
+            "name": "Python: LRW Excel Read Test",
             "type": "python",
             "request": "launch",
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
             "args": ["--program","read_excel","--inpfile","\"S:\\Trackers\\BES (BHS)\\FY25 Q1Q2 P2400814\\Tables_Temp_Branch_20241115\\Outputs\\20241025_172255_qa_and_delivered\\R2400814 WGT BannerMOC_Us_Total.xlsx\""],
+            "justMyCode": true
+        },
+        {
+            "name": "Python: Excel Read Test",
+            "type": "python",
+            "request": "launch",
+            "program": "src/run_universal.py",
+            "console": "integratedTerminal",
+            "args": ["--program","read_excel","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.005\\test_data\\Author_Specifications_mailchimpsmb_wave19.xlsm\""],
             "justMyCode": true
         },
         {

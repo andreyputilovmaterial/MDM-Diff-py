@@ -20,7 +20,6 @@ def trim(s):
 def read_excel(filename):
 
     xls = pd.ExcelFile(filename,engine='openpyxl')
-    sheet_names = xls.sheet_names
 
     data = {
         'report_type': 'Excel File',
@@ -40,15 +39,18 @@ def read_excel(filename):
         'source_file_metadata': [],
         'sections': []
     }
+
+    sheet_names = xls.sheet_names
+    is_format_lrw = False
     global_columnid_lookup = {
 
     }
-    column_zero = 'axis(side)'
+    column_zero = 'axis(side)' # that's how we call column 0 by default; and row 0 should be called "axis(top)"" then
     def get_column_id(col,try_certain_id=None):
         if try_certain_id:
             name_preliminary = try_certain_id
         else:
-            name_preliminary = re.sub(r'([^a-zA-Z])',lambda m: '_x{d}_'.format(d=ord(m[1])),re.sub(r'_+$','',re.sub(r'^_+','',re.sub(r'[\s_]+','_','col_'+col))),flags=re.I)
+            name_preliminary = re.sub(r'([^a-zA-Z])',lambda m: '_x{d}_'.format(d=ord(m[1])),re.sub(r'_+$','',re.sub(r'^_+','',re.sub(r'[\s_]+','_','col_{f}'.format(f=col)))),flags=re.I)
         if not (name_preliminary in global_columnid_lookup):
             global_columnid_lookup[name_preliminary] = col
             return name_preliminary
@@ -58,74 +60,91 @@ def read_excel(filename):
             return get_column_id(col,name_preliminary+'_2')
         
 
-    print('reading excel: reading index sheet')
-    df_mainpage = xls.parse(sheet_name='IndexSheet', index_col=None).fillna(0)
+    if 'IndexSheet' in sheet_names and 'T1' in sheet_names:
+        df_mainpage = xls.parse(sheet_name='IndexSheet', index_col=None).fillna(0)
 
-    rows = [ df_mainpage.iloc[idx,0] for idx in range(0,len(df_mainpage)) ]
-    section_currentlyreading = 'preface'
-    print('reading excel: reading table names')
-    for rownumber,row in enumerate(rows):
-        row_txt = row
-        if re.match(r'^\s*?$',row_txt):
-            continue
-        else:
-            if re.match(r'^\s*?Table of Contents\s*?$',row_txt,flags=re.I):
-                #section_currentlyreading = 'banner_row'
-                section_currentlyreading = 'tables'
-                continue
-        if (section_currentlyreading=='tables'):
-            matches = re.match(r'^\s*?(?:T|Table)\s*?(\d+)\s*?-\s*(.*?)\s*$',row_txt,flags=re.I)
-            if not matches:
-                raise AttributeError('reading excel: indexsheet: Reading list of tables, passed beyound "Table of Contents", expecting "Table 1 - ...", found something else, unexpected line = {l}, text = {t}'.format(l=row,t=row_txt))
-            tablenum = int(matches[1])
-            tabletitle = matches[2]
-            data['sections'].append({
-                'number': tablenum,
-                'title': tabletitle,
-                'name': tabletitle,
-                'columns': ['name'],
-                'column_headers': {},
-                'content': []
-            })
-        elif (section_currentlyreading=='preface'):
-            if len(trim(row_txt))>0:
-                data['source_file_metadata'].append({'name':'line {d}'.format(d=rownumber),'value':trim(row_txt)})
-        else:
-            raise AttributeError('reading excel: indexsheet: Reading list of tables, passed beyound "Table of Contents", expecting "Table 1 - ...", found something else, unexpected line = {l}, text = {t}'.format(l=row,t=row_txt))
-    
-    # check that table names are unique
-    table_names_already_used = []
-    for section_def in data['sections']:
-        table_name = section_def['name']
-        if table_name in table_names_already_used:
-            table_name_override_suggest = None
-            table_name_override_counter = 2
-            while True:
-                table_name_override_suggest = '{keep}{added}'.format(keep=table_name,added=' [Duplicate #] {d}]'.format(d=table_name_override_counter))
-                if not(table_name_override_suggest in table_names_already_used):
-                    break
+        if len( df_mainpage.loc[ df_mainpage[ df_mainpage.columns[0] ].astype('str').str.contains(r'^\s*?Table of Contents\s*?$',regex=True,case=False) ] )>0:
+            
+            print('reading excel: reading index sheet')
+            is_format_lrw = True
+            rows = [ df_mainpage.iloc[idx,0] for idx in range(0,len(df_mainpage)) ]
+            section_currentlyreading = 'preface'
+            print('reading excel: reading table names')
+            for rownumber,row in enumerate(rows):
+                row_txt = row
+                if re.match(r'^\s*?$',row_txt):
+                    continue
                 else:
-                    table_name_override_counter = table_name_override_counter + 1
-            section_def['name'] = table_name_override_suggest
-            print('WARNING: duplicate table names: renaming a table to "{tabtitle}"'.format(tabtitle=table_name_override_suggest))
-        table_names_already_used.append(table_name)
+                    if re.match(r'^\s*?Table of Contents\s*?$',row_txt,flags=re.I):
+                        #section_currentlyreading = 'banner_row'
+                        section_currentlyreading = 'tables'
+                        continue
+                if (section_currentlyreading=='tables'):
+                    matches = re.match(r'^\s*?(?:T|Table)\s*?(\d+)\s*?-\s*(.*?)\s*$',row_txt,flags=re.I)
+                    if not matches:
+                        raise AttributeError('reading excel: indexsheet: Reading list of tables, passed beyound "Table of Contents", expecting "Table 1 - ...", found something else, unexpected line = {l}, text = {t}'.format(l=row,t=row_txt))
+                    tablenum = int(matches[1])
+                    tabletitle = matches[2]
+                    data['sections'].append({
+                        'number': tablenum,
+                        'title': tabletitle,
+                        'name': tabletitle,
+                        'columns': ['name'],
+                        'column_headers': {},
+                        'content': []
+                    })
+                elif (section_currentlyreading=='preface'):
+                    if len(trim(row_txt))>0:
+                        data['source_file_metadata'].append({'name':'line {d}'.format(d=rownumber),'value':trim(row_txt)})
+                else:
+                    raise AttributeError('reading excel: indexsheet: Reading list of tables, passed beyound "Table of Contents", expecting "Table 1 - ...", found something else, unexpected line = {l}, text = {t}'.format(l=row,t=row_txt))
+            
+            # check that table names are unique
+            table_names_already_used = []
+            for section_def in data['sections']:
+                table_name = section_def['name']
+                if table_name in table_names_already_used:
+                    table_name_override_suggest = None
+                    table_name_override_counter = 2
+                    while True:
+                        table_name_override_suggest = '{keep}{added}'.format(keep=table_name,added=' [Duplicate #] {d}]'.format(d=table_name_override_counter))
+                        if not(table_name_override_suggest in table_names_already_used):
+                            break
+                        else:
+                            table_name_override_counter = table_name_override_counter + 1
+                    section_def['name'] = table_name_override_suggest
+                    print('WARNING: duplicate table names: renaming a table to "{tabtitle}"'.format(tabtitle=table_name_override_suggest))
+                table_names_already_used.append(table_name)
 
 
     # print('reading excel: reading whole file')
     # df = xls.parse( sheet_name=None, index_col=None, header=0)
 
-    for sheet_name in [ shname for shname in sheet_names if re.match(r'^\s*?(?:T|Table)\s*?\d+\s*?$',shname,flags=re.I) ]:
+    def is_meaningful_sheet(sheet_name):
+        if is_format_lrw:
+            return  re.match(r'^\s*?(?:T|Table)\s*?\d+\s*?$',sheet_name,flags=re.I)
+        return True
+
+    for sheet_name in [ sheet_name for sheet_name in sheet_names if is_meaningful_sheet(sheet_name) ]:
 
         try:
 
-            print('reading excel: pre-reading {sh}'.format(sh=sheet_name))
+            print('reading excel: sheet: {sh}'.format(sh=sheet_name))
             df_thissheet = xls.parse(sheet_name=sheet_name, index_col=None, header=None)
 
             # find our definitions
             table_defs = data['sections']
-            table_defs_matching = [ tab for tab in table_defs if 'T{n}'.format(n=tab['number'])==sheet_name ]
+            table_defs_matching = [ tab for tab in [ tab for tab in table_defs if 'number' in tab and tab['number']>0 ] if 'T{n}'.format(n=tab['number'])==sheet_name ]
             if len(table_defs_matching)!=1:
-                raise ValueError('reading excel: tab def not found for {n} (we are reading sheet "{n}" but we were not able to grab this table title from index sheet)'.format(n=sheet_name))
+                #raise ValueError('reading excel: tab def not found for {n} (we are reading sheet "{n}" but we were not able to grab this table title from index sheet)'.format(n=sheet_name))
+                section_def_add = {
+                    'name': sheet_name,
+                    'columns': ['name'],
+                    'column_headers': {},
+                    'content': []
+                }
+                data['sections'].append(section_def_add)
+                table_defs_matching = [data['sections'][-1]]          
             tab_def = table_defs_matching[0]
             
             # # inspect sheet contents
@@ -138,7 +157,7 @@ def read_excel(filename):
             linenumber_banner_most_informative = 0
             linenumber_data_starts = 0
             linenumber_last = len(rows)-1
-            while( (len(rows[linenumber]['col_rest'])==0) and (linenumber<=linenumber_last)):
+            while( (linenumber<=linenumber_last) and (len(rows[linenumber]['col_rest'])==0)):
                 linenumber = linenumber + 1
             if linenumber > linenumber_last:
                 print('WARNING: read excel: table #{t}: no banner found'.format(t=sheet_name))
@@ -147,15 +166,16 @@ def read_excel(filename):
                 continue
             linenumber_banner_begins = linenumber
             linenumber = linenumber + 1
-            while( (len(rows[linenumber]['col_1'])==0) and (linenumber<=linenumber_last)):
+            while( (linenumber<=linenumber_last) and (len(rows[linenumber]['col_1'])==0) and (len(rows[linenumber]['col_rest'])==0) ):
                 linenumber = linenumber + 1
             if linenumber > linenumber_last:
-                print('WARNING: read excel: table #{t}: banner has no data'.format(t=sheet_name))
-                raise ValueError('WARNING: read excel: table #{t}: banner has no data'.format(t=sheet_name))
-                continue
+                # print('WARNING: read excel: table #{t}: banner has no data'.format(t=sheet_name))
+                # raise ValueError('WARNING: read excel: table #{t}: banner has no data'.format(t=sheet_name))
+                # continue
+                pass
             linenumber_data_starts = linenumber
             linenumber = linenumber - 1
-            while( (len(rows[linenumber]['col_rest'])==0) and (linenumber<=linenumber_last)):
+            while( (linenumber<=linenumber_last) and (len(rows[linenumber]['col_rest'])==0)):
                 linenumber = linenumber - 1
             linenumber_banner_ends = linenumber
 
@@ -178,7 +198,14 @@ def read_excel(filename):
                     if stat_test:
                         banner_lines_scores[linenumber] = banner_lines_scores[linenumber] - .99/len(row)
                 # and if we stil have the same scores, we'll take the latest row preferrably - we'll add .01 per row number
-                banner_lines_scores[linenumber] = banner_lines_scores[linenumber] + .01*i/(linenumber_banner_ends-linenumber_banner_begins)
+                if linenumber_banner_ends-linenumber_banner_begins>1:
+                    linenumber_limit_banner_lines_max = int(len([r for r in rows if len(r['col_1'])>0]))
+                    if linenumber_limit_banner_lines_max<5:
+                        linenumber_limit_banner_lines_max = 5
+                    if( linenumber_banner_ends-linenumber_banner_begins<linenumber_limit_banner_lines_max ):
+                        banner_lines_scores[linenumber] = banner_lines_scores[linenumber] + .01*i/(linenumber_banner_ends-linenumber_banner_begins)
+                    else:
+                        banner_lines_scores[linenumber] = banner_lines_scores[linenumber] - .01*i/(linenumber_banner_ends-linenumber_banner_begins)
             
             linenumber_banner_most_informative = max([ (banner_lines_scores[linenumber],linenumber) for linenumber in range(linenumber_banner_begins,linenumber_banner_ends+1) ])[1]
             
@@ -201,7 +228,7 @@ def read_excel(filename):
 
             # now load this sheet as data
 
-            print('reading excel: reading {sh}'.format(sh=sheet_name))
+            print('reading excel: reading...')
             df_thissheet = xls.parse(sheet_name=sheet_name, index_col=None, header=linenumber_banner_most_informative)
             df_thissheet_clean = df_thissheet.fillna('')
             # df_thissheet_clean.rename(columns={df_thissheet.columns[0]:'axis(side)'}, inplace=True)
@@ -214,7 +241,7 @@ def read_excel(filename):
             column_name_override[df_thissheet.columns[0]] = col_0_name
             for i,col in enumerate(df_thissheet_clean.columns):
                 if i>0:
-                    if re.match(r'^\s*?Unnamed\s*?:\s*?(\d+)\s*?',col,flags=re.I):
+                    if not col or re.match(r'^\s*?Unnamed\s*?:\s*?(\d+)\s*?','{f}'.format(f=col),flags=re.I):
                         if i==1:
                             column_name_override[col] = 'Total'
                         else:
