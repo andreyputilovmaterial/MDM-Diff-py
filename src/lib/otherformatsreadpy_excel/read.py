@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 
 
 import pandas as pd
+import numpy as np # needed for correct handling of pandas types when converting to json - pandas types are based on numpy
 
 
 
@@ -328,6 +329,13 @@ def read_excel(filename):
 
 
 
+def json_dump_defaulthandler(obj):
+    if type(obj).__module__ == np.__name__:
+        if isinstance(obj,np.ndarray):
+            return obj.tolist()
+        else:
+            return obj.item()
+    raise TypeError('Unknown type: ',type(obj))
 
 
 
@@ -358,7 +366,7 @@ def entry_point(config={}):
     result_json_fname = ( Path(inp_file).parents[0] / '{basename}{ext}'.format(basename=Path(inp_file).name,ext='.json') if Path(inp_file).is_file() else re.sub(r'^\s*?(.*?)\s*?$',lambda m: '{base}{added}'.format(base=m[1],added='.json'),'{path}'.format(path=inp_file)) )
     print('reading Excel: saving as "{fname}"'.format(fname=result_json_fname))
     outfile = open(result_json_fname, 'w')
-    outfile.write(json.dumps(data, indent=4))
+    outfile.write(json.dumps(data, indent=4, default=json_dump_defaulthandler))
 
     time_finish = datetime.now()
     print('reading Excel: finished at {dt} (elapsed {duration})'.format(dt=time_finish,duration=time_finish-time_start))
