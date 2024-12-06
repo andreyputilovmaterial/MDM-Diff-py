@@ -35,7 +35,8 @@ def read_excel(filename):
             'column_headers': {
                 'name': 'Row unique indentifier',
                 # 'label': 'First Column'
-            }
+            },
+            'flags': [ 'data-type:excel' ]
         },
         'source_file_metadata': [],
         'sections': []
@@ -323,6 +324,10 @@ def read_excel(filename):
         except Exception as e:
             print('reading excel: failed when reading sheet "{sn}"'.format(sn=sheet_name))
             raise e
+    
+    if is_format_lrw:
+        data['report_scheme']['flags'].append('excel-type:lrw')
+        
     return data
 
 

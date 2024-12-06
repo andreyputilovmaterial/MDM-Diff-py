@@ -10,21 +10,21 @@ import traceback
 
 if __name__ == '__main__':
     # run as a program
-    import find_mdm_diff
+    import diff
     from lib.mdmreadpy import read_mdd
     from lib.otherformatsreadpy_txt import read as read_txt
     from lib.otherformatsreadpy_excel import read as read_excel
     from lib.mdmreadpy.lib.mdmreportpy import report_create
 elif '.' in __name__:
     # package
-    from . import find_mdm_diff
+    from . import diff
     from .lib.mdmreadpy import read_mdd
     from .lib.otherformatsreadpy_txt import read as read_txt
     from .lib.otherformatsreadpy_excel import read as read_excel
     from .lib.mdmreadpy.lib.mdmreportpy import report_create
 else:
     # included with no parent package
-    import find_mdm_diff
+    import diff
     from lib.mdmreadpy import read_mdd
     from lib.otherformatsreadpy_txt import read as read_txt
     from lib.otherformatsreadpy_excel import read as read_excel
@@ -40,7 +40,7 @@ from datetime import datetime, timezone
 
 
 def call_diff_program():
-    return find_mdm_diff.entry_point({'arglist_strict':False})
+    return diff.entry_point({'arglist_strict':False})
 
 def call_read_mdd_program():
     return read_mdd.entry_point({'arglist_strict':False})

@@ -62,12 +62,43 @@ class DiffItemRemove:
 
 
 
+
+
 def diff_make_combined_list(list_l,list_r):
     results = []
     for item in Myers.to_records(Myers.diff(list_l,list_r),list_l,list_r):
         if not (item.line in results):
             results.append(item.line)
     return results
+
+
+
+
+def did_contents_change_deep_inspect(data):
+    if isinstance(data,str):
+        if '<<ADDED>>' in data:
+            return True
+        if '<<REMOVED>>' in data:
+            return True
+        return False
+    elif isinstance(data,list):
+        result = False
+        for slice in data:
+            result = result or did_contents_change_deep_inspect(slice)
+        return result
+    elif isinstance(data,dict) and 'text' in data:
+        if 'role' in data:
+            if re.match(r'^\s*?(?:role-)?(?:added|removed).*?',data['role'],flags=re.I):
+                return True
+        return did_contents_change_deep_inspect(data['text'])
+    elif isinstance(data,dict) and 'parts' in data:
+        return did_contents_change_deep_inspect(data['parts'])
+    elif isinstance(data,dict) and 'name' in data and 'value' in data:
+        return did_contents_change_deep_inspect(data['value'])
+    else:
+        return did_contents_change_deep_inspect('{f}'.format(f=data))
+
+
 
 
 def finddiff_row_names_respecting_groups(rows_l,rows_r):
@@ -156,6 +187,9 @@ def finddiff_row_names_respecting_groups(rows_l,rows_r):
                     for r in diff_within_group:
                         diff_results_grouping_expanded.append(r)
         return diff_results_grouping_expanded
+
+
+
 
 
 
