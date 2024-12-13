@@ -40,7 +40,8 @@ if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b 
 
 ECHO -
 ECHO 5. diff
-python dist/mdmtoolsap_bundle.py --program diff --cmp-scheme-left "%TEXTFILE_A_JSON%" --cmp-scheme-right "%TEXTFILE_B_JSON%" --cmp-format combined --config-skip-rows-nochange
+REM :: you can add  --config-skip-rows-nochange flag
+python dist/mdmtoolsap_bundle.py --program diff --cmp-scheme-left "%TEXTFILE_A_JSON%" --cmp-scheme-right "%TEXTFILE_B_JSON%" --cmp-format combined
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b %errorlevel% )
 
 ECHO -

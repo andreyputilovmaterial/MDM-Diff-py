@@ -256,13 +256,6 @@ def read_excel(filename):
             tab_def['readerinfo_linenumber_data_starts'] = linenumber_data_starts
             tab_def['readerinfo_linenumber_banner_most_informative'] = linenumber_banner_most_informative
 
-            for linenumber in range(0,linenumber_banner_begins):
-                if len(trim(rows[linenumber]['col_1']))>0:
-                    tab_def['content'].append({'name':'Description Line #{d}'.format(d=linenumber+1),get_column_id(column_zero):trim(rows[linenumber]['col_1'])})
-            for linenumber in range(linenumber_banner_begins,linenumber_banner_ends+1):
-                if len(trim(rows[linenumber]['col_1']))>0:
-                    tab_def['content'].append({'name':'Banner Line #{d}'.format(d=linenumber+1),get_column_id(column_zero):trim(rows[linenumber]['col_1'])+'\t'+trim(rows[linenumber]['col_rest'])})
-
             # now load this sheet as data
 
             print('reading excel: reading...')
@@ -270,8 +263,10 @@ def read_excel(filename):
             df_thissheet_clean = df_thissheet.fillna('')
             # df_thissheet_clean.rename(columns={df_thissheet.columns[0]:'axis(side)'}, inplace=True)
 
-            # check that columns have unique ids
+            # populate column names - check that columns have unique ids
             column_name_override = {}
+            column_name_indexbyname = {}
+            column_name_namebyindex = {}
             col_0_name = column_zero # must be unique
             if col_0_name in df_thissheet_clean.columns:
                 raise ValueError('reading excel: Sorry this tool can\'t work if there is a banner point "{f}"; Please name your banner points differently'.format(f=column_zero))
@@ -297,24 +292,77 @@ def read_excel(filename):
                         else:
                             col_name_override_counter = col_name_override_counter + 1
                     col_name = col_name_override_suggest
+                col_index = df_thissheet_clean.columns.get_loc(col)
                 column_names_already_used.append(col_name)
+                column_name_indexbyname[col_name] = col_index
+                column_name_namebyindex[col_index] = col_name
                 column_name_override[col] = col_name
 
             df_thissheet_clean.rename(columns=column_name_override, inplace=True)
 
-            # and rows
+            # add data for top rows
+            df_thissheet = xls.parse(sheet_name=sheet_name, index_col=None, header=None)
+            df_thissheet_clean = df_thissheet.fillna('')
+            # # df_thissheet_clean.rename(columns={df_thissheet.columns[0]:'axis(side)'}, inplace=True)
+            # df_thissheet_clean = df_thissheet.fillna('')
+            # rows = [ {'col_1':trim(df_thissheet_clean.iloc[idx,0]),'col_rest':trim(''.join([trim(s) for s in df_thissheet_clean.iloc[idx,1:]]))} for idx in range(0,len(df_thissheet)) ]
+            for linenumber in range(0,linenumber_banner_begins):
+                # if len(trim(rows[linenumber]['col_1']))>0:
+                if True:
+                    row_add = {
+                        'name': 'Description Line #{d}'.format(d=linenumber+1),
+                        # get_column_id(column_zero): trim(rows[linenumber]['col_1'])+'\t'+trim(rows[linenumber]['col_rest'])
+                    }
+                    for s in [ s for s in range(0,len(df_thissheet_clean.columns)) ]:
+                        prop_name = '???'
+                        if s==0:
+                            prop_name = get_column_id(column_zero)
+                        else:
+                            prop_name = get_column_id(column_name_namebyindex[s])
+                        row_add[prop_name] = trim(df_thissheet_clean.iloc[linenumber,s])
+                    tab_def['content'].append(row_add)
+            for linenumber in range(linenumber_banner_begins,linenumber_banner_ends+1):
+                # if len(trim(rows[linenumber]['col_1']))>0:
+                if True:
+                    row_add = {
+                        'name': '' if linenumber==linenumber_banner_most_informative else 'Banner Line #{d}'.format(d=linenumber+1),
+                        # get_column_id(column_zero): trim(rows[linenumber]['col_1'])+'\t'+trim(rows[linenumber]['col_rest'])
+                    }
+                    for s in [ s for s in range(0,len(df_thissheet_clean.columns)) ]:
+                        prop_name = '???'
+                        if s==0:
+                            prop_name = get_column_id(column_zero)
+                        else:
+                            prop_name = get_column_id(column_name_namebyindex[s])
+                        row_add[prop_name] = trim(df_thissheet_clean.iloc[linenumber,s])
+                    tab_def['content'].append(row_add)
+
+            # populate row names
+            df_thissheet = xls.parse(sheet_name=sheet_name, index_col=None, header=linenumber_banner_most_informative)
+            df_thissheet_clean = df_thissheet.fillna('')
+            # df_thissheet_clean.rename(columns={df_thissheet.columns[0]:'axis(side)'}, inplace=True)
+            df_thissheet_clean.rename(columns=column_name_override, inplace=True)
+
             LastLine = 'axis(banner)'
             CellItem = 0
             row_names_already_used = []
-            for linenumber in range(0,len(df_thissheet_clean.index)):
+            for linenumber in range(linenumber_banner_ends+1-linenumber_banner_most_informative,len(df_thissheet_clean.index)):
                 row_name = df_thissheet_clean.iloc[linenumber,0]
                 row_name_meaningful = trim(row_name)
-                if len(row_name_meaningful)>0:
+                row_name_empty = not(len(row_name_meaningful)>0)
+                if row_name_empty and ( linenumber==0 ) and not ('' in row_names_already_used):
+                    row_name_empty = False
+                    row_name = 'Row #0'
+                    row_name_meaningful = row_name
+                if not row_name_empty:
                     CellItem = 0
                     LastLine = row_name_meaningful
                 else:
                     row_name_meaningful = LastLine
-                row_name_suggested = '{part_main}{part_unique}'.format(part_main=row_name_meaningful,part_unique=' ({qualifier} {d}'.format(qualifier=('CellItem' if not(row_name_meaningful=='axis(banner)') else 'BannerLine #'),d=CellItem))
+                row_name_suggested = '{part_main}{part_unique}'.format(
+                    part_main = row_name_meaningful,
+                    part_unique = ( (' ({qualifier} {d}'.format(qualifier=('CellItem' if not(row_name_meaningful=='axis(banner)') else 'BannerLine #'),d=CellItem)) if not('{c}'.format(c=CellItem)=='0') else '' )
+                )
                 if row_name_suggested in row_names_already_used:
                     row_name_override_suggest = None
                     row_name_override_counter = 2
@@ -327,7 +375,7 @@ def read_excel(filename):
                     row_name_suggested = row_name_override_suggest
                 row_names_already_used.append(row_name_suggested)
                 #df_thissheet_clean.iloc[linenumber,0] = row_name_suggested
-                row_def_append = {
+                row_append = {
                     'name': row_name_suggested,
                     # 'label': df_thissheet_clean.iloc[linenumber,0]
                 }
@@ -337,7 +385,7 @@ def read_excel(filename):
                     cellvalue = df_thissheet_clean.loc[row,col]
                     prop_add_name = get_column_id(col)
                     prop_add_columntext = col
-                    row_def_append[prop_add_name] = cellvalue
+                    row_append[prop_add_name] = cellvalue
                     if not (prop_add_name in tab_def['columns']):
                         tab_def['columns'].append(prop_add_name)
                     if not (prop_add_name in tab_def['column_headers']):
@@ -346,7 +394,17 @@ def read_excel(filename):
                         data['report_scheme']['columns'].append(prop_add_name)
                     if not (prop_add_name in data['report_scheme']['column_headers']):
                         data['report_scheme']['column_headers'][prop_add_name] = prop_add_columntext
-                tab_def['content'].append(row_def_append)
+                if not row_name_empty or (len(tab_def['content'])==0):
+                    tab_def['content'].append(row_append)
+                else:
+                    row_update = tab_def['content'][-1]
+                    empty_value_filled_linebreaks = ''
+                    cells_check_linebreaks = [ str(row_update[colnum]).count('\n') for colnum in [col_id for col_id in tab_def['columns'] if ( (col_id in row_update) and not (col_id=='name') ) ] ]
+                    cells_check_linebreaks.sort()
+                    empty_value_filled_linebreaks = ''.join(['\n' for p in range(0,cells_check_linebreaks[int(len(cells_check_linebreaks)/2)])])
+                    for prop_name in dict.keys({**row_update,**row_append}):
+                        if not(prop_name=='name'):
+                            row_update[prop_name] = '{part_preserve}\n{part_add}'.format(part_preserve=row_update[prop_name] if prop_name in row_update else empty_value_filled_linebreaks,part_add=row_append[prop_name] if prop_name in row_append else empty_value_filled_linebreaks)
                 
 
             # rows = df_thissheet_clean.index

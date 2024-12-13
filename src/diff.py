@@ -84,6 +84,10 @@ def find_diff(data_left,data_right,config):
     flags_list_combined = [ 'data-type:diff' ] + [ flag for flag in (data_left['report_scheme']['flags'] if 'flags' in data_left['report_scheme'] else []) if flag in (data_right['report_scheme']['flags'] if 'flags' in data_right['report_scheme'] else []) ] + [ '{prefix}{flag}'.format(prefix='diff_source_left:',flag=flag) for flag in (data_left['report_scheme']['flags'] if 'flags' in data_left['report_scheme'] else []) ] + [ '{prefix}{flag}'.format(prefix='diff_source_right:',flag=flag) for flag in (data_right['report_scheme']['flags'] if 'flags' in data_right['report_scheme'] else []) ]
     section_list_combined = helper_diff_wrappers.diff_make_combined_list( [ item['name'] for item in data_left['sections']], [ item['name'] for item in data_right['sections']])
 
+    if 'data-type:mdd' in flags_list_combined:
+        if not ('config_use_hierarchical_name_structure' in config):
+            config['config_use_hierarchical_name_structure'] = True
+
     result = {
         'report_type': 'diff',
         'source_left': '{path}'.format(path=config['inp_filename_left']),
@@ -117,6 +121,7 @@ def find_diff(data_left,data_right,config):
             # if 'columns' in file_l_section or 'columns' in file_r_section:
             #     section_other_props['columns'] = [ column for column in helper_diff_wrappers.diff_make_combined_list(file_l_section['columns'] if 'columns' in file_l_section else [],file_r_section['columns'] if 'columns' in file_r_section else []) ]
 
+            columns_list_check = []
             if ('columns' in file_l_section) or ('columns' in file_r_section):
                 data_columns_left = file_l_section['columns'] if 'columns' in file_l_section else data_columns_global_left
                 data_columns_right = file_r_section['columns'] if 'columns' in file_r_section else data_columns_global_right
@@ -154,8 +159,21 @@ def find_diff(data_left,data_right,config):
             
             rows_l = [ ( item['name'] if 'name' in item else '???' ) for item in file_l_sectiondata ]
             rows_r = [ ( item['name'] if 'name' in item else '???' ) for item in file_r_sectiondata ]
+            # add root element
+            rows_l = rows_l if '' in rows_l else ['']+rows_l
+            rows_r = rows_r if '' in rows_r else ['']+rows_r
+            # confirm that row names are unique
+            if not ( (len(rows_l)==len(set(rows_l))) and (len(rows_r)==len(set(rows_r))) ):
+                # it's not, some of it is not unique
+                file_l_sectiondata,file_r_sectiondata = helper_diff_wrappers.process_make_name_prop_unique(file_l_sectiondata,file_r_sectiondata,columns_list_check)
+                # repeat reading rows_l and rows_r
+                rows_l = [ ( item['name'] if 'name' in item else '???' ) for item in file_l_sectiondata ]
+                rows_r = [ ( item['name'] if 'name' in item else '???' ) for item in file_r_sectiondata ]
+                # add root element
+                rows_l = rows_l if '' in rows_l else ['']+rows_l
+                rows_r = rows_r if '' in rows_r else ['']+rows_r
             
-            report_rows_diff = helper_diff_wrappers.finddiff_row_names_respecting_groups( rows_l if '' in rows_l else ['']+rows_l, rows_r if '' in rows_r else ['']+rows_r )
+            report_rows_diff = helper_diff_wrappers.finddiff_row_names_respecting_groups( rows_l, rows_r, delimiter=('.' if ('config_use_hierarchical_name_structure' in config and config['config_use_hierarchical_name_structure']) else None) )
             
             performance_counter = iter(helper_utility_wrappers.PerformanceMonitor(config={
                 'total_records': len(report_rows_diff),
@@ -193,7 +211,7 @@ def find_diff(data_left,data_right,config):
                     row['flagdiff'] = flag
                     file_l_rowdata = {}
                     file_r_rowdata = {}
-                    if( ( (row_name in rows_l) and (row_name in rows_r) ) and (row_diff_item.flag == 'remove') ):
+                    if( ( (row_name in rows_l) and (row_name in rows_r) ) and (row_diff_item.flag == 'remove') and ('config_do_not_show_content_rows_moved_from' in config and config['config_do_not_show_content_rows_moved_from']) ):
                         # skip for rows moved at their old position
                         pass
                     else:
@@ -358,6 +376,18 @@ def entry_point(runscript_config={}):
         required=False
     )
     parser.add_argument(
+        '--config-do-not-show-content-rows-moved-from',
+        help='Special flag to indicate that we should not print contents of "moved from" rows',
+        action='store_true',
+        required=False
+    )
+    parser.add_argument(
+        '--config-use-hierarchical-name-structure',
+        help='Special flag to indicate that we should not print contents of "moved from" rows',
+        action='store_true',
+        required=False
+    )
+    parser.add_argument(
         '--output-filename',
         help='Set preferred output file name, with path',
         type=str,
@@ -416,6 +446,10 @@ def entry_point(runscript_config={}):
     }
     if args.config_skip_rows_nochange:
         diff_config['config_skip_rows_nochange'] = True
+    if args.config_do_not_show_content_rows_moved_from:
+        diff_config['config_do_not_show_content_rows_moved_from'] = True
+    if args.config_use_hierarchical_name_structure:
+        diff_config['config_use_hierarchical_name_structure'] = True
 
     report_part_filename_left = re.sub( r'\.json\s*?$', '', Path(inp_filename_left).name )
     report_part_filename_right = re.sub( r'\.json\s*?$', '', Path(inp_filename_right).name )

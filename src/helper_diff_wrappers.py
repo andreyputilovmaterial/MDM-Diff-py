@@ -71,6 +71,9 @@ def diff_make_combined_list(list_l,list_r):
             results.append(item.line)
     return results
 
+def diff_raw(list_l,list_r):
+    # just a wrapper
+    return Myers.diff(list_l,list_r)
 
 
 
@@ -101,7 +104,7 @@ def did_contents_change_deep_inspect(data):
 
 
 
-def finddiff_row_names_respecting_groups(rows_l,rows_r):
+def finddiff_row_names_respecting_groups(rows_l,rows_r,delimiter):
     rows_inp_l = [ r for r in rows_l ]
     rows_inp_r = [ r for r in rows_r ]
     #grouping_found = False
@@ -122,9 +125,15 @@ def finddiff_row_names_respecting_groups(rows_l,rows_r):
         if not does_row_belong_to_group:
             rows_ungrouped_l.append(row)
         else:
-            matches = re.match(r'^(.*?)\.(.*)$',row if '.' in row else '{parent}.{field}'.format(parent=row,field=''))
-            row_group = matches[1] # '' is a valid key for dict, we'll have groups_l_defs[''], which means parent item for us, and it should include a list ['']
-            row_rest = matches[2]
+            # matches = re.match(r'^(.*?)\.(.*)$',row if '.' in row else '{parent}.{field}'.format(parent=row,field=''))
+            # row_group = matches[1] # '' is a valid key for dict, we'll have groups_l_defs[''], which means parent item for us, and it should include a list ['']
+            # row_rest = matches[2]
+            row_group = row
+            row_rest = ''
+            if delimiter is not None:
+                matches = (row if delimiter in row else '{parent}{delimiter}{field}'.format(parent=row,field='',delimiter=delimiter)).split(delimiter,1)
+                row_group = matches[0] # '' is a valid key for dict, we'll have groups_l_defs[''], which means parent item for us, and it should include a list ['']
+                row_rest = matches[1]
             if not (row_group in rows_ungrouped_l):
                 rows_ungrouped_l.append(row_group)
             if not (row_group in dict.keys(groups_l_defs)) or not groups_l_defs[row_group]:
@@ -139,9 +148,15 @@ def finddiff_row_names_respecting_groups(rows_l,rows_r):
         if not does_row_belong_to_group:
             rows_ungrouped_r.append(row)
         else:
-            matches = re.match(r'^(.*?)\.(.*)$',row if '.' in row else '{parent}.{field}'.format(parent=row,field=''))
-            row_group = matches[1] # '' is a valid key for dict, we'll have groups_r_defs[''], which means parent item for us, and it should include a list ['']
-            row_rest = matches[2]
+            # matches = re.match(r'^(.*?)\.(.*)$',row if '.' in row else '{parent}.{field}'.format(parent=row,field=''))
+            # row_group = matches[1] # '' is a valid key for dict, we'll have groups_r_defs[''], which means parent item for us, and it should include a list ['']
+            # row_rest = matches[2]
+            row_group = row
+            row_rest = ''
+            if delimiter is not None:
+                matches = (row if delimiter in row else '{parent}{delimiter}{field}'.format(parent=row,field='',delimiter=delimiter)).split(delimiter,1)
+                row_group = matches[0] # '' is a valid key for dict, we'll have groups_r_defs[''], which means parent item for us, and it should include a list ['']
+                row_rest = matches[1]
             if not (row_group in rows_ungrouped_r):
                 rows_ungrouped_r.append(row_group)
             if not (row_group in dict.keys(groups_r_defs)) or not groups_r_defs[row_group]:
@@ -167,7 +182,7 @@ def finddiff_row_names_respecting_groups(rows_l,rows_r):
                 else:
                     rows_subgroup_l = groups_l_defs[diff_item.line] if diff_item.line in dict.keys(groups_l_defs) else ['']
                     rows_subgroup_r = groups_r_defs[diff_item.line] if diff_item.line in dict.keys(groups_r_defs) else ['']
-                    diff_within_group_missing_parent_part = finddiff_row_names_respecting_groups(rows_subgroup_l,rows_subgroup_r)
+                    diff_within_group_missing_parent_part = finddiff_row_names_respecting_groups(rows_subgroup_l,rows_subgroup_r,delimiter)
                     diff_within_group = []
                     item_first_meaning_parent_group = True
                     for diff_item_within_group in diff_within_group_missing_parent_part:
@@ -190,7 +205,95 @@ def finddiff_row_names_respecting_groups(rows_l,rows_r):
 
 
 
-
+def process_make_name_prop_unique(file_l_sectiondata,file_r_sectiondata,columns_list_check):
+    name_col_backup_name = 'name_backup'
+    if name_col_backup_name in columns_list_check:
+        iii = 0
+        while name_col_backup_name in columns_list_check:
+            name_col_backup_name = 'name_backup_{ver}'.format(ver=iii)
+            iii = iii + 1
+    for row in file_l_sectiondata:
+        row[name_col_backup_name] = row['name']
+    for row in file_r_sectiondata:
+        row[name_col_backup_name] = row['name']
+    missing_row_name_holder = '???'
+    all_row_names = [] + [ ( item['name'] if 'name' in item else '' ) for item in file_l_sectiondata ] + [ ( item['name'] if 'name' in item else '' ) for item in file_r_sectiondata ]
+    if missing_row_name_holder in all_row_names:
+        iii = 0
+        while missing_row_name_holder in all_row_names:
+            missing_row_name_holder = '??? ({ver})'.format(ver=iii)
+            iii = iii + 1
+    rows_l = [ ( item['name'] if 'name' in item else missing_row_name_holder ) for item in file_l_sectiondata ]
+    rows_r = [ ( item['name'] if 'name' in item else missing_row_name_holder ) for item in file_r_sectiondata ]
+    diff_temp = diff_raw(rows_l,rows_r)
+    last_index = 0
+    names_used = []
+    # first we separately process all "keep", and then we'll iterate again and process all "added" and "removed"
+    # the reason is that sometimes we are adding " (2)" to a "keep" item which does not make sense
+    # so we'll populate all "keep" items first
+    for diff_entry in diff_temp:
+        part_l_keep_start = last_index
+        part_l_keep_end = diff_entry['lhs']['at']
+        part_r_keep_shift = diff_entry['rhs']['at'] - diff_entry['lhs']['at']
+        part_l_del_start = diff_entry['lhs']['at']
+        part_l_del_end = diff_entry['lhs']['at'] + diff_entry['lhs']['del']
+        part_r_add_start = diff_entry['rhs']['at']
+        part_r_add_end = diff_entry['rhs']['at'] + diff_entry['rhs']['add']
+        last_index = diff_entry['lhs']['at'] + diff_entry['lhs']['del']
+        for i in range(part_l_keep_start,part_l_keep_end):
+            # no change - names are good
+            name_orig = file_l_sectiondata[i]['name']
+            name_upd = name_orig
+            if name_upd in names_used:
+                iii = 2
+                while name_upd in names_used:
+                    name_upd = '{part_orig} ({part_increment})'.format(part_orig=name_orig,part_increment=iii)
+                    while name_upd in all_row_names:
+                        name_upd = '{part_orig} ({part_increment})'.format(part_orig=name_orig,part_increment=iii)
+                        iii = iii + 1
+                    iii = iii + 1
+            names_used.append(name_upd)
+            file_l_sectiondata[i]['name'] = name_upd
+            file_r_sectiondata[i+part_r_keep_shift]['name'] = name_upd
+    for diff_entry in diff_temp:
+        part_l_keep_start = last_index
+        part_l_keep_end = diff_entry['lhs']['at']
+        part_r_keep_shift = diff_entry['rhs']['at'] - diff_entry['lhs']['at']
+        part_l_del_start = diff_entry['lhs']['at']
+        part_l_del_end = diff_entry['lhs']['at'] + diff_entry['lhs']['del']
+        part_r_add_start = diff_entry['rhs']['at']
+        part_r_add_end = diff_entry['rhs']['at'] + diff_entry['rhs']['add']
+        last_index = diff_entry['lhs']['at'] + diff_entry['lhs']['del']
+        for i in range(part_l_del_start,part_l_del_end):
+            # removed
+            name_orig = file_l_sectiondata[i]['name']
+            name_upd = name_orig
+            if name_upd in names_used:
+                iii = 2
+                while name_upd in names_used:
+                    name_upd = '{part_orig} ({part_increment})'.format(part_orig=name_orig,part_increment=iii)
+                    while name_upd in all_row_names:
+                        name_upd = '{part_orig} ({part_increment})'.format(part_orig=name_orig,part_increment=iii)
+                        iii = iii + 1
+                    iii = iii + 1
+            names_used.append(name_upd)
+            file_l_sectiondata[i]['name'] = name_upd
+        for i in range(part_r_add_start,part_r_add_end):
+            # added
+            name_orig = file_r_sectiondata[i]['name']
+            name_upd = name_orig
+            if name_upd in names_used:
+                iii = 2
+                while name_upd in names_used:
+                    name_upd = '{part_orig} ({part_increment})'.format(part_orig=name_orig,part_increment=iii)
+                    while name_upd in all_row_names:
+                        name_upd = '{part_orig} ({part_increment})'.format(part_orig=name_orig,part_increment=iii)
+                        iii = iii + 1
+                    iii = iii + 1
+            names_used.append(name_upd)
+            file_r_sectiondata[i]['name'] = name_upd
+    return file_l_sectiondata, file_r_sectiondata
+    
 
 
 def diff_combine_similar_records( diff_data ):

@@ -14,7 +14,7 @@ python src-make\lib\pinliner\pinliner\pinliner.py src -o dist/mdmtoolsap_bundle.
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && exit /b %errorlevel% )
 ECHO Done
 
-ECHO Pathcing mdmtoolsap_bundle.py...
+ECHO Patching mdmtoolsap_bundle.py...
 ECHO # ... >> dist/mdmtoolsap_bundle.py
 ECHO # print('within mdmtoolsap_bundle') >> dist/mdmtoolsap_bundle.py
 REM REM :: no need for this, the root package is loaded automatically
