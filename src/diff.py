@@ -463,8 +463,18 @@ def entry_point(runscript_config={}):
     data_right = None
     with open(inp_filename_left) as f_l:
         with open(inp_filename_right) as f_r:
-            data_left = json.load(f_l)
-            data_right = json.load(f_r)
+            try:
+                data_left = json.load(f_l)
+            except json.JSONDecodeError as e:
+                # just a more descriptive message to the end user
+                # can happen if the tool is started two times in parallel and it is writing to the same json simultaneously
+                raise TypeError('Diff: Can\'t read left file as JSON: {msg}'.format(msg=e))
+            try:
+                data_right = json.load(f_r)
+            except json.JSONDecodeError as e:
+                # just a more descriptive message to the end user
+                # can happen if the tool is started two times in parallel and it is writing to the same json simultaneously
+                raise TypeError('Diff: Can\'t read right file as JSON: {msg}'.format(msg=e))
     
     print('{script_name}: script started at {dt}'.format(dt=time_start,script_name=script_name))
 

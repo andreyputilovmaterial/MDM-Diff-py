@@ -18,6 +18,95 @@ def trim(s):
     return '{s}'.format(s=s).strip()
 
 
+
+
+
+class MDMExcelReadFormatException(Exception):
+    """Reading Excel: failed with a given format"""
+
+
+
+
+def special_lrw_read_index_sheet(df_mainpage):
+    result = []
+    result_metadata = []
+
+    if not ( len( df_mainpage.loc[ df_mainpage[ df_mainpage.columns[0] ].astype('str').str.contains(r'^\s*?Table of Contents\s*?$',regex=True,case=False) ] )>0 ):
+        raise MDMExcelReadFormatException
+    
+    rows = [ df_mainpage.iloc[idx,0] for idx in range(0,len(df_mainpage)) ]
+    section_currentlyreading = 'preface'
+    print('reading excel: reading table names')
+    for rownumber,row in enumerate(rows):
+        row_txt = row
+        if re.match(r'^\s*?$',row_txt):
+            continue
+        else:
+            if re.match(r'^\s*?Table of Contents\s*?$',row_txt,flags=re.I):
+                #section_currentlyreading = 'banner_row'
+                section_currentlyreading = 'tables'
+                continue
+        if (section_currentlyreading=='tables'):
+            matches = re.match(r'^\s*?(?:T|Table)\s*?(\d+)\s*?-\s*(.*?)\s*$',row_txt,flags=re.I)
+            if not matches:
+                raise MDMExcelReadFormatException('reading excel: indexsheet: Reading list of tables, passed beyound "Table of Contents", expecting "Table 1 - ...", found something else, unexpected line = {l}, text = {t}'.format(l=row,t=row_txt))
+            tablenum = int(matches[1])
+            tabletitle = matches[2]
+            result.append({
+                'number': tablenum,
+                'title': tabletitle,
+                'name': tabletitle,
+                'columns': ['name'],
+                'column_headers': {},
+                'content': []
+            })
+        elif (section_currentlyreading=='preface'):
+            if len(trim(row_txt))>0:
+                result_metadata.append({'name':'line {d}'.format(d=rownumber),'value':trim(row_txt)})
+        else:
+            raise AttributeError('reading excel: indexsheet: Reading list of tables, passed beyound "Table of Contents", expecting "Table 1 - ...", found something else, unexpected line = {l}, text = {t}'.format(l=row,t=row_txt))
+    
+    # check that table names are unique
+    table_names_already_used = []
+    for section_def in result:
+        table_name = section_def['name']
+        if table_name in table_names_already_used:
+            table_name_override_suggest = None
+            table_name_override_counter = 2
+            while True:
+                table_name_override_suggest = '{keep}{added}'.format(keep=table_name,added=' [Duplicate #] {d}]'.format(d=table_name_override_counter))
+                if not(table_name_override_suggest in table_names_already_used):
+                    break
+                else:
+                    table_name_override_counter = table_name_override_counter + 1
+            section_def['name'] = table_name_override_suggest
+            print('WARNING: duplicate table names: renaming a table to "{tabtitle}"'.format(tabtitle=table_name_override_suggest))
+        table_names_already_used.append(table_name)
+        
+    return result, result_metadata
+
+
+
+def add_or_find_section_entry(sections_to_look_for,sheet_name):
+    table_defs = sections_to_look_for
+    table_defs_matching = [ tab for tab in [ tab for tab in table_defs if 'number' in tab and tab['number']>0 ] if 'T{n}'.format(n=tab['number'])==sheet_name ]
+    if len(table_defs_matching)!=1:
+        #raise ValueError('reading excel: tab def not found for {n} (we are reading sheet "{n}" but we were not able to grab this table title from index sheet)'.format(n=sheet_name))
+        section_def_add = {
+            'name': sheet_name,
+            'columns': ['name'],
+            'column_headers': {},
+            'content': []
+        }
+        sections_to_look_for.append(section_def_add)
+        table_defs_matching = [sections_to_look_for[-1]]          
+    result = table_defs_matching[0]
+    return result
+
+
+
+
+
 def read_excel(filename):
 
     xls = pd.ExcelFile(filename,engine='openpyxl')
@@ -43,7 +132,7 @@ def read_excel(filename):
     }
 
     sheet_names = xls.sheet_names
-    is_format_lrw = False
+    is_detected_known_format = None
     global_columnid_lookup = {
 
     }
@@ -62,68 +151,26 @@ def read_excel(filename):
             return get_column_id(col,name_preliminary+'_2')
         
 
-    if 'IndexSheet' in sheet_names and 'T1' in sheet_names:
+    if 'IndexSheet' in sheet_names and 'T1' in sheet_names: # lrw format - trying to read TOC (table of contents)
+        # lrw format - we are expecting that here, on "IndexSheet", there is a line "Table of Contents", and a list of tables below
+        # if there is, we grab table names, and set is_detected_known_format = 'lrw'
         df_mainpage = xls.parse(sheet_name='IndexSheet', index_col=None).fillna(0)
+        print('reading excel: reading index sheet')
+        try:
+            result,result_metadata = special_lrw_read_index_sheet(df_mainpage)
+            data['sections'].extend( result )
+            data['source_file_metadata'].extend( result_metadata )
+            is_detected_known_format = 'lrw'
+        except MDMExcelReadFormatException:
+            pass
 
-        if len( df_mainpage.loc[ df_mainpage[ df_mainpage.columns[0] ].astype('str').str.contains(r'^\s*?Table of Contents\s*?$',regex=True,case=False) ] )>0:
-            
-            print('reading excel: reading index sheet')
-            is_format_lrw = True
-            rows = [ df_mainpage.iloc[idx,0] for idx in range(0,len(df_mainpage)) ]
-            section_currentlyreading = 'preface'
-            print('reading excel: reading table names')
-            for rownumber,row in enumerate(rows):
-                row_txt = row
-                if re.match(r'^\s*?$',row_txt):
-                    continue
-                else:
-                    if re.match(r'^\s*?Table of Contents\s*?$',row_txt,flags=re.I):
-                        #section_currentlyreading = 'banner_row'
-                        section_currentlyreading = 'tables'
-                        continue
-                if (section_currentlyreading=='tables'):
-                    matches = re.match(r'^\s*?(?:T|Table)\s*?(\d+)\s*?-\s*(.*?)\s*$',row_txt,flags=re.I)
-                    if not matches:
-                        raise AttributeError('reading excel: indexsheet: Reading list of tables, passed beyound "Table of Contents", expecting "Table 1 - ...", found something else, unexpected line = {l}, text = {t}'.format(l=row,t=row_txt))
-                    tablenum = int(matches[1])
-                    tabletitle = matches[2]
-                    data['sections'].append({
-                        'number': tablenum,
-                        'title': tabletitle,
-                        'name': tabletitle,
-                        'columns': ['name'],
-                        'column_headers': {},
-                        'content': []
-                    })
-                elif (section_currentlyreading=='preface'):
-                    if len(trim(row_txt))>0:
-                        data['source_file_metadata'].append({'name':'line {d}'.format(d=rownumber),'value':trim(row_txt)})
-                else:
-                    raise AttributeError('reading excel: indexsheet: Reading list of tables, passed beyound "Table of Contents", expecting "Table 1 - ...", found something else, unexpected line = {l}, text = {t}'.format(l=row,t=row_txt))
-            
-            # check that table names are unique
-            table_names_already_used = []
-            for section_def in data['sections']:
-                table_name = section_def['name']
-                if table_name in table_names_already_used:
-                    table_name_override_suggest = None
-                    table_name_override_counter = 2
-                    while True:
-                        table_name_override_suggest = '{keep}{added}'.format(keep=table_name,added=' [Duplicate #] {d}]'.format(d=table_name_override_counter))
-                        if not(table_name_override_suggest in table_names_already_used):
-                            break
-                        else:
-                            table_name_override_counter = table_name_override_counter + 1
-                    section_def['name'] = table_name_override_suggest
-                    print('WARNING: duplicate table names: renaming a table to "{tabtitle}"'.format(tabtitle=table_name_override_suggest))
-                table_names_already_used.append(table_name)
 
 
     # print('reading excel: reading whole file')
     # df = xls.parse( sheet_name=None, index_col=None, header=0)
 
     def is_meaningful_sheet(sheet_name):
-        if is_format_lrw:
+        if is_detected_known_format=='lrw':
             return  re.match(r'^\s*?(?:T|Table)\s*?\d+\s*?$',sheet_name,flags=re.I)
         return True
 
@@ -134,22 +181,10 @@ def read_excel(filename):
             print('reading excel: sheet: {sh}'.format(sh=sheet_name))
             df_thissheet = xls.parse(sheet_name=sheet_name, index_col=None, header=None)
 
-            # find our definitions
-            table_defs = data['sections']
-            table_defs_matching = [ tab for tab in [ tab for tab in table_defs if 'number' in tab and tab['number']>0 ] if 'T{n}'.format(n=tab['number'])==sheet_name ]
-            if len(table_defs_matching)!=1:
-                #raise ValueError('reading excel: tab def not found for {n} (we are reading sheet "{n}" but we were not able to grab this table title from index sheet)'.format(n=sheet_name))
-                section_def_add = {
-                    'name': sheet_name,
-                    'columns': ['name'],
-                    'column_headers': {},
-                    'content': []
-                }
-                data['sections'].append(section_def_add)
-                table_defs_matching = [data['sections'][-1]]          
-            tab_def = table_defs_matching[0]
+            tab_def = add_or_find_section_entry(sections_to_look_for=data['sections'],sheet_name=sheet_name)
             
-            # # inspect sheet contents
+            # inspect sheet contents
+            # data_areas_within_sheet = recognize_data_areas_within_sheet() # TODO:
 
             df_thissheet_clean = df_thissheet.fillna('')
             rows = [ {'col_1':trim(df_thissheet_clean.iloc[idx,0]),'col_rest':trim(''.join([trim(s) for s in df_thissheet_clean.iloc[idx,1:]]))} for idx in range(0,len(df_thissheet)) ]
@@ -167,8 +202,8 @@ def read_excel(filename):
                 raise ValueError('WARNING: read excel: table #{t}: no banner found'.format(t=sheet_name))
                 continue
             linenumber_banner_begins = linenumber
-            linenumber = linenumber + 1
-            while( (linenumber<=linenumber_last) and (len(rows[linenumber]['col_1'])==0) and (len(rows[linenumber]['col_rest'])==0) ):
+            # linenumber = linenumber + 1 # ???
+            while( (linenumber<=linenumber_last) and (len(rows[linenumber]['col_1'])==0) and (len(rows[linenumber]['col_rest'])>0) ):
                 linenumber = linenumber + 1
             if linenumber > linenumber_last:
                 # print('WARNING: read excel: table #{t}: banner has no data'.format(t=sheet_name))
@@ -325,7 +360,7 @@ def read_excel(filename):
             print('reading excel: failed when reading sheet "{sn}"'.format(sn=sheet_name))
             raise e
     
-    if is_format_lrw:
+    if is_detected_known_format=='lrw':
         data['report_scheme']['flags'].append('excel-type:lrw')
         
     return data

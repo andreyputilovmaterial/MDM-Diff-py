@@ -13,21 +13,21 @@ if __name__ == '__main__':
     import diff
     from lib.mdmreadpy import read_mdd
     from lib.otherformatsreadpy_txt import read as read_txt
-    from lib.otherformatsreadpy_excel import read as read_excel
+    from lib.otherformatsreadpy_excel import read_excel as read_excel
     from lib.mdmreadpy.lib.mdmreportpy import report_create
 elif '.' in __name__:
     # package
     from . import diff
     from .lib.mdmreadpy import read_mdd
     from .lib.otherformatsreadpy_txt import read as read_txt
-    from .lib.otherformatsreadpy_excel import read as read_excel
+    from .lib.otherformatsreadpy_excel import read_excel as read_excel
     from .lib.mdmreadpy.lib.mdmreportpy import report_create
 else:
     # included with no parent package
     import diff
     from lib.mdmreadpy import read_mdd
     from lib.otherformatsreadpy_txt import read as read_txt
-    from lib.otherformatsreadpy_excel import read as read_excel
+    from lib.otherformatsreadpy_excel import read_excel as read_excel
     from lib.mdmreadpy.lib.mdmreportpy import report_create
 
 
