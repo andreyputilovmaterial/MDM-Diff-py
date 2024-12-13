@@ -333,7 +333,59 @@ def find_diff(data_left,data_right,config):
     return result
 
 
-
+def make_diff_fname_part(fname_l,fname_r):
+    fname_l = '{fname_l}'.format(fname_l=fname_l)
+    fname_r = '{fname_r}'.format(fname_r=fname_r)
+    fname_l = list(fname_l)
+    fname_r = list(fname_r)
+    diff_temp = helper_diff_wrappers.diff_raw( fname_l, fname_r )
+    # add a dummy element for trailing part
+    diff_temp.append({
+        'lhs': {
+            'at': len(fname_l),
+            'add': 0,
+            'del': 0
+        },
+        'rhs': {
+            'at': len(fname_r),
+            'add': 0,
+            'del': 0
+        }
+    })
+    # go
+    result = ''
+    last_index = 0
+    for diff_entry in diff_temp:
+        part_l_keep_start = last_index
+        part_l_keep_end = diff_entry['lhs']['at']
+        part_r_keep_shift = diff_entry['rhs']['at'] - diff_entry['lhs']['at']
+        part_l_del_start = diff_entry['lhs']['at']
+        part_l_del_end = diff_entry['lhs']['at'] + diff_entry['lhs']['del']
+        part_r_add_start = diff_entry['rhs']['at']
+        part_r_add_end = diff_entry['rhs']['at'] + diff_entry['rhs']['add']
+        last_index = diff_entry['lhs']['at'] + diff_entry['lhs']['del']
+        # has_part_kept = False
+        # has_part_added = False
+        # has_part_removed = False
+        part_kept = ''
+        part_added = ''
+        part_removed = ''
+        for i in range(part_l_keep_start,part_l_keep_end):
+            # no change - names are good
+            part_kept = part_kept + fname_l[i]
+            # has_part_kept = True
+        for i in range(part_l_del_start,part_l_del_end):
+            # removed
+            part_removed = part_removed + fname_l[i]
+            # has_part_removed = True
+        for i in range(part_r_add_start,part_r_add_end):
+            # added
+            part_added = part_added + fname_r[i]
+            # has_part_added = True
+        result = result + ('-' if ((len(part_kept)>0) and (len(result)>0)) else '') + part_kept
+        result = result + ('-' if ((len(part_removed)>0) and (len(result)>0)) else '') + part_removed
+        result = result + ('-' if ((len(part_added)>0) and (len(result)>0)) else '') + part_added
+    return result
 
 
 
@@ -476,7 +528,8 @@ def entry_point(runscript_config={}):
             report_filename_suffixpart = args.output_filename_suffix
             if not validate_fname_part(report_filename_suffixpart):
                 raise FileNotFoundError('diff script: output filename suffix: not valid name (please check the --output-filename-suffix option you are passing)')
-        report_filename_filepart = '{fname_prefix}{file_l}-{file_r}{fname_suffix}.json'.format(file_l=report_part_filename_left,file_r=report_part_filename_right,fname_prefix=report_filename_prefixpart,fname_suffix=report_filename_suffixpart)
+        # report_filename_filepart = '{fname_prefix}{file_l}-{file_r}{fname_suffix}.json'.format(file_l=report_part_filename_left,file_r=report_part_filename_right,fname_prefix=report_filename_prefixpart,fname_suffix=report_filename_suffixpart)
+        report_filename_filepart = '{fname_prefix}{diff_file_name_part_holder}{fname_suffix}.json'.format(diff_file_name_part_holder=make_diff_fname_part(report_part_filename_left,report_part_filename_right),fname_prefix=report_filename_prefixpart,fname_suffix=report_filename_suffixpart)
         # report_filename_pathpart = Path(inp_filename_left).parents[0]
         report_filename_pathpart = Path(inp_filename_right).parents[0] # right!
         # the right compared source is now the destination for the report -

@@ -226,6 +226,20 @@ def process_make_name_prop_unique(file_l_sectiondata,file_r_sectiondata,columns_
     rows_l = [ ( item['name'] if 'name' in item else missing_row_name_holder ) for item in file_l_sectiondata ]
     rows_r = [ ( item['name'] if 'name' in item else missing_row_name_holder ) for item in file_r_sectiondata ]
     diff_temp = diff_raw(rows_l,rows_r)
+    # add a dummy element for trailing part
+    diff_temp.append({
+        'lhs': {
+            'at': len(rows_l),
+            'add': 0,
+            'del': 0
+        },
+        'rhs': {
+            'at': len(rows_r),
+            'add': 0,
+            'del': 0
+        }
+    })
+    # go
     last_index = 0
     names_used = []
     # first we separately process all "keep", and then we'll iterate again and process all "added" and "removed"
