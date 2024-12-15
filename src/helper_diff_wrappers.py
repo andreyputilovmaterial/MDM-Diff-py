@@ -461,13 +461,6 @@ def finddiff_values_text_formatsidebyside( cmpdata_l, cmpdata_r ):
         cmpdata_r_into_lines = [ ('' if linenumber==0 else '\n') + (line if len(line)>0 else ' ') for linenumber,line in enumerate(text_split_lines(cmpdata_r)) ]
         diff_data = Myers.diff(cmpdata_l_into_lines,cmpdata_r_into_lines)
         diff_data = Myers.to_records(diff_data,cmpdata_l_into_lines,cmpdata_r_into_lines)
-        # diff_data = diff_update_records(diff_data,lambda l: '{line}{lineending}'.format(line=l,lineending='\n')) # aaaah is this slow? needs testing # TODO:
-        # for part in diff_data:
-        #     if part.line=='':
-        #         part.line = ' '
-        # for linenumber,part in enumerate(diff_data):
-        #     if linenumber<len(diff_data)-1:
-        #         part.line = part.line + '\n'
         diff_data = diff_combine_similar_records(diff_data)
         diff_data_l_and_r_by_lines = []
         for part in diff_data:
@@ -640,13 +633,6 @@ def finddiff_values_text_formatcombined( cmpdata_l, cmpdata_r ):
         cmpdata_r_into_lines = [ ('' if linenumber==0 else '\n') + (line if len(line)>0 else ' ') for linenumber,line in enumerate(text_split_lines(cmpdata_r)) ]
         diff_data = Myers.diff(cmpdata_l_into_lines,cmpdata_r_into_lines)
         diff_data = Myers.to_records(diff_data,cmpdata_l_into_lines,cmpdata_r_into_lines)
-        # diff_data = diff_update_records(diff_data,lambda l: '{line}{lineending}'.format(line=l,lineending='\n')) # aaaah is this slow? needs testing # TODO:
-        # for part in diff_data:
-        #     if part.line=='':
-        #         part.line = ' '
-        # for linenumber,part in enumerate(diff_data):
-        #     if linenumber<len(diff_data)-1:
-        #         part.line = part.line + '\n'
         diff_data = diff_combine_similar_records(diff_data)
         diff_data_l_and_r_by_lines = []
         for part in diff_data:
