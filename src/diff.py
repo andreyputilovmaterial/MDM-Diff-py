@@ -349,8 +349,10 @@ def find_diff(data_left,data_right,config):
 def make_diff_fname_part(fname_l,fname_r):
     fname_l = '{fname_l}'.format(fname_l=fname_l)
     fname_r = '{fname_r}'.format(fname_r=fname_r)
-    fname_l = list(fname_l)
-    fname_r = list(fname_r)
+    # fname_l = list(fname_l)
+    # fname_r = list(fname_r)
+    fname_l = helper_diff_wrappers.text_split_words(fname_l)
+    fname_r = helper_diff_wrappers.text_split_words(fname_r)
     diff_temp = helper_diff_wrappers.diff_raw( fname_l, fname_r )
     # add a dummy element for trailing part
     diff_temp.append({
