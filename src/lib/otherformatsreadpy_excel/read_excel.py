@@ -379,7 +379,9 @@ def read_excel(filename):
                         all_row_labels.append(row_name_clean)
                         row_label_dict[linenumber] = row_name_clean
                         last_section_label = row_name_clean
-            last_section_label = '???'
+            if len(all_row_labels)==0:
+                all_row_labels.append('???')
+            last_section_label = all_row_labels[0]
             for linenumber in range_lines_to_work_with:
                 if (linenumber in row_label_dict) and (row_label_dict[linenumber] is not None):
                     # populated - step to next line
@@ -396,7 +398,7 @@ def read_excel(filename):
                 elif knt==1:
                     flags.append('unique')
                 else:
-                    raise AttributeError('please check your code')
+                    raise AttributeError('please check your code, it shouldn\'t happen')
                 section_name = None
                 if re.match(r'^\s*?[^\w]*?\bBase\b.*?',rowlabel,flags=re.I):
                     flags.append('base')
