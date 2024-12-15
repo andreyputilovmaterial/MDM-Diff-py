@@ -19,6 +19,6 @@ Ok, you are starting the tool and it crashes. Error messages report some problem
 ## For developers: how to build distributable files?
 There is a script, make.bat
 
-You need pinliner to run this, but the version found on internet was not working well for me. I made certain fixes, please use my personal pinliner version (cinluded in src-make folder, so this is a part of distribution).
+You need pinliner to run this, but the version found on internet was not working well for me. I made certain fixes, please use my personal pinliner version (inluded in src-make folder, so this is a part of distribution).
 
 Everything else that is going on can be clearly found in make.bat - the bundle created is renamed to mdmtoolsap_bundle, the bat files are renamed, and the path to bundle is changed to mdmtoolsap_bundle within those bat files. Results are in dist/ subdirectory.
