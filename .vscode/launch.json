@@ -61,7 +61,7 @@
             "request": "launch",
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
-            "args": ["--program","report","--inpfile","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.006\\test_data\\report.diff.R2401043STK WGT PCT Banner Main Market_FOP 1113.xlsx-R2401043STK WGT PCT Banner Main Market_FOP 1115.xlsx.json"],
+            "args": ["--program","report","--inpfile","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.006\\test_data\\report.diff.R2-3-40-0-8-1-3-4-9- WGT BannerMOC_Us_Total.xlsx.json"],
             "justMyCode": true
         },
         {
