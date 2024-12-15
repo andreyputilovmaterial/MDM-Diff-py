@@ -11,6 +11,10 @@ import numpy as np # needed for correct handling of pandas types when converting
 
 
 
+# CONFIG_NAME_DELIMITER = ' ---->>>> '
+CONFIG_NAME_DELIMITER = ' / '
+
+
 
 def trim(s):
     if not s:
@@ -309,8 +313,14 @@ def read_excel(filename):
             for linenumber in range(0,linenumber_banner_begins):
                 # if len(trim(rows[linenumber]['col_1']))>0:
                 if True:
+                    item_name = 'Description Line #{d}'.format(d=linenumber+1)
+                    item_name = '{global_section_name}{separator}{inner_row_name}'.format(
+                        global_section_name = '### TABLE DESCRIPTION ###',
+                        separator = CONFIG_NAME_DELIMITER,
+                        inner_row_name = item_name
+                    )
                     row_add = {
-                        'name': 'Description Line #{d}'.format(d=linenumber+1),
+                        'name': item_name,
                         # get_column_id(column_zero): trim(rows[linenumber]['col_1'])+'\t'+trim(rows[linenumber]['col_rest'])
                     }
                     for s in [ s for s in range(0,len(df_thissheet_clean.columns)) ]:
@@ -324,8 +334,16 @@ def read_excel(filename):
             for linenumber in range(linenumber_banner_begins,linenumber_banner_ends+1):
                 # if len(trim(rows[linenumber]['col_1']))>0:
                 if True:
+                    item_name = 'Banner Line #{d}'.format(d=linenumber+1)
+                    item_name = '{global_section_name}{separator}{inner_row_name}'.format(
+                        global_section_name = '### BANNER ###',
+                        separator = CONFIG_NAME_DELIMITER,
+                        inner_row_name = item_name
+                    )
+                    # if linenumber==linenumber_banner_most_informative:
+                    #     item_name = ''
                     row_add = {
-                        'name': '' if linenumber==linenumber_banner_most_informative else 'Banner Line #{d}'.format(d=linenumber+1),
+                        'name': item_name,
                         # get_column_id(column_zero): trim(rows[linenumber]['col_1'])+'\t'+trim(rows[linenumber]['col_rest'])
                     }
                     for s in [ s for s in range(0,len(df_thissheet_clean.columns)) ]:
@@ -344,24 +362,225 @@ def read_excel(filename):
             df_thissheet_clean.rename(columns=column_name_override, inplace=True)
 
             LastLine = 'axis(banner)'
+            range_lines_to_work_with = range(linenumber_banner_ends+1-linenumber_banner_most_informative,len(df_thissheet_clean.index))
+
+            # detecting section names and grouping rows into sections - quite complicated code! I am feeling like a schoolboy on regional olympiad!
+            all_row_labels = []
+            row_label_dict = {}
+            row_flags_dict = {}
+            section_label_dict = {}
+            for linenumber in range_lines_to_work_with:
+                row_name_clean = re.sub(r'(?:\b(?:(Unweighted)|(?:Effective))\b)?\s*?(\bBase\b)','Base',trim(df_thissheet_clean.iloc[linenumber,0]),flags=re.I)
+                if re.match(r'.*?\w.*?',row_name_clean):
+                    if( (len(all_row_labels)>0) and (all_row_labels[-1]==row_name_clean) ):
+                        # repeating - skip
+                        pass
+                    else:
+                        all_row_labels.append(row_name_clean)
+                        row_label_dict[linenumber] = row_name_clean
+                        last_section_label = row_name_clean
+            last_section_label = '???'
+            for linenumber in range_lines_to_work_with:
+                if (linenumber in row_label_dict) and (row_label_dict[linenumber] is not None):
+                    # populated - step to next line
+                    last_section_label = row_label_dict[linenumber]
+                else:
+                    row_label_dict[linenumber] = last_section_label
+            last_section_label = row_label_dict[range_lines_to_work_with[0]] if len(range_lines_to_work_with)>0 else None
+            for linenumber in range_lines_to_work_with:
+                rowlabel = row_label_dict[linenumber]
+                knt = all_row_labels.count(rowlabel)
+                flags = []
+                if knt>1:
+                    flags.append('repeating')
+                elif knt==1:
+                    flags.append('unique')
+                else:
+                    raise AttributeError('please check your code')
+                section_name = None
+                if re.match(r'^\s*?[^\w]*?\bBase\b.*?',rowlabel,flags=re.I):
+                    flags.append('base')
+                if re.match(r'^\s*?[^\w]*?\bBase\b\s*?[^\w]*?.*?\w.*?',rowlabel,flags=re.I):
+                    section_name = re.sub(r'^\s*?[^\w]*?\bBase\b\s*?[^\w]*().*?\w.*?)\s*$',lambda m: m[1],rowlabel,flags=re.I)
+                    flags.append('section-name-defined-at-base')
+                elif 'unique' in flags:
+                    section_name = rowlabel
+                else:
+                    section_name = None
+                if section_name:
+                    section_label_dict[linenumber] = section_name
+                    last_section_label = section_name
+                    flags.append('section-name-definition')
+                else:
+                    section_label_dict[linenumber] = last_section_label
+                offset_above = -1
+                while( (linenumber+offset_above>=range_lines_to_work_with[0]) and ( not (len(trim(df_thissheet_clean.iloc[linenumber+offset_above,0]))>0 ) or (trim(df_thissheet_clean.iloc[linenumber+offset_above,0])==trim(df_thissheet_clean.iloc[linenumber,0])) or ( ('base' in flags) and ('base' in row_flags_dict[linenumber+offset_above]) ) ) ):
+                    offset_above = offset_above - 1
+                if( (linenumber+offset_above<range_lines_to_work_with[0]) or (not(section_label_dict[linenumber]==section_label_dict[linenumber+offset_above])) ):
+                    flags.append('section-name-changed')
+                row_flags_dict[linenumber] = flags
+            # check certain cases
+            are_row_sections_defined_above_bases = None
+            are_row_sections_defined_below_bases = None
+            are_row_sections_defined_at_bases = None
+            are_row_sections_defined_no_need_to_define_as_there_s_a_single_section = None
+            are_row_sections_defined_with_ultimate_definition_class = None # (any of 3 above)
+            # 1. check if row sections are defined above bases
+            t = [] # "t" for "temporary" - we count yes or no, checking certain condition, if section name changed above every base (not every, 90% f them), if section name above every base is unique, and it's a row header (all remaining cells are blank)
+            for linenumber in range_lines_to_work_with:
+                if 'base' in row_flags_dict[linenumber]:
+                    offset_above = -1
+                    while( (linenumber+offset_above>=range_lines_to_work_with[0]) and ( not (len(trim(df_thissheet_clean.iloc[linenumber+offset_above,0]))>0 ) ) ):
+                        offset_above = offset_above - 1
+                    if( (linenumber+offset_above>=range_lines_to_work_with[0]) and ('base' in row_flags_dict[linenumber+offset_above]) ):
+                        continue
+                    val = None
+                    offset_above = -1
+                    while( (linenumber+offset_above>=range_lines_to_work_with[0]) and ( not (len(trim(df_thissheet_clean.iloc[linenumber+offset_above,0]))>0 ) or (trim(df_thissheet_clean.iloc[linenumber+offset_above,0])==trim(df_thissheet_clean.iloc[linenumber,0])) or ('base' in row_flags_dict[linenumber+offset_above]) ) ):
+                        offset_above = offset_above - 1
+                    if( (linenumber+offset_above>=range_lines_to_work_with[0]) and ('base' in row_flags_dict[linenumber]) and ( ('unique' in row_flags_dict[linenumber+offset_above]) and ('section-name-changed' in row_flags_dict[linenumber+offset_above]) and (len(trim(''.join([trim(s) for s in df_thissheet_clean.iloc[linenumber+offset_above,1:]])))==0) ) ):
+                        val = True
+                    else:
+                        val = False
+                    if val:
+                        row_flags_dict[linenumber].append('section-header-above')
+                        # linenumber+offset_above is where section starts
+                        if linenumber+offset_above>=range_lines_to_work_with[0]:
+                            row_flags_dict[linenumber+offset_above].append('section-name-ultimate-definition')
+                            row_flags_dict[linenumber+offset_above].append('section-name-ultimate-definition-abovebases')
+                    if val is not None:
+                        t.append(val)
+            are_row_sections_defined_above_bases = ( ( (1.0*len([s for s in t if s])) / (1.0*len(t)) >= .9 ) and (len(t)>2) ) if len(t)>0 else False
+            # 2. check if row sections are defined below bases
+            t = [] # "t" for "temporary" - we count yes or no, checking certain condition...
+            for linenumber in range_lines_to_work_with:
+                if 'base' in row_flags_dict[linenumber]:
+                    offset_above = -1
+                    while( (linenumber+offset_above>=range_lines_to_work_with[0]) and ( not (len(trim(df_thissheet_clean.iloc[linenumber+offset_above,0]))>0) ) ):
+                        offset_above = offset_above - 1
+                    if( (linenumber+offset_above>=range_lines_to_work_with[0]) and ('base' in row_flags_dict[linenumber+offset_above]) ):
+                        continue
+                    val = None
+                    offset_below = 1
+                    while( (linenumber+offset_below<=range_lines_to_work_with[-1]) and ( not (len(trim(df_thissheet_clean.iloc[linenumber+offset_below,0]))>0) or (trim(df_thissheet_clean.iloc[linenumber+offset_below,0])==trim(df_thissheet_clean.iloc[linenumber,0])) or ('base' in row_flags_dict[linenumber+offset_below]) ) ):
+                        offset_below = offset_below + 1
+                    if( (linenumber+offset_below<=range_lines_to_work_with[-1]) and ('base' in row_flags_dict[linenumber]) and ( ('unique' in row_flags_dict[linenumber+offset_below]) ) ):
+                        val = True
+                    else:
+                        val = False
+                    if val:
+                        # linenumber is where section starts
+                        # linenumber+offset_below is where section label is
+                        if linenumber<=range_lines_to_work_with[-1] and linenumber>=range_lines_to_work_with[0] and linenumber+offset_below<=range_lines_to_work_with[-1] and linenumber+offset_below>=range_lines_to_work_with[0]:
+                            row_flags_dict[linenumber].append('section-name-ultimate-definition')
+                            row_flags_dict[linenumber].append('section-name-ultimate-definition-belowbases')
+                            section_label_dict[linenumber] = section_label_dict[linenumber+offset_below]
+                    if val is not None:
+                        t.append(val)
+            are_row_sections_defined_below_bases = ( ( (1.0*len([s for s in t if s])) / (1.0*len(t)) >= .9 ) and (len(t)>2) ) if len(t)>0 else False
+            # 3. check if row sections are defined at bases
+            t = [] # "t" for "temporary" - we count yes or no, checking certain condition...
+            for linenumber in range_lines_to_work_with:
+                if 'base' in row_flags_dict[linenumber]:
+                    offset_above = -1
+                    while( (linenumber+offset_above>=range_lines_to_work_with[0]) and ( not (len(trim(df_thissheet_clean.iloc[linenumber+offset_above,0]))>0 ) ) ):
+                        offset_above = offset_above - 1
+                    if( (linenumber+offset_above>=range_lines_to_work_with[0]) and ('base' in row_flags_dict[linenumber+offset_above]) ):
+                        continue
+                    val = None
+                    if( ('base' in row_flags_dict[linenumber]) and ('section-name-defined-at-base' in row_flags_dict[linenumber]) and ('section-name-definition' in row_flags_dict[linenumber]) ):
+                        val = True
+                    else:
+                        val = False
+                    if val:
+                        # linenumber is where section starts
+                        row_flags_dict[linenumber].append('section-name-ultimate-definition')
+                        row_flags_dict[linenumber].append('section-name-ultimate-definition-atbases')
+                    if val is not None:
+                        t.append(val)
+            are_row_sections_defined_at_bases = ( ( (1.0*len([s for s in t if s])) / (1.0*len(t)) >= .9 ) and (len(t)>2) ) if len(t)>0 else False
+            # 4. another attempt, the most simple actually - "normal" table,  single base at the top (or, maybe unweighted, etc...)
+            are_row_sections_defined_no_need_to_define_as_there_s_a_single_section = ([l.lower() for l in all_row_labels].count('base')==1) and ([l.lower() for l in all_row_labels].index('base')==0)
+            if are_row_sections_defined_no_need_to_define_as_there_s_a_single_section:
+                if len(range_lines_to_work_with)>0:
+                    row_flags_dict[range_lines_to_work_with[0]].append('section-name-ultimate-definition')
+                    row_flags_dict[range_lines_to_work_with[0]].append('section-name-ultimate-definition-simpletable')
+                    section_label_dict[range_lines_to_work_with[0]] = tab_def['name']
+            # now, take action
+            are_row_sections_defined_with_ultimate_definition_class = are_row_sections_defined_above_bases or are_row_sections_defined_below_bases or are_row_sections_defined_at_bases or are_row_sections_defined_no_need_to_define_as_there_s_a_single_section
+            if are_row_sections_defined_with_ultimate_definition_class:
+                check_flag = 'section-name-ultimate-definition'
+                if are_row_sections_defined_no_need_to_define_as_there_s_a_single_section:
+                    check_flag = 'section-name-ultimate-definition-simpletable'
+                elif are_row_sections_defined_at_bases:
+                    check_flag = 'section-name-ultimate-definition-atbases'
+                elif are_row_sections_defined_above_bases:
+                    check_flag = 'section-name-ultimate-definition-abovebases'
+                elif are_row_sections_defined_below_bases:
+                    check_flag = 'section-name-ultimate-definition-belowbases'
+                last_section_label = section_label_dict[range_lines_to_work_with[0]] if len(range_lines_to_work_with)>0 else None
+                for linenumber in range_lines_to_work_with:
+                    if check_flag in row_flags_dict[linenumber]:
+                        # section_label_dict[linenumber] = section_label_dict[linenumber]
+                        last_section_label = section_label_dict[linenumber]
+                    else:
+                        section_label_dict[linenumber] = last_section_label
+            
+            # and reset items at the bottom
+            if len(range_lines_to_work_with)>0:
+                linenumber = range_lines_to_work_with[-1]
+                while( (linenumber>=range_lines_to_work_with[0]) and (len(trim(''.join([trim(s) for s in df_thissheet_clean.iloc[linenumber,1:]])))==0) ):
+                    # if (len(trim(df_thissheet_clean.iloc[linenumber,0]))>0):
+                    if True:
+                        section_label_dict[linenumber] = '### FOOTER ###' # tab_def['name']
+                    linenumber = linenumber - 1
+            # cut one empty row from last last, to normalize the number of line breaks;
+            # if we don't do it, normally every line is represented
+            # by 3 rows - counts/persents/stat testing,
+            # but the last line has 4 rows, just because there's
+            # an empty row, and it's added
+            linenumber = None
+            range_footerlines_all = []
+            range_footerlines_empty = []
+            for linenumber in range_lines_to_work_with:
+                if section_label_dict[linenumber] == '### FOOTER ###':
+                    # footer start here
+                    range_footerlines_all = range(linenumber,range_lines_to_work_with[-1]+1)
+                    break
+            for linenumber in range_footerlines_all:
+                if len(trim(df_thissheet_clean.iloc[linenumber,0]))>0:
+                    # footer non-empty content starts here
+                    range_footerlines_empty = range(range_footerlines_all[0],linenumber)
+                    break
+            if len(range_footerlines_empty)>0:
+                linenumber = range_footerlines_empty[-1]
+            else:
+                linenumber = None
+            if linenumber is not None:
+                section_label_dict[linenumber] = '### FOOTER ###' # tab_def['name']
+                df_thissheet_clean.iloc[linenumber,0] = '-'
+
             CellItem = 0
             row_names_already_used = []
-            for linenumber in range(linenumber_banner_ends+1-linenumber_banner_most_informative,len(df_thissheet_clean.index)):
-                row_name = df_thissheet_clean.iloc[linenumber,0]
-                row_name_meaningful = trim(row_name)
-                row_name_empty = not(len(row_name_meaningful)>0)
-                if row_name_empty and ( linenumber==0 ) and not ('' in row_names_already_used):
-                    row_name_empty = False
-                    row_name = 'Row #0'
-                    row_name_meaningful = row_name
+            for linenumber in range_lines_to_work_with:
+                row_name = trim(df_thissheet_clean.iloc[linenumber,0])
+                if (linenumber==range_lines_to_work_with[0]) and len(row_name) == 0:
+                    row_name = '-' # just something to start with
+                row_name_empty = not(len(row_name)>0)
+                if not row_name_empty:
+                    row_name = '{global_section_name}{separator}{inner_row_name}'.format(
+                        global_section_name = section_label_dict[linenumber],
+                        separator = CONFIG_NAME_DELIMITER,
+                        inner_row_name = row_name
+                    )
                 if not row_name_empty:
                     CellItem = 0
-                    LastLine = row_name_meaningful
+                    LastLine = row_name
                 else:
-                    row_name_meaningful = LastLine
+                    row_name = LastLine
                 row_name_suggested = '{part_main}{part_unique}'.format(
-                    part_main = row_name_meaningful,
-                    part_unique = ( (' ({qualifier} {d}'.format(qualifier=('CellItem' if not(row_name_meaningful=='axis(banner)') else 'BannerLine #'),d=CellItem)) if not('{c}'.format(c=CellItem)=='0') else '' )
+                    part_main = row_name,
+                    part_unique = ( (' ({qualifier} {d}'.format(qualifier=('CellItem' if not(row_name=='axis(banner)') else 'BannerLine #'),d=CellItem)) if not('{c}'.format(c=CellItem)=='0') else '' )
                 )
                 if row_name_suggested in row_names_already_used:
                     row_name_override_suggest = None

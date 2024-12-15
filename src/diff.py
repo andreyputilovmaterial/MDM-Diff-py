@@ -84,9 +84,20 @@ def find_diff(data_left,data_right,config):
     flags_list_combined = [ 'data-type:diff' ] + [ flag for flag in (data_left['report_scheme']['flags'] if 'flags' in data_left['report_scheme'] else []) if flag in (data_right['report_scheme']['flags'] if 'flags' in data_right['report_scheme'] else []) ] + [ '{prefix}{flag}'.format(prefix='diff_source_left:',flag=flag) for flag in (data_left['report_scheme']['flags'] if 'flags' in data_left['report_scheme'] else []) ] + [ '{prefix}{flag}'.format(prefix='diff_source_right:',flag=flag) for flag in (data_right['report_scheme']['flags'] if 'flags' in data_right['report_scheme'] else []) ]
     section_list_combined = helper_diff_wrappers.diff_make_combined_list( [ item['name'] for item in data_left['sections']], [ item['name'] for item in data_right['sections']])
 
-    if 'data-type:mdd' in flags_list_combined:
-        if not ('config_use_hierarchical_name_structure' in config):
+    if not ('config_use_hierarchical_name_structure' in config):
+        if 'data-type:mdd' in flags_list_combined:
             config['config_use_hierarchical_name_structure'] = True
+        elif 'data-type:excel' in flags_list_combined:
+            config['config_use_hierarchical_name_structure'] = False
+    if ('config_use_hierarchical_name_structure' in config) and config['config_use_hierarchical_name_structure']:
+        if 'data-type:mdd' in flags_list_combined:
+            config['config_hierarchical_name_separator'] = '.'
+        elif 'data-type:excel' in flags_list_combined:
+            # config['config_hierarchical_name_separator'] = ' ---->>>> '
+            raise ValueError('excel with groups in item names? are you sure? please provide a separator!')
+        else:
+            config['config_hierarchical_name_separator'] = config['config_use_hierarchical_name_structure']
+
 
     result = {
         'report_type': 'diff',
@@ -159,9 +170,10 @@ def find_diff(data_left,data_right,config):
             
             rows_l = [ ( item['name'] if 'name' in item else '???' ) for item in file_l_sectiondata ]
             rows_r = [ ( item['name'] if 'name' in item else '???' ) for item in file_r_sectiondata ]
-            # add root element
-            rows_l = rows_l if '' in rows_l else ['']+rows_l
-            rows_r = rows_r if '' in rows_r else ['']+rows_r
+            if ('config_use_hierarchical_name_structure' in config and config['config_use_hierarchical_name_structure']):
+                # add root element
+                rows_l = rows_l if '' in rows_l else ['']+rows_l
+                rows_r = rows_r if '' in rows_r else ['']+rows_r
             # confirm that row names are unique
             if not ( (len(rows_l)==len(set(rows_l))) and (len(rows_r)==len(set(rows_r))) ):
                 # it's not, some of it is not unique
@@ -169,11 +181,12 @@ def find_diff(data_left,data_right,config):
                 # repeat reading rows_l and rows_r
                 rows_l = [ ( item['name'] if 'name' in item else '???' ) for item in file_l_sectiondata ]
                 rows_r = [ ( item['name'] if 'name' in item else '???' ) for item in file_r_sectiondata ]
-                # add root element
-                rows_l = rows_l if '' in rows_l else ['']+rows_l
-                rows_r = rows_r if '' in rows_r else ['']+rows_r
+                if ('config_use_hierarchical_name_structure' in config and config['config_use_hierarchical_name_structure']):
+                    # add root element
+                    rows_l = rows_l if '' in rows_l else ['']+rows_l
+                    rows_r = rows_r if '' in rows_r else ['']+rows_r
             
-            report_rows_diff = helper_diff_wrappers.finddiff_row_names_respecting_groups( rows_l, rows_r, delimiter=('.' if ('config_use_hierarchical_name_structure' in config and config['config_use_hierarchical_name_structure']) else None) )
+            report_rows_diff = helper_diff_wrappers.finddiff_row_names_respecting_groups( rows_l, rows_r, delimiter=(config['config_hierarchical_name_separator'] if ('config_use_hierarchical_name_structure' in config and config['config_use_hierarchical_name_structure']) else None) )
             
             performance_counter = iter(helper_utility_wrappers.PerformanceMonitor(config={
                 'total_records': len(report_rows_diff),

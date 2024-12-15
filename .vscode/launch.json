@@ -2,12 +2,30 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: LRW Excel Read Test",
+            "name": "Python: Diff Test (MDD)",
             "type": "python",
             "request": "launch",
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
-            "args": ["--program","read_excel","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.005\\test_data\\R2401043STK WGT PCT Banner Main Market_FOP 1113.xlsx\""],
+            "args": ["--program","diff","--cmp-scheme-left","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.005b\\test_data\\p2301763_prevauto_20240111_clean.mdd.json","--cmp-scheme-right","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.005b\\test_data\\p2401215_auto_20241106_clean.mdd.json"],
+            "justMyCode": true
+        },
+        {
+            "name": "Python: LRW Excel Read Test: sections above bases",
+            "type": "python",
+            "request": "launch",
+            "program": "src/run_universal.py",
+            "console": "integratedTerminal",
+            "args": ["--program","read_excel","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.005b\\test_data\\R2401043STK WGT PCT Banner Main Market_FOP 1113.xlsx\""],
+            "justMyCode": true
+        },
+        {
+            "name": "Python: LRW Excel Read Test: \"normal tables\"",
+            "type": "python",
+            "request": "launch",
+            "program": "src/run_universal.py",
+            "console": "integratedTerminal",
+            "args": ["--program","read_excel","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.005b\\test_data\\R2401428 WGT HuluBanner1 12122024.xlsx\""],
             "justMyCode": true
         },
         {
@@ -16,16 +34,16 @@
             "request": "launch",
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
-            "args": ["--program","read_excel","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.005\\test_data\\Author_Specifications_mailchimpsmb_wave19.xlsm\""],
+            "args": ["--program","read_excel","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.005b\\test_data\\Author_Specifications_mailchimpsmb_wave19.xlsm\""],
             "justMyCode": true
         },
         {
-            "name": "Python: Diff Test",
+            "name": "Python: Diff Test (Excel)",
             "type": "python",
             "request": "launch",
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
-            "args": ["--program","diff","--cmp-scheme-left","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.005\\test_data\\R2401043STK WGT PCT Banner Main Market_FOP 1113.xlsx.json","--cmp-scheme-right","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.005\\test_data\\R2401043STK WGT PCT Banner Main Market_FOP 1115.xlsx.json"],
+            "args": ["--program","diff","--cmp-scheme-left","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.005b\\test_data\\R2401428 WGT HuluBanner1 12042024.xlsx.json","--cmp-scheme-right","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.005b\\test_data\\R2401428 WGT HuluBanner1 12122024.xlsx.json"],
             "justMyCode": true
         },
         {
@@ -34,7 +52,7 @@
             "request": "launch",
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
-            "args": ["--program","report","--inpfile","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.005\\test_data\\report.diff.R2401043STK WGT PCT Banner Main Market_FOP 1113.xlsx-R2401043STK WGT PCT Banner Main Market_FOP 1115.xlsx.json"],
+            "args": ["--program","report","--inpfile","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.005b\\test_data\\report.diff.R2401043STK WGT PCT Banner Main Market_FOP 1113.xlsx-R2401043STK WGT PCT Banner Main Market_FOP 1115.xlsx.json"],
             "justMyCode": true
         },
         {
@@ -43,7 +61,7 @@
             "request": "launch",
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
-            "args": ["--program","report","--inpfile","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.005\\test_data\\p2301763_prevauto_20240111_clean.mdd.json"],
+            "args": ["--program","report","--inpfile","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.005b\\test_data\\p2301763_prevauto_20240111_clean.mdd.json"],
             "justMyCode": true
         },
         {
@@ -52,7 +70,7 @@
             "request": "launch",
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
-            "args": ["--program","read_excel","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.005\\test_data\\R2401043STK WGT PCT Banner Main Market_FOP 1113.xlsx\""],
+            "args": ["--program","read_excel","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.005b\\test_data\\R2401043STK WGT PCT Banner Main Market_FOP 1113.xlsx\""],
             "justMyCode": true
         },
         {
@@ -61,7 +79,7 @@
             "request": "launch",
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
-            "args": ["--program","diff","--cmp-scheme-left","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.005\\test_data\\p2301763_prevauto_20240111_clean_nonunique.mdd.json","--cmp-scheme-right","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.005\\test_data\\p2401215_auto_20241106_clean.mdd.json"],
+            "args": ["--program","diff","--cmp-scheme-left","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.005b\\test_data\\p2301763_prevauto_20240111_clean_nonunique.mdd.json","--cmp-scheme-right","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.005b\\test_data\\p2401215_auto_20241106_clean.mdd.json"],
             "justMyCode": true
         }
     ]

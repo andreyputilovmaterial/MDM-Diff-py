@@ -104,104 +104,113 @@ def did_contents_change_deep_inspect(data):
 
 
 
-def finddiff_row_names_respecting_groups(rows_l,rows_r,delimiter):
-    rows_inp_l = [ r for r in rows_l ]
-    rows_inp_r = [ r for r in rows_r ]
-    #grouping_found = False
+class MDMDiffWrappersGroupingMissingParentException(Exception):
+    """Diff: diff item names with groupings: every group must include a parent element"""
+def finddiff_row_names_respecting_groups(rows_l,rows_r,delimiter,level=None):
+    try:
+        rows_inp_l = [ r for r in rows_l ]
+        rows_inp_r = [ r for r in rows_r ]
+        #grouping_found = False
 
-    # explanation:
-    # when we have a row Respondent.Origin.Categories[Scan]
-    # we split it to parent group name "Respondent", and everything inside, that is processed recursively
-    # and that left part is called a "group", a list of groups is "rows_ungrouped_l" (for the left set) and "rows_ungrouped_r" (for the right set)
-    # then, groups_l_defs (resp. groups_r_defs) holds the list of items within each group (where group name is a dict key)
-    # For example groups_l_defs['Respondent'] = [ '', 'Serial', 'Origin', 'Origin.Categories[Scan]', 'Origin.Categories[HTMLPlayer]', 'Origin.Categories[DataPlayer]', 'ID', ... ]
-    # please note the '' element, there should be an elemetn for just "Respondent", the block item itself, which also has a label and properties and should be in the report
+        # explanation:
+        # when we have a row Respondent.Origin.Categories[Scan]
+        # we split it to parent group name "Respondent", and everything inside, that is processed recursively
+        # and that left part is called a "group", a list of groups is "rows_ungrouped_l" (for the left set) and "rows_ungrouped_r" (for the right set)
+        # then, groups_l_defs (resp. groups_r_defs) holds the list of items within each group (where group name is a dict key)
+        # For example groups_l_defs['Respondent'] = [ '', 'Serial', 'Origin', 'Origin.Categories[Scan]', 'Origin.Categories[HTMLPlayer]', 'Origin.Categories[DataPlayer]', 'ID', ... ]
+        # please note the '' element, there should be an elemetn for just "Respondent", the block item itself, which also has a label and properties and should be in the report
 
-    rows_ungrouped_l = []
-    groups_l_defs = {}
-    for row in rows_inp_l:
-        does_row_belong_to_group = True # ('.' in row)
-        #grouping_found = grouping_found or does_row_belong_to_group
-        if not does_row_belong_to_group:
-            rows_ungrouped_l.append(row)
-        else:
-            # matches = re.match(r'^(.*?)\.(.*)$',row if '.' in row else '{parent}.{field}'.format(parent=row,field=''))
-            # row_group = matches[1] # '' is a valid key for dict, we'll have groups_l_defs[''], which means parent item for us, and it should include a list ['']
-            # row_rest = matches[2]
-            row_group = row
-            row_rest = ''
-            if delimiter is not None:
-                matches = (row if delimiter in row else '{parent}{delimiter}{field}'.format(parent=row,field='',delimiter=delimiter)).split(delimiter,1)
-                row_group = matches[0] # '' is a valid key for dict, we'll have groups_l_defs[''], which means parent item for us, and it should include a list ['']
-                row_rest = matches[1]
-            if not (row_group in rows_ungrouped_l):
-                rows_ungrouped_l.append(row_group)
-            if not (row_group in dict.keys(groups_l_defs)) or not groups_l_defs[row_group]:
-                groups_l_defs[row_group] = []
-            #if row_group!='': # we don't need this condition: even if row_group=='' we still need to have one item in groups_l_defs[row_group]
-            groups_l_defs[row_group].append(row_rest)
-    rows_ungrouped_r = []
-    groups_r_defs = {}
-    for row in rows_inp_r:
-        does_row_belong_to_group = True # ('.' in row)
-        #grouping_found = grouping_found or does_row_belong_to_group
-        if not does_row_belong_to_group:
-            rows_ungrouped_r.append(row)
-        else:
-            # matches = re.match(r'^(.*?)\.(.*)$',row if '.' in row else '{parent}.{field}'.format(parent=row,field=''))
-            # row_group = matches[1] # '' is a valid key for dict, we'll have groups_r_defs[''], which means parent item for us, and it should include a list ['']
-            # row_rest = matches[2]
-            row_group = row
-            row_rest = ''
-            if delimiter is not None:
-                matches = (row if delimiter in row else '{parent}{delimiter}{field}'.format(parent=row,field='',delimiter=delimiter)).split(delimiter,1)
-                row_group = matches[0] # '' is a valid key for dict, we'll have groups_r_defs[''], which means parent item for us, and it should include a list ['']
-                row_rest = matches[1]
-            if not (row_group in rows_ungrouped_r):
-                rows_ungrouped_r.append(row_group)
-            if not (row_group in dict.keys(groups_r_defs)) or not groups_r_defs[row_group]:
-                groups_r_defs[row_group] = []
-            # if row_group!='': # we don't need this condition: even if row_group=='' we still need to have one item in groups_r_defs[row_group]
-            groups_r_defs[row_group].append(row_rest)
-    grouping_found = False
-    for g in dict.keys(groups_l_defs):
-        grouping_found = grouping_found or (len(groups_l_defs[g])>1)
-    for g in dict.keys(groups_r_defs):
-        grouping_found = grouping_found or (len(groups_r_defs[g])>1)
-    diff_results = Myers.to_records(Myers.diff(rows_ungrouped_l,rows_ungrouped_r),rows_ungrouped_l,rows_ungrouped_r)
-    if not grouping_found:
-        return diff_results
-    else:
-        diff_results_grouping_expanded = []
-        for diff_item in diff_results:
-            if not (diff_item.line in dict.keys(groups_l_defs)) and not (diff_item.line in dict.keys(groups_r_defs)):
-                diff_results_grouping_expanded.append(diff_item)
+        rows_ungrouped_l = []
+        groups_l_defs = {}
+        for row in rows_inp_l:
+            does_row_belong_to_group = True # ('.' in row)
+            #grouping_found = grouping_found or does_row_belong_to_group
+            if not does_row_belong_to_group:
+                rows_ungrouped_l.append(row)
             else:
-                if diff_item.flag=='remove':
+                # matches = re.match(r'^(.*?)\.(.*)$',row if '.' in row else '{parent}.{field}'.format(parent=row,field=''))
+                # row_group = matches[1] # '' is a valid key for dict, we'll have groups_l_defs[''], which means parent item for us, and it should include a list ['']
+                # row_rest = matches[2]
+                row_group = row
+                row_rest = ''
+                if delimiter is not None:
+                    matches = (row if delimiter in row else '{parent}{delimiter}{field}'.format(parent=row,field='',delimiter=delimiter)).split(delimiter,1)
+                    row_group = matches[0] # '' is a valid key for dict, we'll have groups_l_defs[''], which means parent item for us, and it should include a list ['']
+                    row_rest = matches[1]
+                if not (row_group in rows_ungrouped_l):
+                    rows_ungrouped_l.append(row_group)
+                if not (row_group in dict.keys(groups_l_defs)) or not groups_l_defs[row_group]:
+                    groups_l_defs[row_group] = []
+                #if row_group!='': # we don't need this condition: even if row_group=='' we still need to have one item in groups_l_defs[row_group]
+                groups_l_defs[row_group].append(row_rest)
+        rows_ungrouped_r = []
+        groups_r_defs = {}
+        for row in rows_inp_r:
+            does_row_belong_to_group = True # ('.' in row)
+            #grouping_found = grouping_found or does_row_belong_to_group
+            if not does_row_belong_to_group:
+                rows_ungrouped_r.append(row)
+            else:
+                # matches = re.match(r'^(.*?)\.(.*)$',row if '.' in row else '{parent}.{field}'.format(parent=row,field=''))
+                # row_group = matches[1] # '' is a valid key for dict, we'll have groups_r_defs[''], which means parent item for us, and it should include a list ['']
+                # row_rest = matches[2]
+                row_group = row
+                row_rest = ''
+                if delimiter is not None:
+                    matches = (row if delimiter in row else '{parent}{delimiter}{field}'.format(parent=row,field='',delimiter=delimiter)).split(delimiter,1)
+                    row_group = matches[0] # '' is a valid key for dict, we'll have groups_r_defs[''], which means parent item for us, and it should include a list ['']
+                    row_rest = matches[1]
+                if not (row_group in rows_ungrouped_r):
+                    rows_ungrouped_r.append(row_group)
+                if not (row_group in dict.keys(groups_r_defs)) or not groups_r_defs[row_group]:
+                    groups_r_defs[row_group] = []
+                # if row_group!='': # we don't need this condition: even if row_group=='' we still need to have one item in groups_r_defs[row_group]
+                groups_r_defs[row_group].append(row_rest)
+        grouping_found = False
+        if delimiter is not None:
+            if (not ('' in groups_l_defs)) or (not ('' in groups_r_defs)):
+                raise MDMDiffWrappersGroupingMissingParentException('diff item names with groupings: every group must include a parent element. For example, if there is "QCData.Flags.Categories...", there should be a parent "QCData.Flags", and its parent "QCData", and its parent "" (a root element, just an empty string)')
+        for g in dict.keys(groups_l_defs):
+            grouping_found = grouping_found or (len(groups_l_defs[g])>1)
+        for g in dict.keys(groups_r_defs):
+            grouping_found = grouping_found or (len(groups_r_defs[g])>1)
+        diff_results = Myers.to_records(Myers.diff(rows_ungrouped_l,rows_ungrouped_r),rows_ungrouped_l,rows_ungrouped_r)
+        if not grouping_found:
+            return diff_results
+        else:
+            diff_results_grouping_expanded = []
+            for diff_item in diff_results:
+                if not (diff_item.line in dict.keys(groups_l_defs)) and not (diff_item.line in dict.keys(groups_r_defs)):
                     diff_results_grouping_expanded.append(diff_item)
                 else:
-                    rows_subgroup_l = groups_l_defs[diff_item.line] if diff_item.line in dict.keys(groups_l_defs) else ['']
-                    rows_subgroup_r = groups_r_defs[diff_item.line] if diff_item.line in dict.keys(groups_r_defs) else ['']
-                    diff_within_group_missing_parent_part = finddiff_row_names_respecting_groups(rows_subgroup_l,rows_subgroup_r,delimiter)
-                    diff_within_group = []
-                    item_first_meaning_parent_group = True
-                    for diff_item_within_group in diff_within_group_missing_parent_part:
-                        item_add = None
-                        name_with_parent_part_added = '{parent}.{field}'.format(parent=diff_item.line,field=diff_item_within_group.line) if len(diff_item_within_group.line)>0 else diff_item.line
-                        diff_item_which_flag_we_grab = diff_item if item_first_meaning_parent_group else diff_item_within_group
-                        if diff_item_which_flag_we_grab.flag=='keep':
-                            item_add = DiffItemKeep(name_with_parent_part_added)
-                        elif diff_item_which_flag_we_grab.flag=='insert':
-                            item_add = DiffItemInsert(name_with_parent_part_added)
-                        elif diff_item_which_flag_we_grab.flag=='remove':
-                            item_add = DiffItemRemove(name_with_parent_part_added)
-                        else:
-                            raise AttributeError('which diff flag???')
-                        diff_within_group.append(item_add)
-                        item_first_meaning_parent_group = False
-                    for r in diff_within_group:
-                        diff_results_grouping_expanded.append(r)
-        return diff_results_grouping_expanded
+                    if diff_item.flag=='remove':
+                        diff_results_grouping_expanded.append(diff_item)
+                    else:
+                        rows_subgroup_l = groups_l_defs[diff_item.line] if diff_item.line in dict.keys(groups_l_defs) else ['']
+                        rows_subgroup_r = groups_r_defs[diff_item.line] if diff_item.line in dict.keys(groups_r_defs) else ['']
+                        diff_within_group_missing_parent_part = finddiff_row_names_respecting_groups(rows_subgroup_l,rows_subgroup_r,delimiter,level=diff_item.line)
+                        diff_within_group = []
+                        item_first_meaning_parent_group = True
+                        for diff_item_within_group in diff_within_group_missing_parent_part:
+                            item_add = None
+                            name_with_parent_part_added = '{parent}{delimiter}{field}'.format(parent=diff_item.line,field=diff_item_within_group.line,delimiter=delimiter) if len(diff_item_within_group.line)>0 else diff_item.line
+                            diff_item_which_flag_we_grab = diff_item if item_first_meaning_parent_group else diff_item_within_group
+                            if diff_item_which_flag_we_grab.flag=='keep':
+                                item_add = DiffItemKeep(name_with_parent_part_added)
+                            elif diff_item_which_flag_we_grab.flag=='insert':
+                                item_add = DiffItemInsert(name_with_parent_part_added)
+                            elif diff_item_which_flag_we_grab.flag=='remove':
+                                item_add = DiffItemRemove(name_with_parent_part_added)
+                            else:
+                                raise AttributeError('which diff flag???')
+                            diff_within_group.append(item_add)
+                            item_first_meaning_parent_group = False
+                        for r in diff_within_group:
+                            diff_results_grouping_expanded.append(r)
+            return diff_results_grouping_expanded
+    except MDMDiffWrappersGroupingMissingParentException as e:
+        print('Error: find diff in item names with grouping: failed at {level}: {e}'.format(level=level if level else 'root',e=e))
+        raise e
 
 
 
