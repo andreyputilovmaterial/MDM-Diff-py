@@ -568,6 +568,15 @@ def read_excel(filename):
                 row_name = trim(df_thissheet_clean.iloc[linenumber,0])
                 if (linenumber==range_lines_to_work_with[0]) and len(row_name) == 0:
                     row_name = '-' # just something to start with
+                if section_label_dict[linenumber] == '### FOOTER ###':
+                    if re.match(r'^\s*?Statistics\s*?:\s.*?',row_name,flags=re.I):
+                        row_name = 'statistics'
+                    elif re.match(r'^\s*?Table \d+.*?',row_name,flags=re.I):
+                        row_name = 'table ###'
+                    else:
+                        row_name = row_name[:10]
+
+
                 row_name_empty = not(len(row_name)>0)
                 if not row_name_empty:
                     row_name = '{global_section_name}{separator}{inner_row_name}'.format(
