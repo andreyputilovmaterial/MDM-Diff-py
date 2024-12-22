@@ -28,6 +28,7 @@ COPY ..\run_calling_bundle.bat .\run_mdd_diff.bat
 COPY ..\run_calling_bundle_mdd_report.bat .\run_mdd_report.bat
 COPY ..\run_calling_bundle_textfile.bat .\run_diff_textfile.bat
 COPY ..\run_calling_bundle_excel.bat .\run_diff_excel.bat
+COPY ..\run_calling_bundle_excel_wholedirectory.bat .\run_diff_excel_wholedirectory.bat
 @REM REN mdmtoolsap_bundle.py mdmtoolsap.py
 @REM powershell -Command "(gc 'run_mdd_diff.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap.py' | Out-File -encoding 'Default' 'run_mdd_diff.bat'"
 @REM powershell -Command "(gc 'run_mdd_diff_routing.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap.py' | Out-File -encoding 'Default' 'run_mdd_diff_routing.bat'"
@@ -37,6 +38,7 @@ powershell -Command "(gc 'run_mdd_diff.bat' -encoding 'Default') -replace '(dist
 powershell -Command "(gc 'run_mdd_report.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap_bundle.py' | Out-File -encoding 'Default' 'run_mdd_report.bat'"
 powershell -Command "(gc 'run_diff_textfile.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap_bundle.py' | Out-File -encoding 'Default' 'run_diff_textfile.bat'"
 powershell -Command "(gc 'run_diff_excel.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap_bundle.py' | Out-File -encoding 'Default' 'run_diff_excel.bat'"
+powershell -Command "(gc 'run_diff_excel_wholedirectory.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap_bundle.py' | Out-File -encoding 'Default' 'run_diff_excel_wholedirectory.bat'"
 COPY .\run_mdd_diff.bat .\run_mdd_diff_routing.bat
 powershell -Command "(gc 'run_mdd_diff_routing.bat' -encoding 'Default') -replace '--config-features\s+\w[\w,]*\w', '--config-features label' | Out-File -encoding 'Default' 'run_mdd_diff_routing.bat'"
 powershell -Command "(gc 'run_mdd_diff_routing.bat' -encoding 'Default') -replace '--config-section\s+\w[\w,]*\w', '--config-section routing' | Out-File -encoding 'Default' 'run_mdd_diff_routing.bat'"
