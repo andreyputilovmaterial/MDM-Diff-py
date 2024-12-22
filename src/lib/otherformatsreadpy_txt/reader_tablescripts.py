@@ -78,6 +78,27 @@ class TableSplitter:
 
 
 
+def syntaxpreprocessor_table_reordergridsummarytablesummaryof(txt):
+    def reorder(txt):
+        parts = [ p.strip() for p in txt.split(',') ]
+        parts.sort()
+        return ','.join(parts)
+    return re.sub(r'(\bgridsummary\w*\s*?\(\s*?\s*?tabledoc\s*?,\s*?"[^\n]*?\s*?,\s*?"\s*?\w+\s*?"s*?,\s*?")(\s*?\w+\s*?(?:\s*?,\s*?\w+\s*?)*?)(\s*?"[^\n]*?\))',lambda m:'{part1}{part2}{part3}'.format(part1=m[1],part2=reorder(m[2]),part3=m[3]),txt,flags=re.I)
+
+def syntaxpreprocessor_table_normalizelinebreaks(txt):
+    return re.sub(
+        r'("!)(.*?)(!")',
+        lambda m: '{opening}{content_escaped}{closingpart}'.format(opening=m[1],closingpart=m[3],content_escaped=re.sub(r'[\n]','\\\\n',m[2],flags=re.M|re.DOTALL|re.I)),
+        re.sub(
+            r"('!)(.*?)(!')",
+            lambda m: '{opening}{content_escaped}{closingpart}'.format(opening=m[1],closingpart=m[3],content_escaped=re.sub(r'[\n]','\\\\n',m[2],flags=re.M|re.DOTALL|re.I)),
+            txt,
+            flags=re.M|re.DOTALL|re.I
+        ),
+        flags=re.M|re.DOTALL|re.I
+    )
+
+
 def syntaxextractor_title_comment(txt,fields):
     name = 'title_comment'
     matches = re.match("^\s*?'{10}'*?\s*?\n\s*?'{3}'*\s*([^\n]*?)\s*?\n\s*?'{10}'*?\s*?\n.*?$",txt,flags=re.M|re.DOTALL|re.I)
@@ -224,6 +245,11 @@ syntaxextractors = [
     syntaxextractor_table_filters,
 ]
 
+syntaxpreprocessors = [
+    syntaxpreprocessor_table_normalizelinebreaks,
+    syntaxpreprocessor_table_reordergridsummarytablesummaryof,
+]
+
 
 
 
@@ -270,25 +296,17 @@ def read(textfilecontents,added_data):
 
     parts = TableSplitter(textfilecontents)
     table_number = 0
-    for part in parts:
-        def normalizelinebreaks(txt):
-            return re.sub(
-                r'("!)(.*?)(!")',
-                lambda m: '{opening}{content_escaped}{closingpart}'.format(opening=m[1],closingpart=m[3],content_escaped=re.sub(r'[\n]','\\\\n',m[2],flags=re.M|re.DOTALL|re.I)),
-                re.sub(
-                    r"('!)(.*?)(!')",
-                    lambda m: '{opening}{content_escaped}{closingpart}'.format(opening=m[1],closingpart=m[3],content_escaped=re.sub(r'[\n]','\\\\n',m[2],flags=re.M|re.DOTALL|re.I)),
-                    txt,
-                    flags=re.M|re.DOTALL|re.I
-                ),
-                flags=re.M|re.DOTALL|re.I
-            )
-        part = normalizelinebreaks(part)
+    for tabscript in parts:
+
+        for syntaxpreprocessor in syntaxpreprocessors:
+            tabscript = syntaxpreprocessor(tabscript)
+        
         table_def = {
-            'rawtextcontents': part
+            'rawtextcontents': tabscript
         }
+
         for syntaxparser in syntaxextractors:
-            name,matching_piece = syntaxparser(part,table_def)
+            name,matching_piece = syntaxparser(tabscript,table_def)
             table_def = {**table_def,**{name:matching_piece}}
             if not (name in column_specs):
                 column_specs.append(name)
