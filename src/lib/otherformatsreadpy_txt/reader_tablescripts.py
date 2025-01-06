@@ -72,6 +72,7 @@ class TableSplitter:
             pos = delim
             parts.append(self.data[start:pos])
             start = pos
+        parts.append(self.data[start:])
         return iter(parts)
 
 
