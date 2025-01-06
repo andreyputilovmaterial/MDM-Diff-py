@@ -1,12 +1,8 @@
-from pathlib import Path
 import re
-import argparse
-import json
 from datetime import datetime, timezone
 
 
 import pandas as pd
-import numpy as np # needed for correct handling of pandas types when converting to json - pandas types are based on numpy
 
 
 
@@ -17,6 +13,8 @@ CONFIG_NAME_DELIMITER = ' / '
 
 
 def trim(s):
+    if s==0:
+        return '0'
     if not s:
         return ''
     return '{s}'.format(s=s).strip()
@@ -30,47 +28,8 @@ class MDMExcelReadFormatException(Exception):
 
 
 
-
-def special_lrw_read_index_sheet(df_mainpage):
-    result = []
-    result_metadata = []
-
-    if not ( len( df_mainpage.loc[ df_mainpage[ df_mainpage.columns[0] ].astype('str').str.contains(r'^\s*?Table of Contents\s*?$',regex=True,case=False) ] )>0 ):
-        raise MDMExcelReadFormatException
-    
-    rows = [ df_mainpage.iloc[idx,0] for idx in range(0,len(df_mainpage)) ]
-    section_currentlyreading = 'preface'
-    print('reading excel: reading table names')
-    for rownumber,row in enumerate(rows):
-        row_txt = row
-        if re.match(r'^\s*?$',row_txt):
-            continue
-        else:
-            if re.match(r'^\s*?Table of Contents\s*?$',row_txt,flags=re.I):
-                #section_currentlyreading = 'banner_row'
-                section_currentlyreading = 'tables'
-                continue
-        if (section_currentlyreading=='tables'):
-            matches = re.match(r'^\s*?(?:T|Table)\s*?(\d+)\s*?-\s*(.*?)\s*$',row_txt,flags=re.I)
-            if not matches:
-                raise MDMExcelReadFormatException('reading excel: indexsheet: Reading list of tables, passed beyound "Table of Contents", expecting "Table 1 - ...", found something else, unexpected line = {l}, text = {t}'.format(l=row,t=row_txt))
-            tablenum = int(matches[1])
-            tabletitle = matches[2]
-            result.append({
-                'number': tablenum,
-                'title': tabletitle,
-                'name': tabletitle,
-                'columns': ['name'],
-                'column_headers': {},
-                'content': []
-            })
-        elif (section_currentlyreading=='preface'):
-            if len(trim(row_txt))>0:
-                result_metadata.append({'name':'line {d}'.format(d=rownumber),'value':trim(row_txt)})
-        else:
-            raise AttributeError('reading excel: indexsheet: Reading list of tables, passed beyound "Table of Contents", expecting "Table 1 - ...", found something else, unexpected line = {l}, text = {t}'.format(l=row,t=row_txt))
-    
-    # check that table names are unique
+def lrwexcel_indexsheet_sectionnames_make_unique(section_defs):
+    result = [ {**sec_def} for sec_def in section_defs ]
     table_names_already_used = []
     for section_def in result:
         table_name = section_def['name']
@@ -86,15 +45,84 @@ def special_lrw_read_index_sheet(df_mainpage):
             section_def['name'] = table_name_override_suggest
             print('WARNING: duplicate table names: renaming a table to "{tabtitle}"'.format(tabtitle=table_name_override_suggest))
         table_names_already_used.append(table_name)
+    return result
+
+def lrwexcel_read_index_sheet(df_mainpage):
+
+    def validate_check_toc(df_mainpage):
+        return ( len( df_mainpage.loc[ df_mainpage[ df_mainpage.columns[0] ].astype('str').str.contains(r'^\s*?Table of Contents\s*?$',regex=True,case=False) ] )>0 )
+    
+    def detect_toc_row_type(row_txt,prev_results):
+        if re.match(r'^\s*?$',row_txt):
+            return 'blank'
+        elif re.match(r'^\s*?Table of Contents\s*?$',row_txt,flags=re.I):
+            return 'toc'
+        elif 'toc' in prev_results:
+            if re.match(r'^\s*?(?:T|Table)\s*?(\d+)\s*?-\s*(.*?)\s*$',row_txt,flags=re.I):
+                return 'table'
+            else:
+                raise MDMExcelReadFormatException('reading excel: indexsheet: Reading list of tables, passed beyound "Table of Contents", expecting "Table 1 - ...", found something else, unexpected line = {l}, text = {t}'.format(l=row,t=row_txt))
+        else:
+            return 'preface'
+    
+    result = []
+    result_metadata = []
+
+    if not validate_check_toc(df_mainpage):
+        raise MDMExcelReadFormatException
+    
+    rows = [ df_mainpage.iloc[idx,0] for idx in range(0,len(df_mainpage)) ]
+
+    row_type_prev_results = []
+    print('reading excel: reading table names')
+    for rownumber,row in enumerate(rows):
+        
+        row_txt = row
+        row_type = detect_toc_row_type(row_txt,row_type_prev_results)
+        row_type_prev_results.append(row_type)
+
+        if row_type=='blank':
+            continue
+        elif row_type=='toc':
+            continue
+        elif row_type=='table':
+            matches = re.match(r'^\s*?(?:T|Table)\s*?(\d+)\s*?-\s*(.*?)\s*$',row_txt,flags=re.I)
+            if not matches:
+                raise MDMExcelReadFormatException('reading excel: indexsheet: Reading list of tables, passed beyound "Table of Contents", expecting "Table 1 - ...", found something else, unexpected line = {l}, text = {t}'.format(l=row,t=row_txt))
+            tablenum = int(matches[1])
+            tabletitle = matches[2]
+            result.append({
+                'number': tablenum,
+                'title': tabletitle,
+                'name': tabletitle,
+                'columns': ['name'],
+                'column_headers': {},
+                'content': []
+            })
+        elif row_type=='preface':
+            if len(trim(row_txt))>0:
+                if re.match(r'^\s*?(\w[\w\s]*?)\s*?:.*?$',row_txt,flags=re.I|re.DOTALL):
+                    m = re.match(r'^\s*?(\w[\w\s]*?)\s*?:\s*(.*?)\s*$',row_txt,flags=re.I|re.DOTALL)
+                    prop_name = m[1]
+                    prop_value = m[2]
+                    result_metadata.append({'name':prop_name,'value':trim(prop_value)})
+                else:
+                    result_metadata.append({'name':'line {d}'.format(d=rownumber),'value':trim(row_txt)})
+                    # result_metadata.append({'name':'','value':trim(row_txt)})
+        else:
+            raise AttributeError('reading excel: indexsheet: Reading list of tables, passed beyound "Table of Contents", expecting "Table 1 - ...", found something else, unexpected line = {l}, text = {t}'.format(l=row,t=row_txt))
+    
+    # check that table names are unique
+    result = lrwexcel_indexsheet_sectionnames_make_unique(result)
         
     return result, result_metadata
 
 
 
-def add_or_find_section_entry(sections_to_look_for,sheet_name):
+def lrwexcel_pick_section_entry_or_create_if_missing(sections_to_look_for,sheet_name):
     table_defs = sections_to_look_for
     table_defs_matching = [ tab for tab in [ tab for tab in table_defs if 'number' in tab and tab['number']>0 ] if 'T{n}'.format(n=tab['number'])==sheet_name ]
-    if len(table_defs_matching)!=1:
+    if len(table_defs_matching)==0:
         #raise ValueError('reading excel: tab def not found for {n} (we are reading sheet "{n}" but we were not able to grab this table title from index sheet)'.format(n=sheet_name))
         section_def_add = {
             'name': sheet_name,
@@ -158,10 +186,10 @@ def read_excel(filename):
     if 'IndexSheet' in sheet_names and 'T1' in sheet_names: # lrw format - trying to read TOC (table of contents)
         # lrw format - we are expecting that here, on "IndexSheet", there is a line "Table of Contents", and a list of tables below
         # if there is, we grab table names, and set is_detected_known_format = 'lrw'
-        df_mainpage = xls.parse(sheet_name='IndexSheet', index_col=None).fillna(0)
+        df_mainpage = xls.parse( sheet_name='IndexSheet', index_col=None, header=None ).fillna(0)
         print('reading excel: reading index sheet')
         try:
-            result,result_metadata = special_lrw_read_index_sheet(df_mainpage)
+            result,result_metadata = lrwexcel_read_index_sheet(df_mainpage)
             data['sections'].extend( result )
             data['source_file_metadata'].extend( result_metadata )
             is_detected_known_format = 'lrw'
@@ -177,6 +205,9 @@ def read_excel(filename):
         if is_detected_known_format=='lrw':
             return  re.match(r'^\s*?(?:T|Table)\s*?\d+\s*?$',sheet_name,flags=re.I)
         return True
+    
+    if not is_detected_known_format:
+        raise MDMExcelReadFormatException('not lrw format')
 
     for sheet_name in [ sheet_name for sheet_name in sheet_names if is_meaningful_sheet(sheet_name) ]:
 
@@ -185,7 +216,7 @@ def read_excel(filename):
             print('reading excel: sheet: {sh}'.format(sh=sheet_name))
             df_thissheet = xls.parse(sheet_name=sheet_name, index_col=None, header=None)
 
-            tab_def = add_or_find_section_entry(sections_to_look_for=data['sections'],sheet_name=sheet_name)
+            tab_def = lrwexcel_pick_section_entry_or_create_if_missing(sections_to_look_for=data['sections'],sheet_name=sheet_name)
             
             # inspect sheet contents
             # data_areas_within_sheet = recognize_data_areas_within_sheet() # TODO:
@@ -657,47 +688,3 @@ def read_excel(filename):
 
 
 
-def json_dump_defaulthandler(obj):
-    if type(obj).__module__ == np.__name__:
-        if isinstance(obj,np.ndarray):
-            return obj.tolist()
-        else:
-            return obj.item()
-    raise TypeError('Unknown type: ',type(obj))
-
-
-
-def entry_point(config={}):
-    time_start = datetime.now()
-    parser = argparse.ArgumentParser(
-        description="Create a JSON suitable for mdmtoolsap tool, reading a file as text",
-        prog='mdmtoolsap --program read_excel'
-    )
-    parser.add_argument(
-        '--inpfile',
-        help='Input file',
-        type=str,
-        required=True
-    )
-    args = None
-    args_rest = None
-    if( ('arglist_strict' in config) and (not config['arglist_strict']) ):
-        args, args_rest = parser.parse_known_args()
-    else:
-        args = parser.parse_args()
-    inp_file = Path(args.inpfile)
-
-    print('reading Excel: opening {fname}, script started at {dt}'.format(dt=time_start,fname=inp_file))
-
-    data = read_excel(inp_file)
-
-    result_json_fname = ( Path(inp_file).parents[0] / '{basename}{ext}'.format(basename=Path(inp_file).name,ext='.json') if Path(inp_file).is_file() else re.sub(r'^\s*?(.*?)\s*?$',lambda m: '{base}{added}'.format(base=m[1],added='.json'),'{path}'.format(path=inp_file)) )
-    print('reading Excel: saving as "{fname}"'.format(fname=result_json_fname))
-    outfile = open(result_json_fname, 'w')
-    outfile.write(json.dumps(data, indent=4, default=json_dump_defaulthandler))
-
-    time_finish = datetime.now()
-    print('reading Excel: finished at {dt} (elapsed {duration})'.format(dt=time_finish,duration=time_finish-time_start))
-
-if __name__ == '__main__':
-    entry_point({'arglist_strict':True})

@@ -13,3 +13,6 @@
 [submodule "src/lib/otherformatsreadpy_metadata/lib/MDM-Syntax-Parser-py"]
 	path = src/lib/otherformatsreadpy_metadata/lib/mdmparser
 	url = https://github.com/andreyputilovmaterial/MDM-Syntax-Parser-py.git
+[submodule "src/lib/otherformatsreadpy_general_msmarkitdown/lib/markitdown"]
+	path = src/lib/otherformatsreadpy_general_msmarkitdown/lib/markitdown
+	url = https://github.com/microsoft/markitdown.git

@@ -13,21 +13,24 @@ if __name__ == '__main__':
     import diff
     from lib.mdmreadpy import read_mdd
     from lib.otherformatsreadpy_txt import read as read_txt
-    from lib.otherformatsreadpy_excel import read_excel as read_excel
+    from lib.otherformatsreadpy_general_msmarkitdown import read as read_msmarkitdown
+    from lib.otherformatsreadpy_excel import read_excel_entry as read_excel
     from lib.mdmreadpy.lib.mdmreportpy import report_create
 elif '.' in __name__:
     # package
     from . import diff
     from .lib.mdmreadpy import read_mdd
     from .lib.otherformatsreadpy_txt import read as read_txt
-    from .lib.otherformatsreadpy_excel import read_excel as read_excel
+    from .lib.otherformatsreadpy_general_msmarkitdown import read as read_msmarkitdown
+    from .lib.otherformatsreadpy_excel import read_excel_entry as read_excel
     from .lib.mdmreadpy.lib.mdmreportpy import report_create
 else:
     # included with no parent package
     import diff
     from lib.mdmreadpy import read_mdd
     from lib.otherformatsreadpy_txt import read as read_txt
-    from lib.otherformatsreadpy_excel import read_excel as read_excel
+    from lib.otherformatsreadpy_general_msmarkitdown import read as read_msmarkitdown
+    from lib.otherformatsreadpy_excel import read_excel_entry as read_excel
     from lib.mdmreadpy.lib.mdmreportpy import report_create
 
 
@@ -51,6 +54,9 @@ def call_read_excel_program():
 def call_read_txt_program():
     return read_txt.entry_point({'arglist_strict':False})
 
+def call_read_msmarkitdown_program():
+    return read_msmarkitdown.entry_point({'arglist_strict':False})
+
 def call_report_program():
     return report_create.entry_point({'arglist_strict':False})
 
@@ -66,6 +72,7 @@ run_programs = {
     'read_mdd': call_read_mdd_program,
     'read_txt': call_read_txt_program,
     'read_excel': call_read_excel_program,
+    'read_msmarkitdown': call_read_msmarkitdown_program,
     'report': call_report_program,
     'test': call_test_program,
 }
