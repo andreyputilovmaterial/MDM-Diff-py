@@ -434,7 +434,7 @@ def read_excel(filename):
                 if re.match(r'^\s*?[^\w]*?\bBase\b.*?',rowlabel,flags=re.I):
                     flags.append('base')
                 if re.match(r'^\s*?[^\w]*?\bBase\b\s*?[^\w]*?.*?\w.*?',rowlabel,flags=re.I):
-                    section_name = re.sub(r'^\s*?[^\w]*?\bBase\b\s*?[^\w]*().*?\w.*?)\s*$',lambda m: m[1],rowlabel,flags=re.I)
+                    section_name = re.sub(r'^\s*?[^\w]*?\bBase\b\s*?[^\w]*?(.*?\w.*?)\s*$',lambda m: m[1],rowlabel,flags=re.I)
                     flags.append('section-name-defined-at-base')
                 elif 'unique' in flags:
                     section_name = rowlabel
