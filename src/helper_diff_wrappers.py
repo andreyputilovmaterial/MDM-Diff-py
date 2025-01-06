@@ -22,16 +22,25 @@ else:
 
 
 
+
 def text_split_words(s):
-    addcounter = 0
-    delimiter = '<<@{cnt}>>'.format(cnt=addcounter)
-    while True:
-        if not(delimiter in s):
-            break
-        else:
-            addcounter = addcounter + 1
-            delimiter = '<<@{cnt}>>'.format(cnt=addcounter)
-    return re.sub(r'((?:\w+)|(?:\r?\n)|(?:\s+))',lambda m:'{delimiter}{preserve}{delimiter}'.format(preserve=m[1],delimiter=delimiter),s).split(delimiter)
+    class Splitter:
+        def __init__(self,data):
+            self.data = data
+            self.delimiter = r"(?:\w*?_|\w+|\s+|.)"
+            
+        def __iter__(self):
+            delimiters = re.finditer(self.delimiter,self.data,flags=re.M|re.DOTALL|re.I)
+            delimiters = [ delim.start(0) for delim in delimiters ]
+            parts = []
+            start = 0
+            for delim in delimiters:
+                pos = delim
+                parts.append(self.data[start:pos])
+                start = pos
+            parts.append(self.data[start:])
+            return iter(parts)
+    return [a for a in Splitter(s)]
 
 def text_split_lines(s):
     return s.split("\n")
