@@ -58,6 +58,12 @@ def entry_point(config={}):
 
     data = None
     data_fetched = False
+    # we don't know if the excel is following format of lrw excel
+    # if we should read it as lrw
+    # so we trt to read it as lrw
+    # if it's not, we read it as general
+    # the other possibility when reading excels (that is not mentioned here) is to read it with ms markitdown
+    # maybe it can be a better option in some cases
     try:
         data = read_excel_lrw.read_excel(inp_file)
         data_fetched = True

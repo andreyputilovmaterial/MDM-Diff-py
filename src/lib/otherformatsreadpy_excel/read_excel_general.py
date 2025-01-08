@@ -5,13 +5,35 @@ from datetime import datetime, timezone
 import pandas as pd
 
 
+# this file is used to read excel
+
+# in general way
+# first we try to read as lrw
+# if can't, we read using funcitons here
+
+# the other possibility when reading excels (that is not mentioned here) is to read it with ms markitdown
+# maybe it can be a better option in some cases
+
+# maybe comments here are too extensive, sometimes unnecessary
+# but it's nice to have, it's easier to read
 
 
-# CONFIG_NAME_DELIMITER = ' ---->>>> '
+
+
+
+# this was used for processing rows in groups
+# for example, if there's a group of rows for "Netflix" or "Hulu" stubs, including Base, Likelihood to recommend, or some scale, and these rows are moved - it si processed as a group
+# but if fact we are not using grouping when processing excel tabs
+# because grouping implies certain structure (as designed in diff script) - every group must have a parent item
+# and we don't follow that standard in tabs (we can add a parent empty item but why?)
+# but adding group names is still useful so that we correctly identify which group does every row belong to
+# for example, if there's a scale, we should know if it's for Disney or Netflix or Hulu
 CONFIG_NAME_DELIMITER = ' / '
 
 
 
+# I used to trim whitespaces everywhere
+# adding trim() fn is not a pythonic way but it follows the same standards I am using elsewhere
 def trim(s):
     if s==0:
         return '0'
@@ -21,7 +43,9 @@ def trim(s):
 
 
 
-
+# detects cell content type
+# return certain flags - flag if numeric, flag if blank, etc...
+# but flags are single-punch: only one value is returned - it can be numeric, OR blank, or ... something else, but not a combination
 def detect_cell_type(v):
     if v==0:
         return 'numeric'
@@ -41,6 +65,7 @@ def detect_cell_type(v):
 
 
 
+# this fn detects col type for every column within area - if it's blank, if its values are unique, if all cell values are numeric, etc...
 def gather_columns_info(df_thissheet):
 
     blank_rows = []
@@ -89,7 +114,12 @@ def trim_rows(df):
     return df
 
 
-def is_valid_header(row):
+# helper fn
+# we check if we can use the first row as a banner
+# it is very common that the first row is banner
+# but not always
+# the condition is the following: no blank values and no duplicates
+def is_valid_banner(row):
     vals_used = []
     is_good = True
     for s in row:
@@ -102,7 +132,10 @@ def is_valid_header(row):
     return is_good
 
 
-def recognize_data_areas_within_sheet(df_thissheet):
+# first we find areas with data on the sheet
+# sometimes a sheet includes seveval blocks of data
+# even Grant is using it in mapping, painless, flatout, reshape...
+def find_data_areas_within_sheet(df_thissheet):
     # chectsheet: get contents of (x,y): df_thissheet.iloc[x,y]
 
     columns = gather_columns_info(df_thissheet)
@@ -124,7 +157,7 @@ def recognize_data_areas_within_sheet(df_thissheet):
 
 
 
-
+# main entry point
 def read_excel(filename):
 
     xls = pd.ExcelFile(filename,engine='openpyxl')
@@ -154,6 +187,9 @@ def read_excel(filename):
 
     }
     column_zero = 'axis(side)' # that's how we call column 0 by default; and row 0 should be called "axis(top)"" then
+
+    # a helper fn to suggest column name that is used as an ID
+    # basically we are trying to use cell contents as a name, but we can modify or add something to ensure it's unique
     def get_column_id(col,try_certain_id=None):
         if try_certain_id:
             name_preliminary = try_certain_id
@@ -173,16 +209,23 @@ def read_excel(filename):
     # print('reading excel: reading whole file')
     # df = xls.parse( sheet_name=None, index_col=None, header=0)
 
+    # this helper fn was used in lrw-type excels (now implemented in a separate file)
+    # like the sheet with TOC is meaningless and the sheet with data is meaningful
+    # so I still keep this as a place for code so that I can add logic here
+    # but in fact I don't know what can be checked if we don't know anything about the excel being read
+    # so I just return true
     def is_meaningful_sheet(sheet_name):
         return True
 
+    # ok, go for it and iterate over all sheets with data
     for sheet_name in [ sheet_name for sheet_name in sheet_names if is_meaningful_sheet(sheet_name) ]:
 
         try:
 
             print('reading excel: sheet: {sh}'.format(sh=sheet_name))
 
-            tab_def = {
+
+            resulting_tab_def = {
                 'name': sheet_name,
                 'columns': ['name'],
                 'column_headers': {},
@@ -190,17 +233,22 @@ def read_excel(filename):
             }
             
             # inspect sheet contents
-            data_areas_within_sheet = recognize_data_areas_within_sheet(xls.parse(sheet_name=sheet_name, index_col=None, header=None).fillna(''))
+            data_areas_within_sheet = find_data_areas_within_sheet(xls.parse(sheet_name=sheet_name, index_col=None, header=None).fillna(''))
 
+            # then process every area (yeah such comments are unnecessary)
             for df in data_areas_within_sheet:
+
+                # detect types of columns - which are blank, or contain unique identifiers
                 columns_data = gather_columns_info(df)
+
+                # in ID for index col
                 idcol = -1
                 if len(columns_data)>0 and columns_data[0]['is_unique']:
                     idcol = 0
                 if len(columns_data)>1 and columns_data[0]['is_unique'] and columns_data[0]['is_numeric'] and columns_data[1]['is_unique'] and not columns_data[1]['is_numeric']:
                     idcol = 1
                 header_index = -1
-                if is_valid_header(df.iloc[0,0:]):
+                if is_valid_banner(df.iloc[0,0:]):
                     header_index = 0
                     for c in range(0,len(df.columns)):
                         columns_data[c]['name'] = df.iloc[0,c]
@@ -208,6 +256,8 @@ def read_excel(filename):
                     header_index = -1
                     for c in range(0,len(df.columns)):
                         columns_data[c]['name'] = 'Column #{n}'.format(n=c)
+                
+                # prep what we store as column names (banner points)
                 col_names = [ c['name'] for c in columns_data ]
                 col_labels = {}
                 for c in col_names:
@@ -216,11 +266,12 @@ def read_excel(filename):
                         data['report_scheme']['columns'].append(c)
                     if not (c in data['report_scheme']['column_headers']):
                         data['report_scheme']['column_headers'][c] = c
-                    if not (c in tab_def['columns']):
-                        tab_def['columns'].append(c)
-                    if not (c in tab_def['column_headers']):
-                        tab_def['column_headers'][c] = c
+                    if not (c in resulting_tab_def['columns']):
+                        resulting_tab_def['columns'].append(c)
+                    if not (c in resulting_tab_def['column_headers']):
+                        resulting_tab_def['column_headers'][c] = c
                 
+                # ok, process data!
                 for rownumber in range(header_index+1,len(df)):
                     r = df.iloc[rownumber,0:]
                     if len(r)>0:
@@ -229,17 +280,11 @@ def read_excel(filename):
                         }
                         for c in range(0,len(r)):
                             row[columns_data[c]['name']] = r.iat[c]
-                        tab_def['content'].append(row)
+                        resulting_tab_def['content'].append(row)
+            
+            # done!
+            data['sections'].append(resulting_tab_def)
                 
-            data['sections'].append(tab_def)
-                
-
-            # rows = df_thissheet_clean.index
-            # cols = df_thissheet_clean.columns
-
-            # # print(tab_def)
-            # # for row in rows[0:15]:
-            # #     print('[ {s} ]'.format(s=' . '.join( [ '( "{col}": "{data}" )'.format(col=col,data=df_thissheet_clean.loc[row,col]) for col in cols ] )[0:100]))
 
         except Exception as e:
             print('reading excel: failed when reading sheet "{sn}"'.format(sn=sheet_name))
