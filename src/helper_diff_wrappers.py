@@ -22,6 +22,12 @@ else:
 
 
 
+def is_empty(s):
+    if s==0:
+        return False
+    else:
+        return not s
+
 
 def text_split_words(s):
     class Splitter:
@@ -328,6 +334,10 @@ def process_make_name_prop_unique(file_l_sectiondata,file_r_sectiondata,columns_
     
 
 
+# this is a very common function that I am using
+# the diffing fn is designed to return a patch
+# but very often I need a list with all items, every item indicated if it was persisted, added, or removed
+# so this is converting patch to a list
 def diff_combine_similar_records( diff_data ):
     for i in range(len(diff_data)):
         if i>0:
@@ -344,22 +354,9 @@ def diff_combine_similar_records( diff_data ):
     return diff_data
 
 
-# def diff_update_records(diff_data,update_cb):
-#     data_upd = []
-#     for part in diff_data:
-#         if (part.flag=='keep'):
-#             data_upd.append(DiffItemKeep(update_cb(part.line)))
-#         elif (part.flag=='insert'):
-#             data_upd.append(DiffItemInsert(update_cb(part.line)))
-#         elif (part.flag=='remove'):
-#             data_upd.append(DiffItemRemove(update_cb(part.line)))
-#         else:
-#             raise ValueError('diff flag not recognized: "{flag}"'.format(flag=part.flag))
-#     return data_upd
-
 
 def check_if_includes_addedremoved_marker(data):
-    if not data:
+    if is_empty(data):
         return False
     if isinstance(data,list) and ([(True if 'name' in dict.keys(item) else False) for item in data].count(True)==len(data)):
         result = False
@@ -398,9 +395,9 @@ def check_if_includes_addedremoved_marker(data):
 
 
 def finddiff_values_propertylist_formatsidebyside( cmpdata_l, cmpdata_r ):
-    if not cmpdata_l:
+    if is_empty(cmpdata_l):
         cmpdata_l = []
-    if not cmpdata_r:
+    if is_empty(cmpdata_r):
         cmpdata_r = []
     cmpdata_l_prop_names = [ prop['name'] for prop in cmpdata_l ]
     cmpdata_r_prop_names = [ prop['name'] for prop in cmpdata_r ]
@@ -446,9 +443,9 @@ def finddiff_values_propertylist_formatsidebyside( cmpdata_l, cmpdata_r ):
 
 
 def finddiff_values_text_formatsidebyside( cmpdata_l, cmpdata_r ):
-    if not cmpdata_l:
+    if is_empty(cmpdata_l):
         cmpdata_l = ''
-    if not cmpdata_r:
+    if is_empty(cmpdata_r):
         cmpdata_r = ''
     result_this_col_left = cmpdata_l
     result_this_col_right = cmpdata_r
@@ -523,9 +520,9 @@ def finddiff_values_text_formatsidebyside( cmpdata_l, cmpdata_r ):
     return result_this_col_left, result_this_col_right
 
 def finddiff_values_list_formatsidebyside( cmpdata_l, cmpdata_r ):
-    if not cmpdata_l:
+    if is_empty(cmpdata_l):
         cmpdata_l = []
-    if not cmpdata_r:
+    if is_empty(cmpdata_r):
         cmpdata_r = []
     list_combined = diff_make_combined_list( cmpdata_l, cmpdata_r )
     result_l = []
@@ -541,9 +538,9 @@ def finddiff_values_list_formatsidebyside( cmpdata_l, cmpdata_r ):
     return result_l, result_r
 
 def finddiff_values_dict_formatsidebyside( cmpdata_l, cmpdata_r ):
-    if not cmpdata_l:
+    if is_empty(cmpdata_l):
         cmpdata_l = {}
-    if not cmpdata_r:
+    if is_empty(cmpdata_r):
         cmpdata_r = {}
     props_left = [prop for prop in dict.keys(cmpdata_l)]
     props_right = [prop for prop in dict.keys(cmpdata_r)]
@@ -561,11 +558,11 @@ def finddiff_values_dict_formatsidebyside( cmpdata_l, cmpdata_r ):
     return result_l,result_r
 
 def finddiff_values_general_formatsidebyside( cmpdata_l, cmpdata_r ):
-    if not cmpdata_l and not cmpdata_r:
+    if is_empty(cmpdata_l) and is_empty(cmpdata_r):
         return '',''
     else:
         def detect_format(val):
-            if not val:
+            if is_empty(val):
                 return 'none'
             elif isinstance(val,list) and len(val)==0:
                 return 'none'
@@ -605,9 +602,9 @@ def finddiff_values_general_formatsidebyside( cmpdata_l, cmpdata_r ):
 
 
 def finddiff_values_propertylist_formatcombined( cmpdata_l, cmpdata_r ):
-    if not cmpdata_l:
+    if is_empty(cmpdata_l):
         cmpdata_l = []
-    if not cmpdata_r:
+    if is_empty(cmpdata_r):
         cmpdata_r = []
     cmpdata_l_prop_names = [ prop['name'] for prop in cmpdata_l ]
     cmpdata_r_prop_names = [ prop['name'] for prop in cmpdata_r ]
@@ -626,9 +623,9 @@ def finddiff_values_propertylist_formatcombined( cmpdata_l, cmpdata_r ):
     return result_this_col_combined
 
 def finddiff_values_text_formatcombined( cmpdata_l, cmpdata_r ):
-    if not cmpdata_l:
+    if is_empty(cmpdata_l):
         cmpdata_l = ''
-    if not cmpdata_r:
+    if is_empty(cmpdata_r):
         cmpdata_r = ''
     result_this_col_combined = {'parts':[]}
     if cmpdata_l==cmpdata_r:
@@ -675,9 +672,9 @@ def finddiff_values_text_formatcombined( cmpdata_l, cmpdata_r ):
     return result_this_col_combined
 
 def finddiff_values_list_formatcombined( cmpdata_l, cmpdata_r ):
-    if not cmpdata_l:
+    if is_empty(cmpdata_l):
         cmpdata_l = []
-    if not cmpdata_r:
+    if is_empty(cmpdata_r):
         cmpdata_r = []
     list_combined = diff_make_combined_list( cmpdata_l, cmpdata_r )
     result = []
@@ -691,9 +688,9 @@ def finddiff_values_list_formatcombined( cmpdata_l, cmpdata_r ):
     return result
 
 def finddiff_values_dict_formatcombined( cmpdata_l, cmpdata_r ):
-    if not cmpdata_l:
+    if is_empty(cmpdata_l):
         cmpdata_l = {}
-    if not cmpdata_r:
+    if is_empty(cmpdata_r):
         cmpdata_r = {}
     props_left = [prop for prop in dict.keys(cmpdata_l)]
     props_right = [prop for prop in dict.keys(cmpdata_r)]
@@ -707,11 +704,11 @@ def finddiff_values_dict_formatcombined( cmpdata_l, cmpdata_r ):
     return result
 
 def finddiff_values_general_formatcombined( cmpdata_l, cmpdata_r ):
-    if not cmpdata_l and not cmpdata_r:
+    if is_empty(cmpdata_l) and is_empty(cmpdata_r):
         return ''
     else:
         def detect_format(val):
-            if not val:
+            if is_empty(val):
                 return 'none'
             elif isinstance(val,list) and len(val)==0:
                 return 'none'
