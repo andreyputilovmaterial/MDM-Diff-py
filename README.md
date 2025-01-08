@@ -13,6 +13,12 @@ You obviously need some dependencies - python, IBM Professional... Just standard
 * Q: Why the chosen language is python?<br />A: I can't write it all in mrs scripts in VBScript. This language is too limited and too stupid. So I had to go for some other alternative, and python is fine, it's a simple scripting language and it has all necessary dependencies. My earier attempts were to keep code partially in mrs scripts but then I realized everything can be done in python so it's easier to opt for one single language. Also I have some additions in JS but this is designed itentionally to add some unnecessary code that runs separately just to beautify the page at the very last stage, add more control over it, add the ability to show or hide columns. But all JS here is unnecessary and can be removed for simplification
 * Q: Why are you doing this?<br />A: Everyone has some hobbies. I am not doing it at work/labor time. I find it interesting to find what we can do. It's some demonstrator of technologies. Maybe saying "tech" sounds too loud when I did not actually invent anything outstanding here - I am just reading fields utilizing existing API and writing it to HTML - nothing extraordinary - but I believe it can be developed to more sophisticated shapes.
 
+## Which types of files can be compared?
+* MDD files. That's why this tool was invented. It can also compare it with routing or with translations. It is configurable, it can handle.
+* Excel tabs. This is maybe even more important than comparing MDDs
+* Any text files, including tab scripts and dms scripts. I highly recommend using it for DA exports
+* Any pdf, ppts, word, xlsx, even transcripted audio or images - everything that can be read with ms markitdown
+
 ## For End Users: how to debug?
 Ok, you are starting the tool and it crashes. Error messages report some problem and line number but you don't know where to check - where do you find that line number? Ok, there's a solution. Open mdmtoolsap_bundle.py and change CONFIG_VERBOSE to True (twice). Run the tool again. Ok, nothing changed, it crashes, it reportes the line number. But now you have modules saved in the same working folder where you start the script. So you can find the line number and see what is going on!
 
@@ -25,8 +31,3 @@ You need pinliner to run this, but the version found on internet was not working
 
 Everything else that is going on can be clearly found in the build.bat script - the bundle created is renamed to mdmtoolsap_bundle, couple more lines are added to get it running, the bat files are renamed, and the path to bundle is changed to mdmtoolsap_bundle within those bat files. Results are in dist/ subdirectory.
 
-## Biggest problems of this tool
-Ok we are here to talk about downsides.<br />I believe most important concerns are the following:
-* It can't handle everything. Yeah the tool is nice but I still want more from it
-* Memory consumptoion of large html reports.<br />Actually I did not look at it in very close detail but it looks the problem is just the number of rows and columns, just the whole size of tables. My code includes some js but it looks it does not make things much worse - the opposite - I am hiding certain sections and columns and it's making the page more efficient. I also tried to color some outputs more but it increases memory consumption a lot. The solution could be to select what we need more carefully, only show the necessary parts, not the whole content. The other solution could be to develop some sophisticated framework with ajax-loaded content and only load the visible part. But this is a different level of development, I wanted to keep this thing simple.
-* The price for support<br />I always wanted to keep this tool simple, but unfortunately I am actively using it and I always want something more, to see this tool smarter, to detect columns better, rows better, and having all different types of inputs - excel tabs of very different format, mdds from wa and from live projects, table scripts, dms code, etc... - the number of lines of code is growing and growing. I can handle it, not problem, it's easy for me. But this is growing out of limits that a different person can easily understand.
