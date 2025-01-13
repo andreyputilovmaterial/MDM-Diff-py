@@ -16,7 +16,7 @@ ECHO -
 ECHO 1. read MDD A
 ECHO read from: %MDD_A%
 ECHO write to: .json
-python dist/mdmtoolsap_bundle.py --program read_mdd --mdd "%MDD_A%" --config-features label,attributes,properties --config-section languages,shared_lists,fields,pages
+python dist/mdmtoolsap_bundle.py --program read_mdd --mdd "%MDD_A%" --config-features label,attributes,properties --config-section languages,shared_lists,fields,pages,routing
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b %errorlevel% )
 
 ECHO -
@@ -28,7 +28,7 @@ ECHO -
 ECHO 3. read MDD B
 ECHO read from: %MDD_B%
 ECHO write to: .json
-python dist/mdmtoolsap_bundle.py --program read_mdd --mdd "%MDD_B%" --config-features label,attributes,properties --config-section languages,shared_lists,fields,pages
+python dist/mdmtoolsap_bundle.py --program read_mdd --mdd "%MDD_B%" --config-features label,attributes,properties --config-section languages,shared_lists,fields,pages,routing
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b %errorlevel% )
 
 ECHO -
