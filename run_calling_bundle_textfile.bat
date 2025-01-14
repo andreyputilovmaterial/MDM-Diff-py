@@ -1,8 +1,8 @@
 @ECHO OFF
 
 
-SET "TEXTFILE_A=prepdatadms.dms"
-SET "TEXTFILE_B=prepdatadms.txt"
+SET "TEXTFILE_A=prepdatadms_20241231.txt"
+SET "TEXTFILE_B=prepdatadms_20250101.txt"
 
 
 set "TEXTFILE_A_JSON=%TEXTFILE_A%.json"

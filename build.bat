@@ -34,7 +34,7 @@ COPY ..\run_calling_bundle_excel_wholedirectory.bat .\run_diff_excel_wholedirect
 @REM REN mdmtoolsap_bundle.py mdmtoolsap.py
 @REM powershell -Command "(gc 'run_mdd_diff.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap.py' | Out-File -encoding 'Default' 'run_mdd_diff.bat'"
 @REM powershell -Command "(gc 'run_mdd_diff_routing.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap.py' | Out-File -encoding 'Default' 'run_mdd_diff_routing.bat'"
-@REM powershell -Command "(gc 'run_mdd_diff_with_translations.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap.py' | Out-File -encoding 'Default' 'run_mdd_diff_with_translations.bat'"
+@REM @REM powershell -Command "(gc 'run_mdd_diff_with_translations.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap.py' | Out-File -encoding 'Default' 'run_mdd_diff_with_translations.bat'"
 @REM powershell -Command "(gc 'run_mdd_report.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap.py' | Out-File -encoding 'Default' 'run_mdd_report.bat'"
 powershell -Command "(gc 'run_mdd_diff.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap_bundle.py' | Out-File -encoding 'Default' 'run_mdd_diff.bat'"
 powershell -Command "(gc 'run_mdd_report.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap_bundle.py' | Out-File -encoding 'Default' 'run_mdd_report.bat'"
@@ -47,8 +47,8 @@ REM powershell -Command "(gc 'run_mdd_diff_routing.bat' -encoding 'Default') -re
 REM powershell -Command "(gc 'run_mdd_diff_routing.bat' -encoding 'Default') -replace '--config-section\s+\w[\w,]*\w', '--config-section routing' | Out-File -encoding 'Default' 'run_mdd_diff_routing.bat'"
 REM powershell -Command "(gc 'run_mdd_diff_routing.bat' -encoding 'Default') -replace '--program diff', '--program diff --output-filename-suffix .routing' | Out-File -encoding 'Default' 'run_mdd_diff_routing.bat'"
 REM powershell -Command "(gc 'run_mdd_diff_routing.bat' -encoding 'Default') -replace '^(?:\s*?ECHO\s*?-\s*?`r?`n)?\s*?ECHO\b\s*?(?:2|4)\s*?\.\s*?generate\s+html\s*?`r?`n\s*?python\b\s*?[^`r?`n]*?\.py\s+--program\s+report[^`r?`n]*?\s*?`r?`n(?:\s*?if\b\s*?%ERRORLEVEL%[^`r?`n]*?\s*?`r?`n', '' | Out-File -encoding 'Default' 'run_mdd_diff_routing.bat'"
-COPY .\run_mdd_diff.bat .\run_mdd_diff_with_translations.bat
-powershell -Command "(gc 'run_mdd_diff_with_translations.bat' -encoding 'Default') -replace '--config-features\s+\w[\w,]*\w', '--config-features label,attributes,properties,translations' | Out-File -encoding 'Default' 'run_mdd_diff_with_translations.bat'"
+@REM COPY .\run_mdd_diff.bat .\run_mdd_diff_with_translations.bat
+@REM powershell -Command "(gc 'run_mdd_diff_with_translations.bat' -encoding 'Default') -replace '--config-features\s+\w[\w,]*\w', '--config-features label,attributes,properties,translations' | Out-File -encoding 'Default' 'run_mdd_diff_with_translations.bat'"
 POPD
 
 @REM ECHO Clear up ..\test_pinliner_results\...

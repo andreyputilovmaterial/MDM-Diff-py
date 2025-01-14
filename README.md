@@ -2,7 +2,7 @@
 A new iteration of diff between MDD files, Excel files (wow!), Tab Scripts, DMS, Text and many more formats. Much cleaner, all in python. No mrs vbscript code and much less js, all should be in python
 
 ## How to start it
-To get it running you only need mdmtoolsap.py and run_mdd_diff.bat. Just find the most recent release and download these 2 files.
+To get it running you only need mdmtoolsap.py and run_mdd_diff.bat (for comparing MDDs, or take a BAT file correspondnig your needs). Just find the most recent release and download these 2 files.
 
 Edit the BAT file and insert your MDD file names at the top.
 
