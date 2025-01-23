@@ -108,6 +108,15 @@
             "console": "integratedTerminal",
             "args": ["--program","diff","--cmp-scheme-left","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.007\\test_data\\R2400814 UNW Test FanshipVars BeforeUpdate.xlsx.json","--cmp-scheme-right","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.007\\test_data\\R2400814 UNW Test FanshipVars WithUpdate.xlsx.json"],
             "justMyCode": true
+        },
+        {
+            "name": "Python: Excel Columns Keyword Argument sttate issue",
+            "type": "python",
+            "request": "launch",
+            "program": "src/run_universal.py",
+            "console": "integratedTerminal",
+            "args": ["--program","read_excel","--inpfile","S:\\Personal Folders\\Putilov\\temp\\seg\\specs\\temp\\unprotected.xlsm"],
+            "justMyCode": false
         }
     ]
 }
