@@ -146,7 +146,7 @@ def find_data_areas_within_sheet(df_thissheet):
         if curr>=len(df_thissheet.columns):
             if curr-1>=start:
                 yield trim_rows(df_thissheet[[col for colindex,col in enumerate(df_thissheet.columns) if colindex in range(start,curr)]])
-                break
+            break
         if columns[curr]['is_empty']:
             if curr-1>=start:
                 yield trim_rows(df_thissheet[[col for colindex,col in enumerate(df_thissheet.columns) if colindex in range(start,curr)]])

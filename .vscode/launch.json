@@ -7,7 +7,7 @@
             "request": "launch",
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
-            "args": ["--program","diff","--cmp-scheme-left","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.007\\test_data\\p2301763_prevauto_20240111_clean.mdd.json","--cmp-scheme-right","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.007\\test_data\\p2401215_auto_20241106_clean.mdd.json"],
+            "args": ["--program","diff","--cmp-scheme-left","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\V2.008\\test_data\\p2301763_prevauto_20240111_clean.mdd.json","--cmp-scheme-right","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\V2.008\\test_data\\p2401215_auto_20241106_clean.mdd.json"],
             "justMyCode": true
         },
         {
@@ -16,7 +16,7 @@
             "request": "launch",
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
-            "args": ["--program","read_excel","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.007\\test_data\\R2401043STK WGT PCT Banner Main Market_FOP 1113.xlsx\""],
+            "args": ["--program","read_excel","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\V2.008\\test_data\\R2401043STK WGT PCT Banner Main Market_FOP 1113.xlsx\""],
             "justMyCode": true
         },
         {
@@ -25,7 +25,7 @@
             "request": "launch",
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
-            "args": ["--program","read_excel","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.007\\test_data\\R2401428 WGT HuluBanner1 12122024.xlsx\""],
+            "args": ["--program","read_excel","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\V2.008\\test_data\\R2401428 WGT HuluBanner1 12122024.xlsx\""],
             "justMyCode": true
         },
         {
@@ -34,7 +34,7 @@
             "request": "launch",
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
-            "args": ["--program","read_excel","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.007\\test_data\\R2301349 WGT BannerMOC_Us_Total.xlsx\""],
+            "args": ["--program","read_excel","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\V2.008\\test_data\\R2301349 WGT BannerMOC_Us_Total.xlsx\""],
             "justMyCode": true
         },
         {
@@ -43,7 +43,7 @@
             "request": "launch",
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
-            "args": ["--program","read_excel","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.007\\test_data\\Author_Specifications_mailchimpsmb_wave19.xlsm\""],
+            "args": ["--program","read_excel","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\V2.008\\test_data\\Author_Specifications_mailchimpsmb_wave19.xlsm\""],
             "justMyCode": true
         },
         {
@@ -52,7 +52,7 @@
             "request": "launch",
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
-            "args": ["--program","diff","--cmp-scheme-left","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.007\\test_data\\R2401428 WGT HuluBanner1 12042024.xlsx.json","--cmp-scheme-right","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.007\\test_data\\R2401428 WGT HuluBanner1 12122024.xlsx.json"],
+            "args": ["--program","diff","--cmp-scheme-left","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\V2.008\\test_data\\R2401428 WGT HuluBanner1 12042024.xlsx.json","--cmp-scheme-right","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\V2.008\\test_data\\R2401428 WGT HuluBanner1 12122024.xlsx.json"],
             "justMyCode": true
         },
         {
@@ -61,7 +61,7 @@
             "request": "launch",
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
-            "args": ["--program","report","--inpfile","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.007\\test_data\\report.diff.R2-3-40-0-8-1-3-4-9- WGT BannerMOC_Us_Total.xlsx.json"],
+            "args": ["--program","report","--inpfile","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\V2.008\\test_data\\report.diff.R2-3-40-0-8-1-3-4-9- WGT BannerMOC_Us_Total.xlsx.json"],
             "justMyCode": true
         },
         {
@@ -70,7 +70,7 @@
             "request": "launch",
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
-            "args": ["--program","report","--inpfile","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.007\\test_data\\p2301763_prevauto_20240111_clean.mdd.json"],
+            "args": ["--program","report","--inpfile","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\V2.008\\test_data\\p2301763_prevauto_20240111_clean.mdd.json"],
             "justMyCode": true
         },
         {
@@ -79,7 +79,7 @@
             "request": "launch",
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
-            "args": ["--program","read_excel","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.007\\test_data\\R2401043STK WGT PCT Banner Main Market_FOP 1113.xlsx\""],
+            "args": ["--program","read_excel","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\V2.008\\test_data\\R2401043STK WGT PCT Banner Main Market_FOP 1113.xlsx\""],
             "justMyCode": true
         },
         {
@@ -88,7 +88,7 @@
             "request": "launch",
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
-            "args": ["--program","diff","--cmp-scheme-left","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.007\\test_data\\p2301763_prevauto_20240111_clean_nonunique.mdd.json","--cmp-scheme-right","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.007\\test_data\\p2401215_auto_20241106_clean.mdd.json"],
+            "args": ["--program","diff","--cmp-scheme-left","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\V2.008\\test_data\\p2301763_prevauto_20240111_clean_nonunique.mdd.json","--cmp-scheme-right","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\V2.008\\test_data\\p2401215_auto_20241106_clean.mdd.json"],
             "justMyCode": true
         },
         {
@@ -97,7 +97,7 @@
             "request": "launch",
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
-            "args": ["--program","read_msmarkitdown","--inpfile","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.007\\test_data\\spss_map_240220_removedrecordssheet_early.xlsx"],
+            "args": ["--program","read_msmarkitdown","--inpfile","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\V2.008\\test_data\\spss_map_240220_removedrecordssheet_early.xlsx"],
             "justMyCode": true
         },
         {
@@ -106,7 +106,7 @@
             "request": "launch",
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
-            "args": ["--program","diff","--cmp-scheme-left","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.007\\test_data\\R2400814 UNW Test FanshipVars BeforeUpdate.xlsx.json","--cmp-scheme-right","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\v2.007\\test_data\\R2400814 UNW Test FanshipVars WithUpdate.xlsx.json"],
+            "args": ["--program","diff","--cmp-scheme-left","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\V2.008\\test_data\\R2400814 UNW Test FanshipVars BeforeUpdate.xlsx.json","--cmp-scheme-right","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\V2.008\\test_data\\R2400814 UNW Test FanshipVars WithUpdate.xlsx.json"],
             "justMyCode": true
         },
         {
@@ -117,6 +117,15 @@
             "console": "integratedTerminal",
             "args": ["--program","read_excel","--inpfile","S:\\Personal Folders\\Putilov\\temp\\seg\\specs\\temp\\unprotected.xlsm"],
             "justMyCode": false
+        },
+        {
+            "name": "Python: Excel read test: FlatOut map",
+            "type": "python",
+            "request": "launch",
+            "program": "src/run_universal.py",
+            "console": "integratedTerminal",
+            "args": ["--program","read_excel","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\V2.008\\test_data\\mdd_map_R2401582_annaverpinsky.xlsx\""],
+            "justMyCode": true
         }
     ]
 }
