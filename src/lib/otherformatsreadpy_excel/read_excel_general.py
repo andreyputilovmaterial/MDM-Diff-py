@@ -211,8 +211,8 @@ def find_data_areas_within_sheet(df_thissheet):
         header_row_candidates_scores[rownumber] = score
     row_best_header_match = header_row_candidates_scores.index(max(header_row_candidates_scores))
 
-    if row_best_header_match>0:
-        yield trim_rows(df_thissheet.iloc[0:row_best_header_match,])
+    # if row_best_header_match>0:
+    #     yield trim_rows(df_thissheet.iloc[0:row_best_header_match,])
 
     columns = gather_columns_info(df_thissheet,rows_skip=range(0,row_best_header_match))
 
@@ -223,17 +223,37 @@ def find_data_areas_within_sheet(df_thissheet):
         if curr>=len(df_thissheet.columns):
             if curr-1>=start:
                 if not bounds_moved:
-                    yield trim_rows(df_thissheet.iloc[row_best_header_match:,start:curr])
+                    # yield trim_rows(df_thissheet.iloc[row_best_header_match:,start:curr])
+                    yield pd.concat([
+                        df_thissheet.iloc[row_best_header_match:row_best_header_match+1,start:curr],
+                        df_thissheet.iloc[0:row_best_header_match,start:curr],
+                        df_thissheet.iloc[row_best_header_match+1:,start:curr],
+                    ], ignore_index=True)
                 else:
-                    for part in find_data_areas_within_sheet(df_thissheet.iloc[row_best_header_match:,start:curr]):
+                    # for part in find_data_areas_within_sheet(df_thissheet.iloc[row_best_header_match:,start:curr]):
+                    for part in find_data_areas_within_sheet(pd.concat([
+                            df_thissheet.iloc[row_best_header_match:row_best_header_match+1,start:curr],
+                            df_thissheet.iloc[0:row_best_header_match,start:curr],
+                            df_thissheet.iloc[row_best_header_match+1:,start:curr],
+                        ], ignore_index=True)):
                         yield part
             break
         if columns[curr]['is_empty']:
             if curr-1>=start:
                 if not bounds_moved:
-                    yield trim_rows(df_thissheet.iloc[row_best_header_match:,start:curr])
+                    # yield trim_rows(df_thissheet.iloc[row_best_header_match:,start:curr])
+                    yield pd.concat([
+                        df_thissheet.iloc[row_best_header_match:row_best_header_match+1,start:curr],
+                        df_thissheet.iloc[0:row_best_header_match,start:curr],
+                        df_thissheet.iloc[row_best_header_match+1:,start:curr],
+                    ], ignore_index=True)
                 else:
-                    for part in find_data_areas_within_sheet(df_thissheet.iloc[row_best_header_match:,start:curr]):
+                    # for part in find_data_areas_within_sheet(df_thissheet.iloc[row_best_header_match:,start:curr]):
+                    for part in find_data_areas_within_sheet(pd.concat([
+                            df_thissheet.iloc[row_best_header_match:row_best_header_match+1,start:curr],
+                            df_thissheet.iloc[0:row_best_header_match,start:curr],
+                            df_thissheet.iloc[row_best_header_match+1:,start:curr],
+                        ], ignore_index=True)):
                         yield part
             start = curr + 1
         curr = curr + 1
@@ -310,21 +330,37 @@ def read_excel(filename):
             print('reading excel: sheet: {sh}'.format(sh=sheet_name))
 
 
-            resulting_tab_def = {
-                'name': sheet_name,
-                'columns': ['name'],
-                'column_headers': {},
-                'content': []
-            }
+            resulting_tab_def = {}
             
             # inspect sheet contents
-            data_areas_within_sheet = find_data_areas_within_sheet(xls.parse(sheet_name=sheet_name, index_col=None, header=None).fillna(''))
+            # data_areas_within_sheet = find_data_areas_within_sheet(xls.parse(sheet_name=sheet_name, index_col=None, header=None).fillna(''))
+            data_areas_within_sheet = [ area for area in find_data_areas_within_sheet(xls.parse(sheet_name=sheet_name, index_col=None, header=None).fillna('')) ]
+
+            are_there_multiple_areas_on_sheet = len(data_areas_within_sheet)>1
+            data_areas_within_sheet_sizes = [ len(df)*len(df.columns) for df in data_areas_within_sheet ]
+            data_areas_within_sheet_biggest_part_index = 0 if len(data_areas_within_sheet)==0 else  data_areas_within_sheet_sizes.index(max(data_areas_within_sheet_sizes))
+
+            if not are_there_multiple_areas_on_sheet:
+                resulting_tab_def = {
+                    'name': sheet_name,
+                    'columns': ['name'],
+                    'column_headers': {},
+                    'content': []
+                }
 
             # then process every area (yeah such comments are unnecessary)
-            for df in data_areas_within_sheet:
+            for area_index,df in enumerate(data_areas_within_sheet):
 
                 if len(df)==0 or len(df.columns)==0:
                     continue
+
+                if are_there_multiple_areas_on_sheet:
+                    resulting_tab_def = {
+                        'name': sheet_name if area_index==data_areas_within_sheet_biggest_part_index else '{base_name}-{suffix}'.format(base_name=sheet_name,suffix=area_index),
+                        'columns': ['name'],
+                        'column_headers': {},
+                        'content': []
+                    }
 
                 # detect types of columns - which are blank, or contain unique identifiers
                 columns_data = gather_columns_info(df)
@@ -370,8 +406,12 @@ def read_excel(filename):
                             row[columns_data[c]['name']] = r.iat[c]
                         resulting_tab_def['content'].append(row)
             
+                if are_there_multiple_areas_on_sheet:
+                    data['sections'].append(resulting_tab_def)
+                    
             # done!
-            data['sections'].append(resulting_tab_def)
+            if not are_there_multiple_areas_on_sheet:
+                data['sections'].append(resulting_tab_def)
                 
 
         except Exception as e:
