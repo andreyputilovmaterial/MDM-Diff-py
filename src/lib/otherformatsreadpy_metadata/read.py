@@ -42,8 +42,11 @@ def entry_point(config={}):
         args, args_rest = parser.parse_known_args()
     else:
         args = parser.parse_args()
+    
     inp_file = Path(args.inpfile)
-    inp_filename = '{f}'.format(f=inp_file)
+    inp_file = '{inp_file}'.format(inp_file=inp_file.resolve())
+    if not(Path(inp_file).is_file()):
+        raise FileNotFoundError('file not found: {fname}'.format(fname=inp_file))
 
     # print('reading file {fname}, script started at {dt}'.format(dt=time_start,fname=inp_file))
 
@@ -51,9 +54,9 @@ def entry_point(config={}):
     textfilecontents = inp_file_obj.read()
 
     format_detect = None
-    if re.match(r'^\s*?TabScripts.*?\.mrs',inp_filename,flags=re.I):
+    if re.match(r'^\s*?TabScripts.*?\.mrs',inp_file,flags=re.I):
         format_detect = 'da_tablescrips'
-    elif re.match(r'^\s*?PrepDataDMS.*?\.txt',inp_filename,flags=re.I):
+    elif re.match(r'^\s*?PrepDataDMS.*?\.txt',inp_file,flags=re.I):
         format_detect = 'da_dms'
 
     read = None
@@ -62,7 +65,7 @@ def entry_point(config={}):
     else:
         read = reader_plain.read
 
-    data = read(textfilecontents,{'filename':inp_filename})
+    data = read(textfilecontents,{'filename':inp_file})
 
     result_json_fname = ( Path(inp_file).parents[0] / '{basename}{ext}'.format(basename=Path(inp_file).name,ext='.json') if Path(inp_file).is_file() else re.sub(r'^\s*?(.*?)\s*?$',lambda m: '{base}{added}'.format(base=m[1],added='.json'),'{path}'.format(path=inp_file)) )
     outfile = open(result_json_fname, 'w')

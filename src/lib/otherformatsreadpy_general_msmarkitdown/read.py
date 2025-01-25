@@ -46,7 +46,7 @@ JSON_TEMPLATE = r'''
         "column_headers": {
             "rawtextcontents": "File Contents"
         },
-        "flags": [ "data-type:text" ]
+        "flags": [ "data-type:markitdown" ]
     },
     "sections": [
         {
@@ -83,7 +83,7 @@ def entry_point(config={}):
     time_start = datetime.now()
     parser = argparse.ArgumentParser(
         description="Create a JSON suitable for mdmtoolsap tool, reading a file as ms markup",
-        prog='mdmtoolsap --program read_txt'
+        prog='mdmtoolsap --program read_markitdown'
     )
     parser.add_argument(
         '--inpfile',
@@ -97,15 +97,18 @@ def entry_point(config={}):
         args, args_rest = parser.parse_known_args()
     else:
         args = parser.parse_args()
+    
     inp_file = Path(args.inpfile)
-    inp_filename = '{f}'.format(f=inp_file)
+    inp_file = '{inp_file}'.format(inp_file=inp_file.resolve())
+    if not(Path(inp_file).is_file()):
+        raise FileNotFoundError('file not found: {fname}'.format(fname=inp_file))
 
     print('reading file: opening {fname}, script started at {dt}'.format(dt=time_start,fname=inp_file))
 
     # inp_file_obj = open(inp_file,'r',encoding='utf-8')
     # textfilecontents = inp_file_obj.read()
 
-    data = read({'filename':inp_filename})
+    data = read({'filename':inp_file})
 
     result_json_fname = ( Path(inp_file).parents[0] / '{basename}{ext}'.format(basename=Path(inp_file).name,ext='.json') if Path(inp_file).is_file() else re.sub(r'^\s*?(.*?)\s*?$',lambda m: '{base}{added}'.format(base=m[1],added='.json'),'{path}'.format(path=inp_file)) )
     print('reading file: saving as "{fname}"'.format(fname=result_json_fname))
@@ -113,7 +116,7 @@ def entry_point(config={}):
     outfile.write(json.dumps(data, indent=4))
 
     time_finish = datetime.now()
-    print('MDM read script: finished at {dt} (elapsed {duration})'.format(dt=time_finish,duration=time_finish-time_start))
+    print('read script: finished at {dt} (elapsed {duration})'.format(dt=time_finish,duration=time_finish-time_start))
 
 if __name__ == '__main__':
     entry_point({'arglist_strict':True})

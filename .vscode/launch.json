@@ -126,6 +126,15 @@
             "console": "integratedTerminal",
             "args": ["--program","read_excel","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\V2.008\\test_data\\mdd_map_R2401582_annaverpinsky.xlsx\""],
             "justMyCode": true
+        },
+        {
+            "name": "Python: SPSS read test",
+            "type": "python",
+            "request": "launch",
+            "program": "src/run_universal.py",
+            "console": "integratedTerminal",
+            "args": ["--program","read_spss","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\V2.008\\test_data\\R2401582_FlatOutSPSS.sav\""],
+            "justMyCode": true
         }
     ]
 }

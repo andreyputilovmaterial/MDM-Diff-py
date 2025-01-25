@@ -52,7 +52,12 @@ def entry_point(config={}):
         args, args_rest = parser.parse_known_args()
     else:
         args = parser.parse_args()
+    
     inp_file = Path(args.inpfile)
+    inp_file = '{inp_file}'.format(inp_file=inp_file.resolve())
+    if not(Path(inp_file).is_file()):
+        raise FileNotFoundError('file not found: {fname}'.format(fname=inp_file))
+
 
     print('reading Excel: opening {fname}, script started at {dt}'.format(dt=time_start,fname=inp_file))
 
