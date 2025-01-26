@@ -2,6 +2,15 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: MDD read test",
+            "type": "python",
+            "request": "launch",
+            "program": "src/run_universal.py",
+            "console": "integratedTerminal",
+            "args": ["--program","read_mdd","--mdd","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\V2.008\\test_data\\P2301763.mdd\""],
+            "justMyCode": true
+        },
+        {
             "name": "Python: Diff Test (MDD)",
             "type": "python",
             "request": "launch",
