@@ -20,6 +20,25 @@ else:
 
 
 
+CONFIG_ATTRS_NOTPRINTININTRO = [
+    'column_names',
+    'column_labels',
+    'column_names_to_labels',
+    'variable_value_labels',
+    'variable_to_label',
+    'value_labels',
+    'original_variable_types',
+    'readstat_variable_types',
+    'variable_storage_width',
+    'variable_display_width',
+    'variable_alignment',
+    'variable_measure',
+    'missing_ranges',
+    'missing_user_values',
+    'mr_sets',
+]
+
+
 
 JSON_TEMPLATE = r'''
 {
@@ -76,20 +95,7 @@ def read(file_data,config={}):
 
     print('reading metadata...')
     for attr_name, attr_value in df_mdata.items():
-        if attr_name in [
-            'column_names',
-            'column_labels',
-            'column_names_to_labels',
-            'variable_value_labels',
-            'variable_to_label',
-            'value_labels',
-            'original_variable_types',
-            'readstat_variable_types',
-            'variable_storage_width',
-            'variable_display_width',
-            'variable_alignment',
-            'variable_measure',
-        ] or attr_name[:len('readstat_')]=='readstat_':
+        if attr_name in CONFIG_ATTRS_NOTPRINTININTRO or attr_name[:len('readstat_')]=='readstat_':
             # skip these
             continue
         attr_value_clean = '{v}'.format(v=attr_value)
@@ -124,6 +130,7 @@ def read(file_data,config={}):
             'total_records': len(df),
             'report_frequency_records_count': 1,
             'report_frequency_timeinterval': 9,
+            'report_text_pipein': 'reading case data',
         }))
         for casenumber in range(0,len(df)):
             row = df.iloc[casenumber,]

@@ -133,7 +133,7 @@
             "request": "launch",
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
-            "args": ["--program","read_spss","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\V2.008\\test_data\\R2401582_FlatOutSPSS.sav\""],
+            "args": ["--program","read_spss","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\V2.008\\test_data\\R2401582_FlatOutSPSS.sav\"","--config-read-data","yes"],
             "justMyCode": true
         }
     ]
