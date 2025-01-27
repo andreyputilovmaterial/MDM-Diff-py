@@ -91,7 +91,11 @@ def gather_columns_info(df_thissheet, rows_skip=[]):
             if row_type=='empty':
                 has_missing_values = True
                 pass
-            elif rownumber==0 and re.match(r'^\s*?x(?:\.\d*)?\s*?$',row_txt,flags=re.I|re.DOTALL):
+            # elif rownumber==0 and re.match(r'^\s*?x(?:\.\d*)?\s*?$',row_txt,flags=re.I|re.DOTALL):
+            elif rownumber==0 and row_txt=='x':
+                # maybe column is for separating areas
+                # "x" does not sound like a meaningful col name
+                # maybe it's supposed just to split parts
                 pass
             else:
                 is_empty = False
