@@ -167,9 +167,9 @@ def read(file_data,config={}):
         spss_var_label = df_mdata['column_names_to_labels'][spss_var_name]
         column_name = sanitize_name(spss_var_name) if not sanitize_name(col_txt) in dict_attr_name_translate else dict_attr_name_translate[sanitize_name(col_txt)]
         column_label = find_column_label(spss_var_name,spss_var_label,config)
-        result_report_scheme['columns'].append(column_name)
-        result_report_scheme['column_headers'][column_name] = column_label
         if result_section_data:
+            result_report_scheme['columns'].append(column_name)
+            result_report_scheme['column_headers'][column_name] = column_label
             result_section_data['columns'].append(column_name)
             result_section_data['column_headers'][column_name] = column_label
         if result_section_variables:
