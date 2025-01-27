@@ -168,8 +168,10 @@ def find_diff(data_left,data_right,config):
             rows_changed = 0
             row_count = 0
             
-            rows_l = [ ( item['name'] if 'name' in item else '???' ) for item in file_l_sectiondata ]
-            rows_r = [ ( item['name'] if 'name' in item else '???' ) for item in file_r_sectiondata ]
+            def fail_no_name_attr():
+                raise Exception('Data must include "name" column that is used as an ID, we can\'t compare records without it. Exit.')
+            rows_l = [ ( item['name'] if 'name' in item else fail_no_name_attr() ) for item in file_l_sectiondata ]
+            rows_r = [ ( item['name'] if 'name' in item else fail_no_name_attr() ) for item in file_r_sectiondata ]
             if ('config_use_hierarchical_name_structure' in config and config['config_use_hierarchical_name_structure']):
                 # add root element
                 rows_l = rows_l if '' in rows_l else ['']+rows_l

@@ -49,10 +49,10 @@ JSON_TEMPLATE = r'''
     "source_file_metadata": [],
     "report_scheme": {
         "columns": [
-            ""
+            "name"
         ],
         "column_headers": {
-            "": " "
+            "name": "Data record ID"
         },
         "flags": [ "data-type:spss" ]
     },
@@ -61,6 +61,29 @@ JSON_TEMPLATE = r'''
 '''
 
 def read(file_data,config={}):
+    def find_column_label(name,label,config):
+        display_style = None
+        if 'display_label_style' in config and config['display_label_style']:
+            display_style = config['display_label_style']
+        else:
+            display_style = 'name'
+        if display_style=='name':
+            return '{variable}'.format(variable=name)
+        elif display_style=='label':
+            return '{descr}'.format(descr=label)
+        elif display_style=='combination':
+            return '{variable}: {descr}'.format(variable=name,descr=label)
+        else:
+            raise Exception('Unrecognized --display-label-style option: {s}'.format(s=display_style))
+    def sanitize_name(s):
+        if s==0:
+            return '0'
+        if not s:
+            return ''
+        s = '{s}'.format(s=s)
+        s = re.sub(r'^\s*','',re.sub(r'\s*$','',s,flags=re.I|re.DOTALL),flags=re.I|re.DOTALL)
+        s = s.lower()
+        return s
 
     inp_file = file_data['filename']
 
@@ -81,17 +104,22 @@ def read(file_data,config={}):
     result_section_value_labels = None
     result_section_data = None
     if 'read_variables' in config and config['read_variables']:
-        result['sections'].append({'name':'variables','columns':['name','label'],'content':[]})
+        result['sections'].append({'name':'variables','columns':['name','label'],'column_headers':{'name':'Variable Name','label':'Variable Label'},'content':[]})
         result_section_variables = result['sections'][-1]
     if 'read_value_labels' in config and config['read_value_labels']:
-        result['sections'].append({'name':'value labels','columns':['name','label'],'content':[]})
+        result['sections'].append({'name':'value labels','columns':['name','label'],'column_headers':{'name':'Analysis Value','label':'Category Label'},'content':[]})
         result_section_value_labels = result['sections'][-1]
     if 'read_data' in config and config['read_data']:
-        result['sections'].append({'name':'data','columns':[],'content':[]})
+        result['sections'].append({'name':'data','columns':['name'],'column_headers':{'name':'Data Record ID'},'content':[]})
         result_section_data = result['sections'][-1]
     result_variables = result_section_variables['content'] if result_section_variables else None
     result_value_labels = result_section_value_labels['content'] if result_section_value_labels else None
     result_data = result_section_data['content'] if result_section_data else None
+    id_key = None
+    if result_section_data:
+        id_key = sanitize_name(config['id_key']) if 'id_key' in config else None
+        if not id_key:
+            raise Exception('ID key not provided but --config-read-data is set: we need an ID to read data. Please provide SPSS variable name used as an ID with --id-key option')
 
     print('reading metadata...')
     for attr_name, attr_value in df_mdata.items():
@@ -113,31 +141,59 @@ def read(file_data,config={}):
                 item_label = cat_label
                 result_value_labels.append({'name':item_name,'label':item_label})
 
-    for col in df.columns:
-        col_txt = '{t}'.format(t=col)
-        col_name = col_txt
-        col_label = df_mdata['column_names_to_labels'][col_txt]
-        result_report_scheme['columns'].append(col_name)
-        result_report_scheme['column_headers'][col_name] = col_label
+    spss_variables = [sanitize_name(v) for v in df.columns]
+    # (done)) make var names case-insesitive? Translate to lowercase maybe?
+
+    if result_section_data:
+        # note: id_key is lowercased when read from config (top of this fn) and spss_variables are lowercased when grabbing from df.columns
+        # so we are comparing lower to lower
+        if id_key in spss_variables:
+            id_key = [c for c in df.columns][spss_variables.index(id_key)]
+        else:
+            raise Exception('ID Key: SPSS variable with the given name is not found: "{s}"'.format(s=id_key))
+        result_section_data['column_headers']['name'] = 'Data Record ID ({s})'.format(s=id_key)
+    
+    dict_attr_name_translate = {}
+    if 'name' in spss_variables and id_key!='name':
+        add_count = 1
+        name_corrected = 'name'+''.join(['_']*add_count)
+        while name_corrected in spss_variables:
+            add_count = add_count + 1
+            name_corrected = 'name'+''.join(['_']*add_count)
+        dict_attr_name_translate['name'] = name_corrected
+
+    for col_txt in df.columns:
+        spss_var_name = col_txt
+        spss_var_label = df_mdata['column_names_to_labels'][spss_var_name]
+        column_name = sanitize_name(spss_var_name) if not sanitize_name(col_txt) in dict_attr_name_translate else dict_attr_name_translate[sanitize_name(col_txt)]
+        column_label = find_column_label(spss_var_name,spss_var_label,config)
+        result_report_scheme['columns'].append(column_name)
+        result_report_scheme['column_headers'][column_name] = column_label
         if result_section_data:
-            result_section_data['columns'].append(col_name)
+            result_section_data['columns'].append(column_name)
+            result_section_data['column_headers'][column_name] = column_label
         if result_section_variables:
-            result_variables.append({'name':col_name,'label':col_label})
+            result_variables.append({'name':spss_var_name,'label':spss_var_label})
 
     if result_section_data:
         print('reading data...')
         performance_counter = iter(helper_utility_performancemonitor.PerformanceMonitor(config={
             'total_records': len(df),
-            'report_frequency_records_count': 1,
+            'report_frequency_records_count': 3,
             'report_frequency_timeinterval': 9,
             'report_text_pipein': 'reading case data',
         }))
         for casenumber in range(0,len(df)):
             row = df.iloc[casenumber,]
             next(performance_counter)
-            result_row = {}
+            result_row = {
+                'name': row[id_key]
+            }
             for col in df.columns:
-                result_row['{c}'.format(c=col)] = row[col]
+                col_txt = sanitize_name(col)
+                spss_data_col = col
+                result_record_col = col_txt if not col_txt in dict_attr_name_translate else dict_attr_name_translate[col_txt]
+                result_row[result_record_col] = row[spss_data_col]
             result_data.append( result_row )
     
     print('done')
@@ -146,17 +202,6 @@ def read(file_data,config={}):
 
 
 def entry_point(config={}):
-    time_start = datetime.now()
-    parser = argparse.ArgumentParser(
-        description="Create a JSON suitable for mdmtoolsap tool, reading a file as spss",
-        prog='mdmtoolsap --program read_spss'
-    )
-    parser.add_argument(
-        '--inpfile',
-        help='Input file',
-        type=str,
-        required=True
-    )
     def arg_str2bool(value):
         if isinstance(value,bool):
             return value
@@ -180,6 +225,17 @@ def entry_point(config={}):
             except:
                 pass
                 return not not value
+    time_start = datetime.now()
+    parser = argparse.ArgumentParser(
+        description="Create a JSON suitable for mdmtoolsap tool, reading a file as spss",
+        prog='mdmtoolsap --program read_spss'
+    )
+    parser.add_argument(
+        '--inpfile',
+        help='Input file',
+        type=str,
+        required=True
+    )
     parser.add_argument(
         '--config-read-variables',
         help='Config option: include info about the variables',
@@ -201,6 +257,18 @@ def entry_point(config={}):
         default=False,
         required=False
     )
+    parser.add_argument(
+        '--id-key',
+        help='SPSS variable used as an ID',
+        type=str,
+        required=False
+    )
+    parser.add_argument(
+        '--config-display-label-style',
+        help='Holds what to show: variable name, label, or a combination. Possible values are "name", "label", "combination"',
+        type=str,
+        required=False
+    )
     args = None
     args_rest = None
     if( ('arglist_strict' in config) and (not config['arglist_strict']) ):
@@ -218,6 +286,12 @@ def entry_point(config={}):
         'read_value_labels': args.config_read_value_labels,
         'read_data': args.config_read_data,
     }
+    if args.id_key:
+        config_spss_reader['id_key'] = args.id_key
+    if args.config_display_label_style:
+        config['display_label_style'] = args.config_display_label_style
+        if not config['display_label_style'] in ['name','label','combination']:
+            raise Exception('--config-display-label-style param can only be of one of the following: "name", "label", "combination", but received "{s}"'.format(s=config['display_label_style']))
 
     print('reading file: opening {fname}, script started at {dt}'.format(dt=time_start,fname=inp_file))
 

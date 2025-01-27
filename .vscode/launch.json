@@ -137,12 +137,21 @@
             "justMyCode": true
         },
         {
-            "name": "Python: SPSS read test",
+            "name": "Python: SPSS read test (only metadata)",
             "type": "python",
             "request": "launch",
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
-            "args": ["--program","read_spss","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\V2.008\\test_data\\R2401582_FlatOutSPSS.sav\"","--config-read-data","yes"],
+            "args": ["--program","read_spss","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\V2.008\\test_data\\R2401582_FlatOutSPSS.sav\""],
+            "justMyCode": true
+        },
+        {
+            "name": "Python: SPSS read test, with data",
+            "type": "python",
+            "request": "launch",
+            "program": "src/run_universal.py",
+            "console": "integratedTerminal",
+            "args": ["--program","read_spss","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\V2.008\\test_data\\R2401582_FlatOutSPSS.sav\"","--config-read-data","yes","--id-key","Respondent_ID"],
             "justMyCode": true
         }
     ]
