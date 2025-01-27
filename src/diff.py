@@ -33,6 +33,16 @@ def find_diff(data_left,data_right,config):
         'format': 'sidebyside'
     }
     config = {**config_default,**config}
+    config['verbose_prep_logging'] = False
+    try:
+        if len(data_left['report_scheme']['columns'])>1000 or len(data_right['report_scheme']['columns'])>1000:
+            config['verbose_prep_logging'] = True
+    except:
+        pass
+    if config['verbose_prep_logging']:
+       print('preparation...')
+    if config['verbose_prep_logging']:
+       print('config...')
     config['format'] = config['format']
     config_diff_format = None
     if config['format']=='sidebyside':
@@ -47,6 +57,8 @@ def find_diff(data_left,data_right,config):
     # if config_diff_format=='combined':
     #     raise Exception('diff format=="combined": not implemented yet')
 
+    if config['verbose_prep_logging']:
+       print('find combined list of columns...')
     columns_list_combined_global = [
         'flagdiff', 'name'
     ]
@@ -80,10 +92,14 @@ def find_diff(data_left,data_right,config):
             if not( '{name}'.format(name=key) in column_headers_combined ):
                 column_headers_combined['{name}'.format(name=key)] = '{basename}'.format(basename=data_right['report_scheme']['column_headers'][key])
             column_headers_combined['{name}_right'.format(name=key)] = '{basename} (Right file)'.format(basename=data_right['report_scheme']['column_headers'][key])
+    if config['verbose_prep_logging']:
+       print('flags...')
     # flags_list_combined = helper_diff_wrappers.diff_make_combined_list( data_left['report_scheme']['flags'] if 'flags' in data_left['report_scheme'] else [], data_right['report_scheme']['flags'] if 'flags' in data_right['report_scheme'] else [] )
     flags_list_combined = [ 'data-type:diff' ] + [ flag for flag in (data_left['report_scheme']['flags'] if 'flags' in data_left['report_scheme'] else []) if flag in (data_right['report_scheme']['flags'] if 'flags' in data_right['report_scheme'] else []) ] + [ '{prefix}{flag}'.format(prefix='diff_source_left:',flag=flag) for flag in (data_left['report_scheme']['flags'] if 'flags' in data_left['report_scheme'] else []) ] + [ '{prefix}{flag}'.format(prefix='diff_source_right:',flag=flag) for flag in (data_right['report_scheme']['flags'] if 'flags' in data_right['report_scheme'] else []) ]
     section_list_combined = helper_diff_wrappers.diff_make_combined_list( [ item['name'] for item in data_left['sections']], [ item['name'] for item in data_right['sections']])
 
+    if config['verbose_prep_logging']:
+       print('final config...')
     if not ('config_use_hierarchical_name_structure' in config):
         if 'data-type:mdd' in flags_list_combined:
             config['config_use_hierarchical_name_structure'] = True
@@ -116,6 +132,8 @@ def find_diff(data_left,data_right,config):
         },
         'sections': [],
     }
+    if config['verbose_prep_logging']:
+       print('go!')
     for section_name in section_list_combined:
         try:
             
