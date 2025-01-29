@@ -25,6 +25,10 @@ else:
 
 
 
+CONFIG_NUM_COLUMNS_CONSIDERED_DIFFICULT = 1000
+CONFIG_NUM_ROWS_CONSIDERED_DIFFICULT = 3000
+
+
 
 def find_diff(data_left,data_right,config):
 
@@ -35,7 +39,7 @@ def find_diff(data_left,data_right,config):
     config = {**config_default,**config}
     config['verbose_prep_logging'] = False
     try:
-        if len(data_left['report_scheme']['columns'])>1000 or len(data_right['report_scheme']['columns'])>1000:
+        if len(data_left['report_scheme']['columns'])>CONFIG_NUM_COLUMNS_CONSIDERED_DIFFICULT or len(data_right['report_scheme']['columns'])>CONFIG_NUM_COLUMNS_CONSIDERED_DIFFICULT:
             config['verbose_prep_logging'] = True
     except:
         pass
@@ -105,9 +109,13 @@ def find_diff(data_left,data_right,config):
             config['config_use_hierarchical_name_structure'] = True
         elif 'data-type:excel' in flags_list_combined:
             config['config_use_hierarchical_name_structure'] = False
+        elif 'data-type:spss' in flags_list_combined:
+            config['config_use_hierarchical_name_structure'] = True
     if ('config_use_hierarchical_name_structure' in config) and config['config_use_hierarchical_name_structure']:
         if 'data-type:mdd' in flags_list_combined:
             config['config_hierarchical_name_separator'] = '.'
+        elif 'data-type:spss' in flags_list_combined:
+            config['config_hierarchical_name_separator'] = '\t'
         elif 'data-type:excel' in flags_list_combined:
             # config['config_hierarchical_name_separator'] = ' ---->>>> '
             raise ValueError('excel with groups in item names? are you sure? please provide a separator!')
@@ -137,47 +145,67 @@ def find_diff(data_left,data_right,config):
     for section_name in section_list_combined:
         try:
             
-            print('processing section {name}'.format(name=section_name))
+            print('== processing section {name} =='.format(name=section_name))
             
             file_l_sections_allmatches = [ section for section in data_left['sections'] if section['name']==section_name ]
             file_r_sections_allmatches = [ section for section in data_right['sections'] if section['name']==section_name ]
             file_l_section = file_l_sections_allmatches[0] if len(file_l_sections_allmatches)>0 else {}
             file_r_section = file_r_sections_allmatches[0] if len(file_r_sections_allmatches)>0 else {}
-            file_l_sectiondata = file_l_section['content'] if 'content' in file_l_section else []
-            file_r_sectiondata = file_r_section['content'] if 'content' in file_r_section else []
+            file_l_sectiondata_as_list = file_l_section['content'] if 'content' in file_l_section else []
+            file_r_sectiondata_as_list = file_r_section['content'] if 'content' in file_r_section else []
+            def fail_no_name_attr():
+                raise Exception('Data must include "name" column that is used as an ID, we can\'t compare records without it. Exit.')
+            file_l_sectiondata = {}
+            for item in file_l_sectiondata_as_list:
+                name = item['name'] if 'name' in item else fail_no_name_attr()
+                counter = 2
+                while name in file_l_sectiondata:
+                    name = '{part_existing}{part_added}'.format(part_existing=item['name'],part_added='_duplicate({d})'.format(d=counter))
+                    counter = counter + 1
+                file_l_sectiondata[name] = item
+            file_r_sectiondata = {}
+            for item in file_r_sectiondata_as_list:
+                name = item['name'] if 'name' in item else fail_no_name_attr()
+                counter = 2
+                while name in file_r_sectiondata:
+                    name = '{part_existing}{part_added}'.format(part_existing=item['name'],part_added='_duplicate({d})'.format(d=counter))
+                    counter = counter + 1
+                file_r_sectiondata[name] = item
+            rows_l = [ name for name in file_l_sectiondata.keys() ]
+            rows_r = [ name for name in file_r_sectiondata.keys() ]
             
             section_other_props = helper_diff_wrappers.finddiff_values_general_formatcombined( {**file_l_section,'content':None}, {**file_r_section,'content':None} )
             # if 'columns' in file_l_section or 'columns' in file_r_section:
             #     section_other_props['columns'] = [ column for column in helper_diff_wrappers.diff_make_combined_list(file_l_section['columns'] if 'columns' in file_l_section else [],file_r_section['columns'] if 'columns' in file_r_section else []) ]
 
             columns_list_check = []
-            if ('columns' in file_l_section) or ('columns' in file_r_section):
-                data_columns_left = file_l_section['columns'] if 'columns' in file_l_section else data_columns_global_left
-                data_columns_right = file_r_section['columns'] if 'columns' in file_r_section else data_columns_global_right
-                columns_list_combined = [
-                    'flagdiff', 'name'
-                ]
-                columns_list_check = [ col for col in helper_diff_wrappers.diff_make_combined_list(data_columns_left,data_columns_right) if not re.match(r'^\s*?name\s*?$',col,flags=re.I) ]
-                if config['format']=='sidebyside':
-                    # add left and right, left and right...
-                    for col in columns_list_check:
-                        columns_list_combined.append('{basename}{suffix}'.format(basename=col,suffix='_left'))
-                        columns_list_combined.append('{basename}{suffix}'.format(basename=col,suffix='_right'))
-                elif config['format']=='sidebyside_distant':
-                    # add all left, then all right
-                    for col in columns_list_check:
-                        columns_list_combined.append('{basename}{suffix}'.format(basename=col,suffix='_left'))
-                    for col in columns_list_check:
-                        columns_list_combined.append('{basename}{suffix}'.format(basename=col,suffix='_right'))
-                elif config['format']=='combined':
-                    # no left and right, just columns that contain diffs with added parts and removed
-                    for col in columns_list_check:
-                        columns_list_combined.append('{basename}{suffix}'.format(basename=col,suffix=''))
-                else:
-                    raise Exception('diff format=="{fmt}": not supported, or not implemented'.format(fmt=config['format']))
+            data_columns_left = file_l_section['columns'] if 'columns' in file_l_section else data_columns_global_left
+            data_columns_right = file_r_section['columns'] if 'columns' in file_r_section else data_columns_global_right
+            columns_list_combined = [
+                'flagdiff', 'name'
+            ]
+            if not config['verbose_prep_logging'] and ( (len(data_columns_left)>CONFIG_NUM_COLUMNS_CONSIDERED_DIFFICULT) or (len(data_columns_right)>CONFIG_NUM_COLUMNS_CONSIDERED_DIFFICULT) ):
+                config['verbose_prep_logging'] = True
+            if config['verbose_prep_logging']:
+                print('compiling combined column list...')
+            columns_list_check = [ col for col in helper_diff_wrappers.diff_make_combined_list(data_columns_left,data_columns_right) if not re.match(r'^\s*?name\s*?$',col,flags=re.I) ]
+            if config['format']=='sidebyside':
+                # add left and right, left and right...
+                for col in columns_list_check:
+                    columns_list_combined.append('{basename}{suffix}'.format(basename=col,suffix='_left'))
+                    columns_list_combined.append('{basename}{suffix}'.format(basename=col,suffix='_right'))
+            elif config['format']=='sidebyside_distant':
+                # add all left, then all right
+                for col in columns_list_check:
+                    columns_list_combined.append('{basename}{suffix}'.format(basename=col,suffix='_left'))
+                for col in columns_list_check:
+                    columns_list_combined.append('{basename}{suffix}'.format(basename=col,suffix='_right'))
+            elif config['format']=='combined':
+                # no left and right, just columns that contain diffs with added parts and removed
+                for col in columns_list_check:
+                    columns_list_combined.append('{basename}{suffix}'.format(basename=col,suffix=''))
             else:
-                columns_list_combined = columns_list_combined_global
-                columns_list_check = columns_list_check_global
+                raise Exception('diff format=="{fmt}": not supported, or not implemented'.format(fmt=config['format']))
             section_other_props['columns'] = columns_list_combined
 
             result_this_section = []
@@ -186,25 +214,15 @@ def find_diff(data_left,data_right,config):
             rows_changed = 0
             row_count = 0
             
-            def fail_no_name_attr():
-                raise Exception('Data must include "name" column that is used as an ID, we can\'t compare records without it. Exit.')
-            rows_l = [ ( item['name'] if 'name' in item else fail_no_name_attr() ) for item in file_l_sectiondata ]
-            rows_r = [ ( item['name'] if 'name' in item else fail_no_name_attr() ) for item in file_r_sectiondata ]
+            if not config['verbose_prep_logging'] and ( (len(rows_l)>CONFIG_NUM_ROWS_CONSIDERED_DIFFICULT) or (len(rows_r)>CONFIG_NUM_ROWS_CONSIDERED_DIFFICULT) ):
+                config['verbose_prep_logging'] = True
+            if config['verbose_prep_logging']:
+                print('finding list of items that were added or removed...')
             if ('config_use_hierarchical_name_structure' in config and config['config_use_hierarchical_name_structure']):
                 # add root element
                 rows_l = rows_l if '' in rows_l else ['']+rows_l
                 rows_r = rows_r if '' in rows_r else ['']+rows_r
             # confirm that row names are unique
-            if not ( (len(rows_l)==len(set(rows_l))) and (len(rows_r)==len(set(rows_r))) ):
-                # it's not, some of it is not unique
-                file_l_sectiondata,file_r_sectiondata = helper_diff_wrappers.process_make_name_prop_unique(file_l_sectiondata,file_r_sectiondata,columns_list_check)
-                # repeat reading rows_l and rows_r
-                rows_l = [ ( item['name'] if 'name' in item else '???' ) for item in file_l_sectiondata ]
-                rows_r = [ ( item['name'] if 'name' in item else '???' ) for item in file_r_sectiondata ]
-                if ('config_use_hierarchical_name_structure' in config and config['config_use_hierarchical_name_structure']):
-                    # add root element
-                    rows_l = rows_l if '' in rows_l else ['']+rows_l
-                    rows_r = rows_r if '' in rows_r else ['']+rows_r
             
             report_rows_diff = helper_diff_wrappers.finddiff_row_names_respecting_groups( rows_l, rows_r, delimiter=(config['config_hierarchical_name_separator'] if ('config_use_hierarchical_name_structure' in config and config['config_use_hierarchical_name_structure']) else None) )
             
@@ -213,6 +231,8 @@ def find_diff(data_left,data_right,config):
                 'report_frequency_records_count': 150,
                 'report_frequency_timeinterval': 6
             }))
+            if config['verbose_prep_logging']:
+                print('calculating diffs within each row...')
             for row_diff_item in report_rows_diff:
                 try:
                     
@@ -249,13 +269,9 @@ def find_diff(data_left,data_right,config):
                         pass
                     else:
                         if( row_name in rows_l ):
-                            file_l_rowdata_allrowsmatching = [ row for row in file_l_sectiondata if row['name']==row_name ]
-                            if len(file_l_rowdata_allrowsmatching)>0:
-                                file_l_rowdata = file_l_rowdata_allrowsmatching[0]
+                            file_l_rowdata = file_l_sectiondata[row_name] if row_name in file_l_sectiondata else {}
                         if( row_name in rows_r ):
-                            file_r_rowdata_allrowsmatching = [ row for row in file_r_sectiondata if row['name']==row_name ]
-                            if len(file_r_rowdata_allrowsmatching)>0:
-                                file_r_rowdata = file_r_rowdata_allrowsmatching[0]
+                            file_r_rowdata = file_r_sectiondata[row_name] if row_name in file_r_sectiondata else {}
                     for col in columns_list_check:
 
                         file_l_coldata = file_l_rowdata[col] if col in file_l_rowdata else None
@@ -263,27 +279,8 @@ def find_diff(data_left,data_right,config):
 
                         col_changed = False
 
-                        # file_l_is_structural = isinstance(file_l_coldata,dict) or isinstance(file_l_coldata,list)
-                        # file_r_is_structural = isinstance(file_r_coldata,dict) or isinstance(file_r_coldata,list)
-                        
                         if config_diff_format == 'sidebyside':
 
-                            # result_this_col_left = ''
-                            # result_this_col_right = ''
-                            # if( file_l_is_structural and file_r_is_structural ) or ( file_l_is_structural and (file_r_coldata is None) ) or ( (file_l_coldata is None) and file_r_is_structural ):
-                            #     if file_l_coldata is None:
-                            #         file_l_coldata = []
-                            #     if file_r_coldata is None:
-                            #         file_r_coldata = []
-                            #     result_this_col_left, result_this_col_right = helper_diff_wrappers.finddiff_values_propertylist_formatsidebyside( file_l_coldata, file_r_coldata )
-                            # else:
-                            #     file_l_coldata = '' if file_l_coldata is None else ( json.dumps(file_l_coldata) if file_l_is_structural else '{fmt}'.format(fmt=file_l_coldata) )
-                            #     file_r_coldata = '' if file_r_coldata is None else ( json.dumps(file_r_coldata) if file_r_is_structural else '{fmt}'.format(fmt=file_r_coldata) )
-                            #     def normalize_linebreaks(t):
-                            #         return re.sub('\r?\n','\n',re.sub('\r','\n',t))
-                            #     file_l_coldata = normalize_linebreaks(file_l_coldata)
-                            #     file_r_coldata = normalize_linebreaks(file_r_coldata)
-                            #     result_this_col_left, result_this_col_right = helper_diff_wrappers.finddiff_values_text_formatsidebyside( file_l_coldata, file_r_coldata )
                             result_this_col_left, result_this_col_right = helper_diff_wrappers.finddiff_values_general_formatsidebyside( file_l_coldata, file_r_coldata )
                             
                             if helper_diff_wrappers.check_if_includes_addedremoved_marker(result_this_col_left) or helper_diff_wrappers.check_if_includes_addedremoved_marker(result_this_col_right):
@@ -293,21 +290,6 @@ def find_diff(data_left,data_right,config):
 
                         elif config_diff_format == 'combined':
 
-                            # result_this_col_combined = ''
-                            # if( file_l_is_structural and file_r_is_structural ) or ( file_l_is_structural and (file_r_coldata is None) ) or ( (file_l_coldata is None) and file_r_is_structural ):
-                            #     if file_l_coldata is None:
-                            #         file_l_coldata = []
-                            #     if file_r_coldata is None:
-                            #         file_r_coldata = []
-                            #     result_this_col_combined = helper_diff_wrappers.finddiff_values_propertylist_formatcombined( file_l_coldata, file_r_coldata )
-                            # else:
-                            #     file_l_coldata = '' if file_l_coldata is None else ( json.dumps(file_l_coldata) if file_l_is_structural else '{fmt}'.format(fmt=file_l_coldata) )
-                            #     file_r_coldata = '' if file_r_coldata is None else ( json.dumps(file_r_coldata) if file_r_is_structural else '{fmt}'.format(fmt=file_r_coldata) )
-                            #     def normalize_linebreaks(t):
-                            #         return re.sub('\r?\n','\n',re.sub('\r','\n',t))
-                            #     file_l_coldata = normalize_linebreaks(file_l_coldata)
-                            #     file_r_coldata = normalize_linebreaks(file_r_coldata)
-                            #     result_this_col_combined = helper_diff_wrappers.finddiff_values_text_formatcombined( file_l_coldata, file_r_coldata )
                             result_this_col_combined = helper_diff_wrappers.finddiff_values_general_formatcombined( file_l_coldata, file_r_coldata )
                             
                             if helper_diff_wrappers.check_if_includes_addedremoved_marker(result_this_col_combined):

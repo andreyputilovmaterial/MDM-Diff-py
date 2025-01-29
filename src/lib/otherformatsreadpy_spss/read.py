@@ -135,10 +135,16 @@ def read(file_data,config={}):
         result_report_properties.append({'name':attr_name,'value':attr_value_clean})
 
     if result_section_value_labels:
+        result_value_labels_groups_check = []
         for variable_name, cat_data in df_mdata['variable_value_labels'].items():
             for cat_value_value, cat_label in cat_data.items():
-                item_name = '{variable_name}.Values[{cat_name}]'.format(variable_name=variable_name,cat_name=cat_value_value)
+                # item_name = '{variable_name}.Values[{cat_name}]'.format(variable_name=variable_name,cat_name=cat_value_value)
+                item_name = '{variable_name}{sep}{cat_name}'.format(variable_name=variable_name,cat_name=cat_value_value,sep='\t')
+                parent_group_name = '{variable_name}'.format(variable_name=variable_name)
                 item_label = cat_label
+                if not parent_group_name in result_value_labels_groups_check:
+                    result_value_labels.append({'name':parent_group_name,'label':''})
+                    result_value_labels_groups_check.append(parent_group_name)
                 result_value_labels.append({'name':item_name,'label':item_label})
 
     spss_variables = [sanitize_name(v) for v in df.columns]
