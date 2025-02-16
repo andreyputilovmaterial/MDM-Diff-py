@@ -52,8 +52,9 @@ def entry_point(config={}):
 
     print('reading file: opening {fname}, script started at {dt}'.format(dt=time_start,fname=inp_file))
 
-    inp_file_obj = open(inp_file,'r',encoding='utf-8')
-    textfilecontents = inp_file_obj.read()
+    textfilecontents = None
+    with open(inp_file,'r',encoding='utf-8') as inp_file_obj:
+        textfilecontents = inp_file_obj.read()
 
     format_detect = None
     inp_file_namepart = '{f}'.format(f=Path(inp_file).name)

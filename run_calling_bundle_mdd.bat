@@ -24,6 +24,8 @@ SET "CONFIG_INCLUDE_LABELS=1==1"
 
 SET "CONFIG_PRODUCE_HTML_EACH_MDD=1==0"
 
+SET "CONFIG_SHAREDLISTS_STEPINTO=1==0"
+
 
 
 
@@ -47,6 +49,14 @@ IF %CONFIG_INCLUDE_PAGES% ( SET "MDD_READ_CONFIG_SECTIONLIST=!MDD_READ_CONFIG_SE
 IF %CONFIG_INCLUDE_ROUTING% ( SET "MDD_READ_CONFIG_SECTIONLIST=!MDD_READ_CONFIG_SECTIONLIST!,routing" )
 SET "MDD_READ_CONFIG_SECTIONLIST=!MDD_READ_CONFIG_SECTIONLIST:@,=!"
 
+SET "MDD_READ_CONFIG_SETTINGS="
+IF %CONFIG_SHAREDLISTS_STEPINTO% (
+    SET MDD_READ_CONFIG_SETTINGS=!MDD_READ_CONFIG_SETTINGS! --config-sharedlists-listcats stepinto
+) ELSE (
+    SET MDD_READ_CONFIG_SETTINGS=!MDD_READ_CONFIG_SETTINGS! --config-sharedlists-listcats stepover
+)
+SET MDD_READ_CONFIG_SETTINGS=!MDD_READ_CONFIG_SETTINGS!  --config-features %MDD_READ_CONFIG_FEATURELIST% --config-section %MDD_READ_CONFIG_SECTIONLIST%
+
 
 REM :: file names with file schemes in json
 SET "MDD_A_JSON=%MDD_A%.json"
@@ -60,7 +70,7 @@ ECHO -
 ECHO 1. read MDD A
 ECHO read from: %MDD_A%
 ECHO write to: .json
-python dist/mdmtoolsap_bundle.py --program read_mdd --mdd "%MDD_A%" --config-features %MDD_READ_CONFIG_FEATURELIST% --config-section %MDD_READ_CONFIG_SECTIONLIST%
+python dist/mdmtoolsap_bundle.py --program read_mdd --mdd "%MDD_A%" %MDD_READ_CONFIG_SETTINGS%
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b %errorlevel% )
 
 IF %CONFIG_PRODUCE_HTML_EACH_MDD% (
@@ -74,7 +84,7 @@ ECHO -
 ECHO 3. read MDD B
 ECHO read from: %MDD_B%
 ECHO write to: .json
-python dist/mdmtoolsap_bundle.py --program read_mdd --mdd "%MDD_B%" --config-features %MDD_READ_CONFIG_FEATURELIST% --config-section %MDD_READ_CONFIG_SECTIONLIST%
+python dist/mdmtoolsap_bundle.py --program read_mdd --mdd "%MDD_B%" %MDD_READ_CONFIG_SETTINGS%
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b %errorlevel% )
 
 IF %CONFIG_PRODUCE_HTML_EACH_MDD% (
