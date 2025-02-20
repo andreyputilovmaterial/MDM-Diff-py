@@ -78,7 +78,7 @@ ECHO -
 ECHO 3. read SPSS B
 ECHO read from: %SPSS_B%
 ECHO write to: .json
-python dist/mdmtoolsap_bundle.py --program read_spss --inpfile "%SPSS_B%" --config-features %SPSS_READ_CONFIG_FEATURELIST% --config-section %SPSS_READ_CONFIG%
+python dist/mdmtoolsap_bundle.py --program read_spss --inpfile "%SPSS_B%" %SPSS_READ_CONFIG%
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b %errorlevel% )
 
 IF %CONFIG_PRODUCE_HTML_EACH_SPSS% (
