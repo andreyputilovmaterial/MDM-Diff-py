@@ -128,7 +128,13 @@ def read(file_data,config={}):
     # df_mdata = df.attrs
     if import_error:
         raise import_error
-    df, spss_metadata = pyreadstat.read_sav(inp_file) if 'read_data' in config and config['read_data'] else pyreadstat.read_sav(inp_file,metadataonly=True)
+    try:
+        df, spss_metadata = pyreadstat.read_sav(inp_file) if 'read_data' in config and config['read_data'] else pyreadstat.read_sav(inp_file,metadataonly=True)
+    except pyreadstat._readstat_parser.ReadstatError as e:
+        if 'Unable to convert string to the requested encoding (invalid byte sequence)' in '{e}'.format(e=e):
+            raise Exception('Failed to read SPSS: File is not in Unicode? Please open and save it in SPSS Statictics first. Error: {e}'.format(e=e)) from e
+        else:
+            raise Exception('Failed to read SPSS. Error: {e}'.format(e=e)) from e
     df_mdata = spss_metadata.__dict__
     print('done, working on it...')
 
