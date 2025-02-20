@@ -19,6 +19,13 @@ else:
     import helper_utility_performancemonitor
 
 
+pyreadstat = None
+import_error = None
+try:
+    import pyreadstat
+except Exception as e:
+    import_error = e
+
 
 CONFIG_ATTRS_NOTPRINTININTRO = [
     'column_names',
@@ -93,11 +100,6 @@ def read(file_data,config={}):
     result['report_datetime_utc']='{f}'.format(f=(datetime.now()).astimezone(tz=timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),)
     result['report_datetime_local']='{f}'.format(f=(datetime.now()).strftime('%Y-%m-%dT%H:%M:%SZ'))
 
-    print('reading spss...')
-    df = pd.read_spss(inp_file)
-    df_mdata = df.attrs
-
-    print('done, working on it...')
     result_report_scheme = result['report_scheme']
     result_report_properties = result['source_file_metadata']
     result_section_variables = None
@@ -121,7 +123,16 @@ def read(file_data,config={}):
         if not id_key:
             raise Exception('ID key not provided but --config-read-data is set: we need an ID to read data. Please provide SPSS variable name used as an ID with --id-key option')
 
-    print('reading metadata...')
+    print('reading spss...')
+    # df = pd.read_spss(inp_file)
+    # df_mdata = df.attrs
+    if import_error:
+        raise import_error
+    df, spss_metadata = pyreadstat.read_sav(inp_file) if 'read_data' in config and config['read_data'] else pyreadstat.read_sav(inp_file,metadataonly=True)
+    df_mdata = spss_metadata.__dict__
+    print('done, working on it...')
+
+    print('parsing metadata...')
     for attr_name, attr_value in df_mdata.items():
         if attr_name in CONFIG_ATTRS_NOTPRINTININTRO or attr_name[:len('readstat_')]=='readstat_':
             # skip these
