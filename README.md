@@ -2,11 +2,10 @@
 A new iteration of diff between MDD files, Excel files (wow!), SPSS (inluding only columns/variables, or also data), Tab Scripts, DMS, Text and many more formats. All in python. No mrs vbscript code and much less js.
 
 ## How to start it
-Go to
-[Releases](../../releases/latest)
-and download the .py bundle and a BAT file per your needs - if you need to compare MDDs, SPSS's, Excel's, etc... 
+Download mdmtoolsap_bundle.py and a BAT for your file type file from
+[Releases](../../releases/latest).
 
-Edit the BAT file and insert the path to compared files at the top.
+Edit the BAT file and insert paths to compared files.
 
 You obviously need some dependencies - python, IBM Professional... Just standard things.
 
