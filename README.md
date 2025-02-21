@@ -17,6 +17,7 @@ You obviously need some dependencies - python, IBM Professional... Just standard
 ## Which types of files can be compared?
 * MDD files. That's why this tool was invented. It can also compare it with routing or with translations. It is configurable, it can handle.
 * Excel tabs. This is maybe even more important than comparing MDDs
+* SPSS - I suggest only comparing metadata (columns/variables and category analysis values) and not comparing data (this can be configured from within BAT file) because the results are printed in html page - if you include data - the page would probably be too big to load in browser, even in smallest projects. However, the tool is capable of reading and comparing SPSS file contents.
 * Any text files, including tab scripts and dms scripts. I highly recommend using it for DA exports
 * Any pdf, ppts, word, xlsx, even transcripted audio or images - everything that can be read with ms markitdown
 
