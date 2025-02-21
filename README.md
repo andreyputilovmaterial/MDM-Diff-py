@@ -1,5 +1,5 @@
 # MDM-Diff-py
-A new iteration of diff between MDD files, Excel files (wow!), Tab Scripts, DMS, Text and many more formats. Much cleaner, all in python. No mrs vbscript code and much less js, all should be in python
+A new iteration of diff between MDD files, Excel files (wow!), SPSS (inluding only columns/variables, or also data), Tab Scripts, DMS, Text and many more formats. All in python. No mrs vbscript code and much less js.
 
 ## How to start it
 Go to
