@@ -3,6 +3,7 @@ import re
 import argparse
 import json
 from datetime import datetime, timezone
+import codecs
 
 
 
@@ -22,6 +23,24 @@ else:
 
 
 
+
+
+def detect_encoding(path, default='utf-8'):
+    """Adapted from https://stackoverflow.com/questions/13590749/reading-unicode-file-data-with-bom-chars-in-python/24370596#24370596 """
+
+    with open(path, 'rb') as f:
+        raw = f.read(4)    # will read less if the file is smaller
+    # BOM_UTF32_LE's start is equal to BOM_UTF16_LE so need to try the former first
+    for enc, boms in \
+            ('utf-8-sig', (codecs.BOM_UTF8,)), \
+            ('utf-32', (codecs.BOM_UTF32_LE, codecs.BOM_UTF32_BE)), \
+            ('utf-16', (codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE)):
+        for bom in boms:
+            if raw.startswith(bom):
+                # return enc, bom
+                return enc
+    # return default, None
+    return default
 
 
 
@@ -53,7 +72,10 @@ def entry_point(config={}):
     print('reading file: opening {fname}, script started at {dt}'.format(dt=time_start,fname=inp_file))
 
     textfilecontents = None
-    with open(inp_file,'r',encoding='utf-8') as inp_file_obj:
+
+    encoding = detect_encoding(inp_file)
+    
+    with open(inp_file,'r',encoding=encoding) as inp_file_obj:
         textfilecontents = inp_file_obj.read()
 
     format_detect = None
