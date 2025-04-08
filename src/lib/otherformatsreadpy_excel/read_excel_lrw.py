@@ -75,6 +75,7 @@ def lrwexcel_read_index_sheet(df_mainpage):
     # and then a list of tables
     # so this fn detects which line is it - above TOC, below TOC, or just maybe blank, or it's the line which says "Table of Contents"
     def detect_toc_row_type(row_txt,prev_results):
+        row_txt = '{t}'.format(t=row_txt)
         if re.match(r'^\s*?$',row_txt):
             return 'blank'
         elif re.match(r'^\s*?Table of Contents\s*?$',row_txt,flags=re.I):
@@ -83,7 +84,8 @@ def lrwexcel_read_index_sheet(df_mainpage):
             if re.match(r'^\s*?(?:T|Table)\s*?(\d+)\s*?-\s*(.*?)\s*$',row_txt,flags=re.I):
                 return 'table'
             else:
-                raise MDMExcelReadFormatException('reading excel: indexsheet: Reading list of tables, passed beyound "Table of Contents", expecting "Table 1 - ...", found something else, unexpected line = {l}, text = {t}'.format(l=row,t=row_txt))
+                return 'garbage'
+                # raise MDMExcelReadFormatException('reading excel: indexsheet: Reading list of tables, passed beyound "Table of Contents", expecting "Table 1 - ...", found something else, unexpected line = {l}, text = {t}'.format(l=row,t=row_txt))
         else:
             return 'preface'
     
@@ -167,6 +169,8 @@ def lrwexcel_read_index_sheet(df_mainpage):
                 else:
                     result_metadata.append({'name':'line {d}'.format(d=rownumber),'value':trim(row_txt)})
                     # result_metadata.append({'name':'','value':trim(row_txt)})
+        elif row_type=='garbage':
+            pass
         else:
             # something is off but it should not happen
             raise AttributeError('reading excel: indexsheet: Reading list of tables, passed beyound "Table of Contents", expecting "Table 1 - ...", found something else, unexpected line = {l}, text = {t}'.format(l=row,t=row_txt))
@@ -248,10 +252,10 @@ def read_excel(filename):
             return get_column_id(col,name_preliminary+'_2')
         
 
-    if 'IndexSheet' in sheet_names and 'T1' in sheet_names: # lrw format - trying to read TOC (table of contents)
+    if ( ('IndexSheet' in sheet_names) or ('TOC' in sheet_names) ) and 'T1' in sheet_names: # lrw format - trying to read TOC (table of contents)
         # lrw format - we are expecting that here, on "IndexSheet", there is a line "Table of Contents", and a list of tables below
         # if there is, we grab table names, and set is_detected_known_format = 'lrw'
-        df_mainpage = xls.parse( sheet_name='IndexSheet', index_col=None, header=None ).fillna(0)
+        df_mainpage = xls.parse( sheet_name='IndexSheet' if ('IndexSheet' in sheet_names) else 'TOC', index_col=None, header=None ).fillna(0)
         print('reading excel: reading index sheet')
         try:
             result,result_metadata = lrwexcel_read_index_sheet(df_mainpage)
