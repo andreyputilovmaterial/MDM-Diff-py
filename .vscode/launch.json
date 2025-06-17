@@ -11,6 +11,15 @@
             "justMyCode": true
         },
         {
+            "name": "Python: MDD read test with numeric loop iterations",
+            "type": "python",
+            "request": "launch",
+            "program": "src/run_universal.py",
+            "console": "integratedTerminal",
+            "args": ["--program","read_mdd","--mdd","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\R2302101.mdd\""],
+            "justMyCode": true
+        },
+        {
             "name": "Python: Diff Test (MDD)",
             "type": "python",
             "request": "launch",
