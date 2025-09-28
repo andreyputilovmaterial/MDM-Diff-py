@@ -58,12 +58,12 @@ ECHO 1. read MDD A
 ECHO read from: %MDD_A%
 ECHO write to: .json
 python dist/mdmtoolsap_bundle.py --program read_mdd --mdd "%MDD_A%" --config-features %MDD_READ_CONFIG_FEATURELIST% --config-section %MDD_READ_CONFIG_SECTIONLIST% %MDD_READ_CONFIG_SETTINGS%
-if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b %errorlevel% )
+if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 ECHO -
 ECHO 2. generate excel
 python dist/mdmtoolsap_bundle.py --program report_excel --inpfile "%MDD_A_JSON%"
-if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b %errorlevel% )
+if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 ECHO -
 ECHO 7 del .json temporary files
@@ -88,5 +88,5 @@ RMDIR /Q /S __pycache__
 )
 
 ECHO done!
-exit /b %errorlevel%
+exit /b !ERRORLEVEL!
 

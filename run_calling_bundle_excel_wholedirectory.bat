@@ -53,7 +53,7 @@ PUSHD "%FOLDER_RECENT%"
             ECHO "ERR: left does not exist: !left!"
         )
 		ECHO .
-        if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && exit /b %errorlevel% )
+        if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && exit /b !ERRORLEVEL! )
         POPD        
     )
 
