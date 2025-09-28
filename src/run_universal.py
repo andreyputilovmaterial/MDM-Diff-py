@@ -16,7 +16,8 @@ if __name__ == '__main__':
     from lib.otherformatsreadpy_general_msmarkitdown import read as read_msmarkitdown
     from lib.otherformatsreadpy_excel import read_excel_entry as read_excel
     from lib.otherformatsreadpy_spss import read as read_spss
-    from lib.mdmreadpy.lib.mdmreportpy import report_create
+    from lib.mdmreadpy.lib.mdmreportpy import report_create as report_html_create
+    from lib.mdmexcelreportpy import report_create as report_excel_create
 elif '.' in __name__:
     # package
     from . import diff
@@ -25,7 +26,8 @@ elif '.' in __name__:
     from .lib.otherformatsreadpy_general_msmarkitdown import read as read_msmarkitdown
     from .lib.otherformatsreadpy_excel import read_excel_entry as read_excel
     from .lib.otherformatsreadpy_spss import read as read_spss
-    from .lib.mdmreadpy.lib.mdmreportpy import report_create
+    from .lib.mdmreadpy.lib.mdmreportpy import report_create as report_html_create
+    from .lib.mdmexcelreportpy import report_create as report_excel_create
 else:
     # included with no parent package
     import diff
@@ -34,7 +36,8 @@ else:
     from lib.otherformatsreadpy_general_msmarkitdown import read as read_msmarkitdown
     from lib.otherformatsreadpy_excel import read_excel_entry as read_excel
     from lib.otherformatsreadpy_spss import read as read_spss
-    from lib.mdmreadpy.lib.mdmreportpy import report_create
+    from lib.mdmreadpy.lib.mdmreportpy import report_create as report_html_create
+    from lib.mdmexcelreportpy import report_create as report_excel_create
 
 
 
@@ -63,8 +66,11 @@ def call_read_txt_program():
 def call_read_msmarkitdown_program():
     return read_msmarkitdown.entry_point({'arglist_strict':False})
 
-def call_report_program():
-    return report_create.entry_point({'arglist_strict':False})
+def call_report_html_program():
+    return report_html_create.entry_point({'arglist_strict':False})
+
+def call_report_excel_program():
+    return report_excel_create.entry_point({'arglist_strict':False})
 
 def call_test_program():
     print('hello, world!')
@@ -80,7 +86,9 @@ run_programs = {
     'read_excel': call_read_excel_program,
     'read_spss': call_read_spss_program,
     'read_msmarkitdown': call_read_msmarkitdown_program,
-    'report': call_report_program,
+    'report': call_report_html_program,
+    'report_html': call_report_html_program,
+    'report_excel': call_report_excel_program,
     'test': call_test_program,
 }
 

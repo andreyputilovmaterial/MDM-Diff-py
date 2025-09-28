@@ -16,3 +16,6 @@
 [submodule "src/lib/otherformatsreadpy_general_msmarkitdown/lib/markitdown"]
 	path = src/lib/otherformatsreadpy_general_msmarkitdown/lib/markitdown
 	url = https://github.com/microsoft/markitdown.git
+[submodule "src/lib/mdmexcelreportpy"]
+	path = src/lib/mdmexcelreportpy
+	url = https://github.com/andreyputilovmaterial/MDM-ExcelReport-py.git

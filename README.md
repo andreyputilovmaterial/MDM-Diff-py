@@ -24,6 +24,12 @@ If you don't need to read input files with ms markitdown, dependencies are minim
 * Any text files, including tab scripts and dms scripts. I highly recommend using it for DA exports
 * Any pdf, ppts, word, xlsx, even transcripted audio or images - everything that can be read with ms markitdown (WARNING: see a note above on "On necessary dependencies and ms markitdown")
 
+## What are the output formats that this tool can generate?
+* The default one, which I encourage you to use, is **html****
+* Before that, a **.json** scheme is produced. However, in BAT files distributed with this tool, this is configured that .json files are deleted after the execution
+* An **Excel** can also be generated. I know most people love Excel. But in fact it's not as useful if used by this tool. It can't give you as detailed output as you wish, with every property and value in its own cell. And when multiple properties are printed within one cell, it's quite hard to use  
+However, Excel is super useful if you need to grab texts or translations from your MDD
+
 ## For End Users: how to debug?
 Ok, you are starting the tool and it crashes. Error messages report some problem and line number but you don't know where to check - where do you find that line number? Ok, there's a solution. Open mdmtoolsap_bundle.py and change CONFIG_VERBOSE to True (twice). Run the tool again. Ok, nothing changed, it crashes, it reportes the line number. But now you have modules saved in the same working folder where you start the script. So you can find the line number and see what is going on!
 

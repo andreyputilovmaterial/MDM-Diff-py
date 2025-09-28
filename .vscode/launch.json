@@ -92,6 +92,15 @@
             "justMyCode": true
         },
         {
+            "name": "Python: MDD Excel Report Test",
+            "type": "python",
+            "request": "launch",
+            "program": "src/run_universal.py",
+            "console": "integratedTerminal",
+            "args": ["--program","report_excel","--inpfile","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\p2301763_prevauto_20240111_clean.mdd.json"],
+            "justMyCode": true
+        },
+        {
             "name": "Python: LRW Excel Columns Read Test",
             "type": "python",
             "request": "launch",
