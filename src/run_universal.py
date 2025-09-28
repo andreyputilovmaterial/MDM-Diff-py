@@ -1,7 +1,7 @@
 
 import argparse
 # from pathlib import Path
-import traceback
+import traceback, sys
 
 
 
@@ -123,17 +123,17 @@ def main():
         # but the error message itself is separated and printed as the last message again
 
         # for example, I don't write "print('File Not Found!');exit(1);", I just write "raise FileNotFoundErro()"
-        print('')
-        print('Stack trace:')
-        print('')
+        print('',file=sys.stderr)
+        print('Stack trace:',file=sys.stderr)
+        print('',file=sys.stderr)
         traceback.print_exception(e,limit=20)
-        print('')
-        print('')
-        print('')
-        print('Error:')
-        print('')
-        print('{e}'.format(e=e))
-        print('')
+        print('',file=sys.stderr)
+        print('',file=sys.stderr)
+        print('',file=sys.stderr)
+        print('Error:',file=sys.stderr)
+        print('',file=sys.stderr)
+        print('{e}'.format(e=e),file=sys.stderr)
+        print('',file=sys.stderr)
         exit(1)
 
 

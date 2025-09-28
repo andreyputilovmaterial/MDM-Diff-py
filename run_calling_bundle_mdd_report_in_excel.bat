@@ -61,16 +61,16 @@ python dist/mdmtoolsap_bundle.py --program read_mdd --mdd "%MDD_A%" --config-fea
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b %errorlevel% )
 
 ECHO -
-ECHO 2. generate html
+ECHO 2. generate excel
 python dist/mdmtoolsap_bundle.py --program report_excel --inpfile "%MDD_A_JSON%"
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b %errorlevel% )
 
 ECHO -
 ECHO 7 del .json temporary files
 DEL "%MDD_A%.json"
-@REM DEL "%MDD_A%.json.html"
+@REM DEL "%MDD_A%.json.xlsx"
 DEL "%MDD_B%.json"
-@REM DEL "%MDD_B%.json.html"
+@REM DEL "%MDD_B%.json.xlsx"
 @REM DEL "%MDD_FINAL_DIFF_JSON%"
 
 ECHO -
