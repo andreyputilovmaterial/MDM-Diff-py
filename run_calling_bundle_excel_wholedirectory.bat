@@ -55,6 +55,11 @@ PUSHD "%FOLDER_RECENT%"
 		ECHO .
         if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && exit /b !ERRORLEVEL! )
         POPD        
+
+        IF NOT EXIST "Compare\" (
+            MKDIR "Compare\"
+        )
+        MOVE "report*.html" "Compare\"
     )
 
 POPD
