@@ -312,7 +312,8 @@ def read(textfilecontents,added_data):
             if not (name in column_specs):
                 column_specs.append(name)
 
-        table_def['name'] = table_def['title_comment']
+        # table_def['name'] = table_def['title_comment']
+        table_def['name'] = table_def['table_id']
         if not table_def['title_comment'] and (table_number==0):
             # table_def['name'] = 'preparation_code'
             table_def['name'] = ''
