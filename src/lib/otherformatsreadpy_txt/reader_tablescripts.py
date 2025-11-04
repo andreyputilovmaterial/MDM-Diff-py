@@ -253,6 +253,13 @@ syntaxpreprocessors = [
 
 
 
+def compile_ultimate_table_id(table_def):
+    result = table_def['table_id']
+    if not result:
+        result = table_def['title_comment']
+    return result
+
+
 
 JSON_TEMPLATE = r'''
 {
@@ -313,7 +320,7 @@ def read(textfilecontents,added_data):
                 column_specs.append(name)
 
         # table_def['name'] = table_def['title_comment']
-        table_def['name'] = table_def['table_id']
+        table_def['name'] = compile_ultimate_table_id(table_def)
         if not table_def['title_comment'] and (table_number==0):
             # table_def['name'] = 'preparation_code'
             table_def['name'] = ''
