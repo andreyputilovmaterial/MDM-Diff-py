@@ -73,7 +73,10 @@ def call_report_excel_program():
     return report_excel_create.entry_point({'arglist_strict':False})
 
 def call_test_program():
-    print('hello, world!')
+    msg = '''
+hello, world!
+    '''
+    print(msg)
     return True
 
 
@@ -139,5 +142,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-

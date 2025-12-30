@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 #         self.start = None
 #         self.need_reiterate = None
 #         self.delimiter = r"^\s*?'{10}'*?\s*?\n\s*?'{3}[^\n]*?\s*?\n\s*?'{10}'*?\s*?\n"
-        
+
 #     def find_next_delimniter_pos(self):
 #         match = re.search(self.delimiter,self.data[self.pos:],flags=re.M|re.DOTALL|re.I)
 #         if match:
@@ -62,7 +62,7 @@ class TableSplitter:
     def __init__(self,data):
         self.data = data
         self.delimiter = r"^\s*?'{10}'*?\s*?\n\s*?'{3}[^\n]*?\s*?\n\s*?'{10}'*?\s*?\n"
-        
+
     def __iter__(self):
         delimiters = re.finditer(self.delimiter,self.data,flags=re.M|re.DOTALL|re.I)
         delimiters = [ delim.start(0) for delim in delimiters ]
@@ -102,7 +102,7 @@ def syntaxpreprocessor_table_normalizelinebreaks(txt):
 
 def syntaxextractor_title_comment(txt,fields):
     name = 'title_comment'
-    matches = re.match("^\s*?'{10}'*?\s*?\n\s*?'{3}'*\s*([^\n]*?)\s*?\n\s*?'{10}'*?\s*?\n.*?$",txt,flags=re.M|re.DOTALL|re.I)
+    matches = re.match(r"^\s*?'{10}'*?\s*?\n\s*?'{3}'*\s*([^\n]*?)\s*?\n\s*?'{10}'*?\s*?\n.*?$",txt,flags=re.M|re.DOTALL|re.I)
     result = None
     if matches:
         result = matches[1]
@@ -293,7 +293,7 @@ def read(textfilecontents,added_data):
     inp_file = added_data['filename']
 
     data=json.loads(JSON_TEMPLATE)
-    
+
     data['source_file']='{f}'.format(f=inp_file)
     data['report_datetime_utc']='{f}'.format(f=(datetime.now()).astimezone(tz=timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),)
     data['report_datetime_local']='{f}'.format(f=(datetime.now()).strftime('%Y-%m-%dT%H:%M:%SZ'))
@@ -308,7 +308,7 @@ def read(textfilecontents,added_data):
 
         for syntaxpreprocessor in syntaxpreprocessors:
             tabscript = syntaxpreprocessor(tabscript)
-        
+
         table_def = {
             'rawtextcontents': tabscript
         }
