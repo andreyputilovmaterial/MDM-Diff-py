@@ -6,6 +6,7 @@ import argparse
 from pathlib import Path
 import re
 import json
+import sys # for error reporting, to print to stderr
 
 
 
@@ -118,7 +119,7 @@ def find_diff(data_left,data_right,config):
             config['config_hierarchical_name_separator'] = '\t'
         elif 'data-type:excel' in flags_list_combined:
             # config['config_hierarchical_name_separator'] = ' ---->>>> '
-            raise ValueError('excel with groups in item names? are you sure? please provide a separator!')
+            raise Exception('excel with groups in item names? are you sure? please provide a separator!')
         else:
             config['config_hierarchical_name_separator'] = config['config_use_hierarchical_name_structure']
 
@@ -253,7 +254,7 @@ def find_diff(data_left,data_right,config):
                         elif row_diff_item.flag == 'insert':
                             flag = '(moved here)'
                         else:
-                            raise AttributeError('Please check diff flag!!!')
+                            raise Exception('Please check diff flag!!!')
                         row_changed = True
                     elif( row_name in rows_l ):
                         flag = '(removed)'
@@ -311,7 +312,7 @@ def find_diff(data_left,data_right,config):
                     else:
                         result_this_section.append(row)
                 except Exception as e:
-                    print('ERROR: something happened when processing row {name}'.format(name=row_name))
+                    print('ERROR: something happened when processing row {name}'.format(name=row_name),file=sys.stderr)
                     raise e
             section_title = section_name
             if section_name in [ item['name'] for item in data_left['sections']]:
@@ -343,7 +344,7 @@ def find_diff(data_left,data_right,config):
                     ]
             result['sections'].append(section_add)
         except Exception as e:
-            print('ERROR: something happened when processing section {name}'.format(name=section_name))
+            print('ERROR: something happened when processing section {name}'.format(name=section_name),file=sys.stderr)
             raise e
     return result
 
@@ -506,7 +507,7 @@ def entry_point(runscript_config={}):
         diff_format = args.cmp_format
         fmts_allowed = ['sidebyside','sidebyside_distant','combined']
         if not (diff_format in fmts_allowed):
-            raise ValueError('diff: unsupported config option: diff format: "{fmt}"; you can only use [ {allowed} ]'.format(fmt=diff_format,alowed=', '.join(fmts_allowed)))
+            raise Exception('diff: unsupported config option: diff format: "{fmt}"; you can only use [ {allowed} ]'.format(fmt=diff_format,alowed=', '.join(fmts_allowed)))
 
     diff_config = {
         'format': diff_format,
@@ -572,13 +573,13 @@ def entry_point(runscript_config={}):
             except json.JSONDecodeError as e:
                 # just a more descriptive message to the end user
                 # can happen if the tool is started two times in parallel and it is writing to the same json simultaneously
-                raise TypeError('Diff: Can\'t read left file as JSON: {msg}'.format(msg=e))
+                raise Exception('Diff: Can\'t read left file as JSON: {msg}'.format(msg=e))
             try:
                 data_right = json.load(f_r)
             except json.JSONDecodeError as e:
                 # just a more descriptive message to the end user
                 # can happen if the tool is started two times in parallel and it is writing to the same json simultaneously
-                raise TypeError('Diff: Can\'t read right file as JSON: {msg}'.format(msg=e))
+                raise Exception('Diff: Can\'t read right file as JSON: {msg}'.format(msg=e))
     
     print('{script_name}: script started at {dt}'.format(dt=time_start,script_name=script_name))
 

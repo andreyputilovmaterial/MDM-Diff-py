@@ -83,6 +83,24 @@
             "justMyCode": true
         },
         {
+            "name": "Python: Excel Diff Test on cmp from flatout maps",
+            "type": "python",
+            "request": "launch",
+            "program": "src/run_universal.py",
+            "console": "integratedTerminal",
+            "args": ["--program","diff","--cmp-scheme-left","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\mdd_map_R2401582.xlsx_filled_with_script.xlsx.json","--cmp-scheme-right","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\mdd_map_R2401582_annaverpinsky.xlsx.json"],
+            "justMyCode": true
+        },
+        {
+            "name": "Python: Excel Diff Report Test on cmp from flatout maps",
+            "type": "python",
+            "request": "launch",
+            "program": "src/run_universal.py",
+            "console": "integratedTerminal",
+            "args": ["--program","report","--inpfile","\\\\cnc-fsh-107p.elrw.com\\IPS2019\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\report.diff.mdd_map_-R2401582.xlsx_filled_with_script-R2401582_annaverpinsky-.xlsx.json"],
+            "justMyCode": true
+        },
+        {
             "name": "Python: MDD HTML Report Test",
             "type": "python",
             "request": "launch",
