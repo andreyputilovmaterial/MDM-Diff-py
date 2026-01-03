@@ -127,7 +127,7 @@ def find_diff(data_left,data_right,config):
     result = {
         'report_type': 'diff',
         'source_left': '{path}'.format(path=config['inp_filename_left']),
-        'source_right': '{path}'.format(path=config['inp_filename_left']),
+        'source_right': '{path}'.format(path=config['inp_filename_right']),
         'report_datetime_utc': datetime_start.astimezone(tz=timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
         'report_datetime_local': datetime_start.strftime('%Y-%m-%dT%H:%M:%SZ'),
         'source_file_metadata': [

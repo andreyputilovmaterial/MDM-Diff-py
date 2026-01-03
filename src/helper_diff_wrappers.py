@@ -26,6 +26,8 @@ def is_empty(s):
     if s==0:
         return False
     else:
+        # attention
+        # empty list, empty dict evaluates to empty
         return not s
 
 
@@ -447,7 +449,7 @@ def finddiff_values_dict_formatsidebyside( cmpdata_l, cmpdata_r ):
     for prop in props_combined:
         value_left = cmpdata_l[prop] if prop in cmpdata_l else None
         value_right = cmpdata_r[prop] if prop in cmpdata_r else None
-        value_resulting = value_resulting = finddiff_values_general_formatcombined( value_left, value_right )
+        value_resulting = finddiff_values_general_formatcombined( value_left, value_right )
         if prop in cmpdata_l:
             result_l[prop] = value_resulting
         if prop in cmpdata_r:
@@ -458,6 +460,7 @@ def finddiff_values_general_formatsidebyside( cmpdata_l, cmpdata_r ):
     if is_empty(cmpdata_l) and is_empty(cmpdata_r):
         return '',''
     else:
+        # TODO: I updated similar code in finddiff_values_general_formatcombined - please check if it should be updated here
         def detect_format(val):
             if is_empty(val):
                 return 'none'
@@ -596,31 +599,58 @@ def finddiff_values_dict_formatcombined( cmpdata_l, cmpdata_r ):
     for prop in props_combined:
         value_left = cmpdata_l[prop] if prop in cmpdata_l else None
         value_right = cmpdata_r[prop] if prop in cmpdata_r else None
-        value_resulting = value_resulting = finddiff_values_general_formatcombined( value_left, value_right )
+        value_resulting = finddiff_values_general_formatcombined( value_left, value_right )
         result[prop] = value_resulting
     return result
 
 def finddiff_values_general_formatcombined( cmpdata_l, cmpdata_r ):
+    def detect_format(val):
+        if False and is_empty(val):
+            return 'none' # none should not override dicts or lists
+        elif isinstance(val,list) and len(val)==0:
+            # return 'none'
+            return 'list'
+        elif isinstance(val,list) and (len([v for v in val if isinstance(v,dict) and 'name' in v])==len(val)):
+            return 'propertylist'
+        elif isinstance(val,list) and (len([v for v in val if isinstance(v,str)])==len(val)):
+            return 'list'
+        elif isinstance(val,dict):
+            return 'dict'
+        elif isinstance(val,str):
+            return 'str'
+        elif is_empty(val):
+            return 'none'
+        else:
+            return 'unrecognized'
     if is_empty(cmpdata_l) and is_empty(cmpdata_r):
-        return ''
-    else:
-        def detect_format(val):
-            if is_empty(val):
-                return 'none'
-            elif isinstance(val,list) and len(val)==0:
-                return 'none'
-            elif isinstance(val,list) and (len([v for v in val if isinstance(v,dict) and 'name' in v])==len(val)):
-                return 'propertylist'
-            elif isinstance(val,list) and (len([v for v in val if isinstance(v,str)])==len(val)):
-                return 'list'
-            elif isinstance(val,dict):
-                return 'dict'
-            elif isinstance(val,str):
-                return 'str'
-            else:
-                return 'unrecognized'
+        # return '' # wrong, if we compare {}'s, or {} to None, the result should be of the same type, not str
+        # return None # and this is wrong too
         cmpdata_l_format = detect_format(cmpdata_l)
         cmpdata_r_format = detect_format(cmpdata_r)
+        if cmpdata_l_format=='none':
+            cmpdata_l_format = cmpdata_r_format
+        if cmpdata_r_format=='none':
+            cmpdata_r_format = cmpdata_l_format
+        if (cmpdata_l_format==cmpdata_r_format):
+            if cmpdata_l_format=='str':
+                return ''
+            elif cmpdata_l_format=='list':
+                return []
+            elif cmpdata_l_format=='dict':
+                return {}
+            elif cmpdata_l_format=='propertylist':
+                return []
+            else:
+                return None
+        else:
+            return None
+    else:
+        cmpdata_l_format = detect_format(cmpdata_l)
+        cmpdata_r_format = detect_format(cmpdata_r)
+        if cmpdata_l_format=='list' and len(cmpdata_l)==0 and cmpdata_r_format=='propertylist':
+            cmpdata_l_format = 'propertylist'
+        if cmpdata_r_format=='list' and len(cmpdata_r)==0 and cmpdata_l_format=='propertylist':
+            cmpdata_r_format = 'propertylist'
         if cmpdata_l_format=='none':
             cmpdata_l_format = cmpdata_r_format
         if cmpdata_r_format=='none':
