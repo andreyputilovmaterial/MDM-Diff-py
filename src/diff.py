@@ -208,6 +208,16 @@ def find_diff(data_left,data_right,config):
             else:
                 raise Exception('diff format=="{fmt}": not supported, or not implemented'.format(fmt=config['format']))
             section_other_props['columns'] = columns_list_combined
+            if 'column_headers' in section_other_props:
+                column_headers_left = (file_l_section['column_headers'] or {}) if 'column_headers' in file_l_section else {}
+                column_headers_right = (file_r_section['column_headers'] or {}) if 'column_headers' in file_r_section else {}
+                section_other_props['column_headers'] = { **column_headers_left, **column_headers_right }
+                column_headers = section_other_props['column_headers']
+                for col_id, lab in ({**column_headers}).items():
+                    lab_left = (column_headers_left[col_id] if col_id in column_headers_left else lab) or lab
+                    lab_right = (column_headers_right[col_id] if col_id in column_headers_right else lab) or lab
+                    section_other_props['column_headers']['{n}_left'.format(n=col_id)] = '{basename} (Left file)'.format(basename=lab_left)
+                    section_other_props['column_headers']['{n}_right'.format(n=col_id)] = '{basename} (Right file)'.format(basename=lab_right)
 
             result_this_section = []
 
