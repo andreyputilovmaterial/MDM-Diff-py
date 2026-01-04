@@ -63,20 +63,20 @@ SET "MDD_A_JSON=%MDD_A%.json"
 SET "MDD_B_JSON=%MDD_B%.json"
 
 @REM FOR /F "delims=" %%i IN ('python -c "import sys;from pathlib import Path;import re;inp_mdd_l = sys.argv[1];inp_mdd_r = sys.argv[2];report_part_mdd_left_filename = re.sub( r'\.mdd\.json', '.mdd', Path(inp_mdd_l).name );report_part_mdd_right_filename = re.sub( r'\.mdd\.json', '.mdd', Path(inp_mdd_r).name );report_filename = 'report.diff.{mdd_l}-{mdd_r}.json'.format(mdd_l=report_part_mdd_left_filename,mdd_r=report_part_mdd_right_filename);result_json_fname = ( Path(inp_mdd_l).parents[0] / report_filename );print(result_json_fname)" "%MDD_A%" "%MDD_B%"') DO SET "MDD_FINAL_DIFF_JSON=%%i"
-FOR /F "delims=" %%i IN ('python src/run_universal.py --program diff --cmp-scheme-left "%MDD_A_JSON%" --cmp-scheme-right "%MDD_B_JSON%" --norun-special-onlyprintoutputfilename') DO SET "MDD_FINAL_DIFF_JSON=%%i"
+FOR /F "delims=" %%i IN ('python src/launcher.py --program diff --cmp-scheme-left "%MDD_A_JSON%" --cmp-scheme-right "%MDD_B_JSON%" --norun-special-onlyprintoutputfilename') DO SET "MDD_FINAL_DIFF_JSON=%%i"
 
 
 ECHO -
 ECHO 1. read MDD A
 ECHO read from: %MDD_A%
 ECHO write to: .json
-python src/run_universal.py --program read_mdd --mdd "%MDD_A%" %MDD_READ_CONFIG_SETTINGS%
+python src/launcher.py --program read_mdd --mdd "%MDD_A%" %MDD_READ_CONFIG_SETTINGS%
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 IF %CONFIG_PRODUCE_HTML_EACH_MDD% (
     ECHO -
     ECHO 2. generate html
-    python src/run_universal.py --program report --inpfile "%MDD_A_JSON%"
+    python src/launcher.py --program report --inpfile "%MDD_A_JSON%"
     if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 )
 
@@ -84,24 +84,24 @@ ECHO -
 ECHO 3. read MDD B
 ECHO read from: %MDD_B%
 ECHO write to: .json
-python src/run_universal.py --program read_mdd --mdd "%MDD_B%" %MDD_READ_CONFIG_SETTINGS%
+python src/launcher.py --program read_mdd --mdd "%MDD_B%" %MDD_READ_CONFIG_SETTINGS%
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 IF %CONFIG_PRODUCE_HTML_EACH_MDD% (
     ECHO -
     ECHO 4. generate html
-    python src/run_universal.py --program report --inpfile "%MDD_B_JSON%"
+    python src/launcher.py --program report --inpfile "%MDD_B_JSON%"
     if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 )
 
 ECHO -
 ECHO 5. diff
-python src/run_universal.py --program diff --cmp-scheme-left "%MDD_A_JSON%" --cmp-scheme-right "%MDD_B_JSON%"
+python src/launcher.py --program diff --cmp-scheme-left "%MDD_A_JSON%" --cmp-scheme-right "%MDD_B_JSON%"
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 ECHO -
 ECHO 6. final html with diff!
-python src/run_universal.py --program report --inpfile "%MDD_FINAL_DIFF_JSON%"
+python src/launcher.py --program report --inpfile "%MDD_FINAL_DIFF_JSON%"
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 ECHO -

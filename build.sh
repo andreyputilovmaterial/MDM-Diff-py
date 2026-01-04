@@ -23,8 +23,8 @@ echo "Patching mdmtoolsap_bundle.py..."
 {
     echo "# ..."
     echo "# print('within mdmtoolsap_bundle')"
-    echo "from src import run_universal"
-    echo "run_universal.main()"
+    echo "from src import launcher"
+    echo "launcher.main()"
     echo "# print('out of mdmtoolsap_bundle')"
 } >> dist/mdmtoolsap_bundle.py
 
