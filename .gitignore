@@ -1,20 +1,39 @@
-## Ignore everything in this directory
-# *
+# --- Proprietary / sensitive data ---
 *.mdd
 *.ddf
-**/[Tt]est*
-[Tt]est*
-[Tt]est*/
-ref.py
-**/__pycache__/
-__pycache__
-__pycache__/
-/__pycache__/
-*.pyc
-report.*
-# Except this file
-!.gitignore
-# !tests/
 
+# Reports generated from real data
+report.*
+
+# Examples directory (top-level only)
 examples/
-dist/
+
+# Test directories (case-insensitive, any level)
+[Tt]est*/
+
+# --- Python artifacts ---
+__pycache__/
+*.pyc
+
+# --- OS junk files ---
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100/
+.Trashes/
+
+# Optional: Windows shortcuts
+*.lnk
+
+# Keep .gitignore itself
+!.gitignore
