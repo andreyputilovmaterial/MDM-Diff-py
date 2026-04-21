@@ -1,5 +1,4 @@
 # import os, time, re, sys
-from msilib.schema import Error
 import os
 from datetime import datetime, timezone
 # from dateutil import tz
@@ -563,7 +562,7 @@ def entry_point(runscript_config={}):
         elif args.config_casesensitive_item_list_comparison=='strict':
             diff_config['config_row_diff_ignorecase'] = False
         else:
-            raise Error(f'Unrecognized option: config-casesensitive-item-list-comparison = "{args.config_casesensitive_item_list_comparison}"')
+            raise Exception(f'Unrecognized option: config-casesensitive-item-list-comparison = "{args.config_casesensitive_item_list_comparison}"')
 
     report_part_filename_left = re.sub( r'\.json\s*?$', '', Path(inp_filename_left).name )
     report_part_filename_right = re.sub( r'\.json\s*?$', '', Path(inp_filename_right).name )
