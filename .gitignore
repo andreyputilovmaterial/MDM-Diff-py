@@ -2,6 +2,10 @@
 *.mdd
 *.ddf
 
+# Outputs / generated artifacts
+dist/
+build/
+
 # Reports generated from real data
 report.*
 
