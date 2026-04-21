@@ -96,7 +96,7 @@ IF %CONFIG_PRODUCE_HTML_EACH_MDD% (
 
 ECHO -
 ECHO 5. diff
-python src/diff.py --cmp-scheme-left "%MDD_A_JSON%" --cmp-scheme-right "%MDD_B_JSON%"
+python src/diff.py --cmp-scheme-left "%MDD_A_JSON%" --cmp-scheme-right "%MDD_B_JSON%" --config-casesensitive-item-list-comparison ignorecase
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 ECHO -

@@ -123,8 +123,9 @@ def did_contents_change_deep_inspect(data):
 
 class MDMDiffWrappersGroupingMissingParentException(Exception):
     """Diff: diff item names with groupings: every group must include a parent element"""
-def finddiff_row_names_respecting_groups(rows_l,rows_r,delimiter,level=None):
+def finddiff_row_names_respecting_groups(rows_l,rows_r,delimiter,level=None,flags=None):
     try:
+        flags = flags or {}
         rows_inp_l = [ r for r in rows_l ]
         rows_inp_r = [ r for r in rows_r ]
         #grouping_found = False
@@ -191,7 +192,7 @@ def finddiff_row_names_respecting_groups(rows_l,rows_r,delimiter,level=None):
             grouping_found = grouping_found or (len(groups_l_defs[g])>1)
         for g in dict.keys(groups_r_defs):
             grouping_found = grouping_found or (len(groups_r_defs[g])>1)
-        diff_results = Myers.to_records(Myers.diff(rows_ungrouped_l,rows_ungrouped_r),rows_ungrouped_l,rows_ungrouped_r)
+        diff_results = Myers.to_records(Myers.diff(rows_ungrouped_l,rows_ungrouped_r,flags),rows_ungrouped_l,rows_ungrouped_r)
         if not grouping_found:
             return diff_results
         else:
@@ -205,7 +206,7 @@ def finddiff_row_names_respecting_groups(rows_l,rows_r,delimiter,level=None):
                     else:
                         rows_subgroup_l = groups_l_defs[diff_item.line] if diff_item.line in dict.keys(groups_l_defs) else ['']
                         rows_subgroup_r = groups_r_defs[diff_item.line] if diff_item.line in dict.keys(groups_r_defs) else ['']
-                        diff_within_group_missing_parent_part = finddiff_row_names_respecting_groups(rows_subgroup_l,rows_subgroup_r,delimiter,level=diff_item.line)
+                        diff_within_group_missing_parent_part = finddiff_row_names_respecting_groups(rows_subgroup_l,rows_subgroup_r,delimiter,level=diff_item.line,flags=flags)
                         diff_within_group = []
                         item_first_meaning_parent_group = True
                         for diff_item_within_group in diff_within_group_missing_parent_part:

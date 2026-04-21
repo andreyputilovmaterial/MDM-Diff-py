@@ -1,9 +1,11 @@
 # import os, time, re, sys
+from msilib.schema import Error
 import os
 from datetime import datetime, timezone
 # from dateutil import tz
 import argparse
 from pathlib import Path
+from random import choices
 import re
 import json
 import sys # for error reporting, to print to stderr
@@ -105,7 +107,7 @@ def find_diff(data_left,data_right,config):
 
     if config['verbose_prep_logging']:
        print('final config...')
-    if not ('config_use_hierarchical_name_structure' in config):
+    if 'config_use_hierarchical_name_structure' not in config:
         if 'data-type:mdd' in flags_list_combined:
             config['config_use_hierarchical_name_structure'] = True
         elif 'data-type:excel' in flags_list_combined:
@@ -122,6 +124,15 @@ def find_diff(data_left,data_right,config):
             raise Exception('excel with groups in item names? are you sure? please provide a separator!')
         else:
             config['config_hierarchical_name_separator'] = config['config_use_hierarchical_name_structure']
+    if 'config_row_diff_ignorecase' not in config or config['config_row_diff_ignorecase'] is None:
+        config['config_row_diff_ignorecase'] = None
+    if config['config_row_diff_ignorecase'] is None: # having "None" stored means auto-detect
+        if 'data-type:mdd' in flags_list_combined:
+            config['config_row_diff_ignorecase'] = True
+        else:
+            config['config_row_diff_ignorecase'] = False
+    if not ( (config['config_row_diff_ignorecase'] is False) or (config['config_row_diff_ignorecase'] is True) ): # verify/validate - must be explicitly true or false
+        raise Exception(f'not allowed config_row_diff_ignorecasevalue ("{config["config_row_diff_ignorecase"]}") - at this point must be explicitly True or False')
 
 
     result = {
@@ -235,7 +246,13 @@ def find_diff(data_left,data_right,config):
                 rows_r = rows_r if '' in rows_r else ['']+rows_r
             # confirm that row names are unique
             
-            report_rows_diff = helper_diff_wrappers.finddiff_row_names_respecting_groups( rows_l, rows_r, delimiter=(config['config_hierarchical_name_separator'] if ('config_use_hierarchical_name_structure' in config and config['config_use_hierarchical_name_structure']) else None) )
+            report_rows_diff = helper_diff_wrappers.finddiff_row_names_respecting_groups(
+                rows_l,
+                rows_r,
+                delimiter=(config['config_hierarchical_name_separator'] if ('config_use_hierarchical_name_structure' in config and config['config_use_hierarchical_name_structure']) else None),
+                level=None,
+                flags={'ignorecase':True} if config['config_row_diff_ignorecase'] else {}
+            )
             
             performance_counter = iter(helper_utility_wrappers.PerformanceMonitor(config={
                 'total_records': len(report_rows_diff),
@@ -468,6 +485,13 @@ def entry_point(runscript_config={}):
         required=False
     )
     parser.add_argument(
+        '--config-casesensitive-item-list-comparison',
+        help='Special flag to indicate if item name is a case-sensitive indentifier, or not and items written in different capitalization should be treated as same item',
+        choices=('ignorecase','strict','auto',),
+        default='auto',
+        required=False
+    )
+    parser.add_argument(
         '--output-filename',
         help='Set preferred output file name, with path',
         type=str,
@@ -524,12 +548,22 @@ def entry_point(runscript_config={}):
         'inp_filename_left': inp_filename_left,
         'inp_filename_right': inp_filename_right
     }
+    # TODO: simplify (but not break api!)
     if args.config_skip_rows_nochange:
         diff_config['config_skip_rows_nochange'] = True
     if args.config_do_not_show_content_rows_moved_from:
         diff_config['config_do_not_show_content_rows_moved_from'] = True
     if args.config_use_hierarchical_name_structure:
         diff_config['config_use_hierarchical_name_structure'] = True
+    if args.config_casesensitive_item_list_comparison:
+        if args.config_casesensitive_item_list_comparison=='auto':
+            diff_config['config_row_diff_ignorecase'] = None
+        elif args.config_casesensitive_item_list_comparison=='ignorecase':
+            diff_config['config_row_diff_ignorecase'] = True
+        elif args.config_casesensitive_item_list_comparison=='strict':
+            diff_config['config_row_diff_ignorecase'] = False
+        else:
+            raise Error(f'Unrecognized option: config-casesensitive-item-list-comparison = "{args.config_casesensitive_item_list_comparison}"')
 
     report_part_filename_left = re.sub( r'\.json\s*?$', '', Path(inp_filename_left).name )
     report_part_filename_right = re.sub( r'\.json\s*?$', '', Path(inp_filename_right).name )

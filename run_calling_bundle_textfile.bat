@@ -1,4 +1,5 @@
 @ECHO OFF
+@ECHO TODO: No enabledelayedexpansion?
 
 
 SET "TEXTFILE_A=prepdatadms_20241231.txt"

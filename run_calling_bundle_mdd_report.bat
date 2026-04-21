@@ -2,7 +2,7 @@
 SETLOCAL enabledelayedexpansion
 
 
-SET "MDD_A=examples\p221366_wave19.mdd"
+SET "MDD_A=Data\p221366_wave19.mdd"
 
 
 

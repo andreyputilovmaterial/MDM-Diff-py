@@ -32,6 +32,7 @@ SET "CONFIG_SHAREDLISTS_STEPINTO=1==0"
 
 
 
+
 REM :: prepare helper config strings
 SET "MDD_READ_CONFIG_FEATURELIST=@"
 IF %CONFIG_INCLUDE_LABELS% ( SET "MDD_READ_CONFIG_FEATURELIST=!MDD_READ_CONFIG_FEATURELIST!,label" )
@@ -96,7 +97,7 @@ IF %CONFIG_PRODUCE_HTML_EACH_MDD% (
 
 ECHO -
 ECHO 5. diff
-python src/launcher.py --program diff --cmp-scheme-left "%MDD_A_JSON%" --cmp-scheme-right "%MDD_B_JSON%"
+python src/launcher.py --program diff --cmp-scheme-left "%MDD_A_JSON%" --cmp-scheme-right "%MDD_B_JSON%" --config-casesensitive-item-list-comparison ignorecase
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 ECHO -
