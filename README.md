@@ -7,13 +7,13 @@ Download mdmtoolsap_bundle.py and a BAT for your file type file from
 
 Edit the BAT file and insert paths to compared files.
 
-You obviously need some dependencies - python, IBM Professional... Just standard things.
+You need python installed to run this. To compare MDDs, you need IBM/Unicom Professional to have this tool running. It is a requirement. If not dealing with MDDs, having Unicom/IBM Professional is unnecessary.
 
 ### On necessary dependencies and ms markitdown
 If you don't need to read input files with ms markitdown, dependencies are minimal. You just won't be able to use that ms markitdown way of reading files. Actually, ms markitdown is quite powerful - using it, you can read, html, excel, pdf, images, transcribed audio, etc. But it has a lot of dependencies now (it was much simpler is earlier versions), including openai libraries, azure-ai-documentintelligence, etc... Ms markitdown now comes with docker file - a different way of running the scripts - it is supposed that you create and run a container with python code. This diff tool was initially started as a simple script, so I am not sure if it worth it installing all these complicated dependencies without version control on your local machine. It's not a good practice, cause versions of packages might be important.
 
 ## Frequently asked questions
-* Q: What do I need to run this?<br />A: You need python environment (any modern version) and IBM (Unicom) software that shoud be installed on your machine by default (you don't even need Unicom if you are not producing any outputs from MDD files)
+* Q: What do I need to run this?<br />A: You need python installed to run this. To compare MDDs, you need IBM/Unicom Professional to have this tool running. It is a requirement. If not dealing with MDDs, having Unicom/IBM Professional is unnecessary.
 * Q: Why the chosen language is python?<br />A: I can't write it all in mrs scripts in VBScript. This language is too limited and too stupid. So I had to go for some other alternative, and python is fine, it's a simple scripting language and it has all necessary dependencies. My earier attempts were to keep code partially in mrs scripts but then I realized everything can be done in python so it's easier to opt for one single language. Also I have some additions in JS but this is designed itentionally to add some unnecessary code that runs separately just to beautify the page at the very last stage, add more control over it, add the ability to show or hide columns. But all JS here is unnecessary and can be removed for simplification
 * Q: Why are you doing this?<br />A: Everyone has some hobbies. I am not doing it at work/labor time. I find it interesting to find what we can do. It's some demonstrator of technologies. Maybe saying "tech" sounds too loud when I did not actually invent anything outstanding here - I am just reading fields utilizing existing API and writing it to HTML - nothing extraordinary - but I believe it can be developed to more sophisticated shapes.
 
