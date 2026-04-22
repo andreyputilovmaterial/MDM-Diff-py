@@ -43,7 +43,16 @@
             "request": "launch",
             "program": "src/launcher.py",
             "console": "integratedTerminal",
-            "args": ["--program","diff","--cmp-scheme-left","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\p2301763_prevauto_20240111_clean.mdd.json","--cmp-scheme-right","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\p2401215_auto_20241106_clean.mdd.json"],
+            "args": ["--program","diff","--cmp-scheme-left","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\p2301763_prevauto_20240111_clean.mdd.json\"","--cmp-scheme-right","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\p2401215_auto_20241106_clean.mdd.json\""],
+            "justMyCode": true
+        },
+        {
+            "name": "Python: Structural Diff Test (MDD)",
+            "type": "python",
+            "request": "launch",
+            "program": "src/launcher.py",
+            "console": "integratedTerminal",
+            "args": ["--program","diff","--cmp-scheme-left","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\p2301763_prevauto_20240111_clean.mdd.json\"","--cmp-scheme-right","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\p2401215_auto_20241106_clean.mdd.json\"","--cmp-format","structural","--config-do-not-include-rows-moved"],
             "justMyCode": true
         },
         {

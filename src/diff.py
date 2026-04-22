@@ -246,7 +246,9 @@ def find_diff(data_left,data_right,config):
                 for col in columns_list_check:
                     columns_list_combined.append(f'{col}')
             elif config['format']=='structural':
-                raise NotImplementedError(f'diff format=="{config["format"]}": not implemented yet')
+                # no left and right, just columns that contain diffs with added parts and removed
+                for col in columns_list_check:
+                    columns_list_combined.append(f'{col}')
             else:
                 raise NotImplementedError(f'diff format=="{config["format"]}": not supported, or not implemented')
             section_other_props['columns'] = columns_list_combined
@@ -320,6 +322,7 @@ def find_diff(data_left,data_right,config):
                     elif( row_name in rows_r ):
                         flag = '(added)'
                         row_changed = True
+                    col_any_changed = False
                     row['flagdiff'] = flag
                     file_l_rowdata = {}
                     file_r_rowdata = {}
@@ -356,21 +359,31 @@ def find_diff(data_left,data_right,config):
                             row[f'{col}'] = result_this_col_combined
 
                         elif config['format'] == 'structural':
-                            raise NotImplementedError(f'diff format is implemented yet: {config["format"]}')
+
+                            result_this_col_combined = helper_diff_wrappers.finddiff_values_general_formatstructural( file_l_coldata, file_r_coldata )
+                            
+                            if helper_diff_wrappers.check_if_includes_addedremoved_marker(result_this_col_combined):
+                                col_changed = True
+                            row[f'{col}'] = result_this_col_combined
 
                         else:
                             raise NotImplementedError(f'diff format is not supported: {config["format"]}')
                         
                         if col_changed:
-                            row_changed = True
-                    if row_changed:
-                        section_changed = True
-                        rows_changed = rows_changed + 1
-                    row_count = row_count + 1
-                    if 'config_skip_rows_nochange' in config and config['config_skip_rows_nochange']:
-                        if row_changed:
-                            result_this_section.append(row)
+                            col_any_changed = True
+                            # row_changed = True
+                    row_changed = row_changed or col_any_changed
+                    if 'config_skip_rows_nochange' in config and config['config_skip_rows_nochange'] and not row_changed:
+                        pass
+                    elif (config['format']=='structural') and not row_changed:
+                        pass # skip - do not add unchanged rows in structural diff format
+                    elif( ( (row_name in rows_l) and (row_name in rows_r) ) and (row_diff_item.flag in ['remove','insert']) and not col_any_changed and ('config_do_not_include_rows_moved' in config and config['config_do_not_include_rows_moved']) ):
+                        pass # skip if set in config
                     else:
+                        if row_changed:
+                            section_changed = True
+                            rows_changed = rows_changed + 1
+                        row_count = row_count + 1
                         result_this_section.append(row)
                 except Exception as e:
                     print(f'ERROR: something happened when processing row {row_name}',file=sys.stderr)
@@ -487,8 +500,14 @@ def entry_point(runscript_config={}):
         required=False
     )
     parser.add_argument(
+        '--config-do-not-include-rows-moved',
+        help='Special flag to indicate that we should not print contents of "moved" rows',
+        action='store_true',
+        required=False
+    )
+    parser.add_argument(
         '--config-use-hierarchical-name-structure',
-        help='Special flag to indicate that we should not print contents of "moved from" rows',
+        help='Special flag to control if items names should be treated hierarhical',
         action='store_true',
         required=False
     )
@@ -561,6 +580,8 @@ def entry_point(runscript_config={}):
         diff_config['config_skip_rows_nochange'] = True
     if args.config_do_not_show_content_rows_moved_from:
         diff_config['config_do_not_show_content_rows_moved_from'] = True
+    if args.config_do_not_include_rows_moved:
+        diff_config['config_do_not_include_rows_moved'] = True
     if args.config_use_hierarchical_name_structure:
         diff_config['config_use_hierarchical_name_structure'] = True
     if args.config_casesensitive_item_list_comparison:
