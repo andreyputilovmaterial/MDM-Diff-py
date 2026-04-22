@@ -4,20 +4,10 @@ import re
 
 # from collections import namedtuple
 from dataclasses import dataclass
+from typing import ClassVar
+from difflib import SequenceMatcher
 
 
-
-
-
-if __name__ == '__main__':
-    # run as a program
-    from lib.difflib.diff import Myers
-elif '.' in __name__:
-    # package
-    from .lib.difflib.diff import Myers
-else:
-    # included with no parent package
-    from lib.difflib.diff import Myers
 
 
 
@@ -53,44 +43,118 @@ def text_split_words(s):
 def text_split_lines(s):
     return s.split("\n")
 
+def diff_normalize(input,flags=None):
+    options = flags or {}
+    result = [r for r in input]
+    if ('ignorewhitespace' in options) and (options['ignorewhitespace']):
+        raise NotImplementedError('Ignore whitespace is not implemented in current implementation of diff')
+    if ('ignorecase' in options) and (options['ignorecase']):
+        result = [r for r in result]
+    if ('ignoreaccents' in options) and (options['ignoreaccents']):
+        raise NotImplementedError('Ignore accepts is not implemented in current implementation of diff')
+    return result
+
 
 
 # temporary repeating similar definitions from diff.py so that I can combine rows and it looks similar
 @dataclass(frozen=False)
-class DiffItemKeep:
+class DiffItemAbstract:
     line: str
-    flag = 'keep'
+    flag: ClassVar[str] = '???'
     def __str__(self):
-        return '{flag}: {line}'.format(flag=self.flag,line=self.line)
+        return f'{self.flag}: {self.line}'
 
 @dataclass(frozen=False)
-class DiffItemInsert:
-    line: str
-    flag = 'insert'
-    def __str__(self):
-        return 'insert: {line}'.format(flag=self.flag,line=self.line)
+class DiffItemKeep(DiffItemAbstract):
+    flag: ClassVar[str] = 'keep'
 
 @dataclass(frozen=False)
-class DiffItemRemove:
-    line: str
-    flag = 'remove'
-    def __str__(self):
-        return 'remove: {line}'.format(flag=self.flag,line=self.line)
+class DiffItemInsert(DiffItemAbstract):
+    flag: ClassVar[str] = 'insert'
+
+@dataclass(frozen=False)
+class DiffItemRemove(DiffItemAbstract):
+    flag: ClassVar[str] = 'remove'
+
+def as_diff_items_grouped(opcodes, a, b):
+    result = []
+    for tag, i1, i2, j1, j2 in opcodes:
+        line = None
+        if tag=='equal':
+            line = a[i1:i2]
+            result += [DiffItemKeep(line)]
+        elif tag == 'replace':
+            line = a[i1:i2]
+            result += [DiffItemRemove(line)]
+            line = b[j1:j2]
+            result += [DiffItemInsert(line)]
+        elif tag == 'insert':
+            line = b[j1:j2]
+            result += [DiffItemInsert(line)]
+        elif tag == 'delete':
+            line = a[i1:i2]
+            result += [DiffItemRemove(line)]
+        else:
+            raise Exception(f'Finding combined compiled output file name: Unrecognized piece from diff chunk {tag}')
+    return result
+
+def as_diff_items_individual(opcodes, a, b):
+    result = []
+    for tag, i1, i2, j1, j2 in opcodes:
+        line = None
+        if tag=='equal':
+            line = a[i1:i2]
+            for l in line:
+                result += [DiffItemKeep(l)]
+        elif tag == 'replace':
+            line = a[i1:i2]
+            for l in line:
+                result += [DiffItemRemove(l)]
+            line = b[j1:j2]
+            for l in line:
+                result += [DiffItemInsert(l)]
+        elif tag == 'insert':
+            line = b[j1:j2]
+            for l in line:
+                result += [DiffItemInsert(l)]
+        elif tag == 'delete':
+            line = a[i1:i2]
+            for l in line:
+                result += [DiffItemRemove(l)]
+        else:
+            raise Exception(f'Finding combined compiled output file name: Unrecognized piece from diff chunk {tag}')
+    return result
+
+def as_diff_items(*args,**argv):
+    return as_diff_items_individual(*args,**argv)
 
 
 
 
 
-def diff_make_combined_list(list_l,list_r):
-    results = []
-    for item in Myers.to_records(Myers.diff(list_l,list_r),list_l,list_r):
-        if not (item.line in results):
-            results.append(item.line)
-    return results
+
+def diff_make_combined_list(a,b):
+    sm = SequenceMatcher(None,a,b)
+    result = []
+    for tag, i1, i2, j1, j2 in sm.get_opcodes():
+        if tag=='equal':
+            result += a[i1:i2]
+        elif tag == 'replace':
+            result += a[i1:i2]
+            result += b[j1:j2]
+        elif tag == 'insert':
+            result += b[j1:j2]
+        elif tag == 'delete':
+            result += a[i1:i2]
+        else:
+            raise Exception(f'Finding combined compiled list of compared collections: Unrecognized piece from diff chunk {tag}')
+    return result
 
 def diff_raw(list_l,list_r):
-    # just a wrapper
-    return Myers.diff(list_l,list_r)
+    # # just a wrapper
+    # return Myers.diff(list_l,list_r)
+    # hmmm, is this still used?
+    raise NotImplementedError(f'diff_raw is not implemented; please clarify what actually need as "diff_raw"')
 
 
 
@@ -192,7 +256,8 @@ def finddiff_row_names_respecting_groups(rows_l,rows_r,delimiter,level=None,flag
             grouping_found = grouping_found or (len(groups_l_defs[g])>1)
         for g in dict.keys(groups_r_defs):
             grouping_found = grouping_found or (len(groups_r_defs[g])>1)
-        diff_results = Myers.to_records(Myers.diff(rows_ungrouped_l,rows_ungrouped_r,flags),rows_ungrouped_l,rows_ungrouped_r)
+        _diff = SequenceMatcher( None, diff_normalize(rows_ungrouped_l,flags=flags),diff_normalize(rows_ungrouped_r,flags=flags))
+        diff_results = as_diff_items( _diff.get_opcodes(), rows_ungrouped_l, rows_ungrouped_r )
         if not grouping_found:
             return diff_results
         else:
@@ -365,8 +430,8 @@ def finddiff_values_text_formatsidebyside( cmpdata_l, cmpdata_r ):
     else:
         cmpdata_l_into_lines = [ ('' if linenumber==0 else '\n') + (line if len(line)>0 else ' ') for linenumber,line in enumerate(text_split_lines(cmpdata_l)) ]
         cmpdata_r_into_lines = [ ('' if linenumber==0 else '\n') + (line if len(line)>0 else ' ') for linenumber,line in enumerate(text_split_lines(cmpdata_r)) ]
-        diff_data = Myers.diff(cmpdata_l_into_lines,cmpdata_r_into_lines)
-        diff_data = Myers.to_records(diff_data,cmpdata_l_into_lines,cmpdata_r_into_lines)
+        diff_data = SequenceMatcher(None,cmpdata_l_into_lines,cmpdata_r_into_lines).get_opcodes()
+        diff_data = as_diff_items( diff_data, cmpdata_l_into_lines, cmpdata_r_into_lines )
         diff_data = diff_combine_similar_records(diff_data)
         diff_data_l_and_r_by_lines = []
         for part in diff_data:
@@ -390,7 +455,7 @@ def finddiff_values_text_formatsidebyside( cmpdata_l, cmpdata_r ):
             #     result_this_col_right['parts'].append( '\n' )
             cmpdata_l_into_pieces = text_split_words(part['l'])
             cmpdata_r_into_pieces = text_split_words(part['r'])
-            diff_data = Myers.to_records(Myers.diff(cmpdata_l_into_pieces,cmpdata_r_into_pieces),cmpdata_l_into_pieces,cmpdata_r_into_pieces)
+            diff_data = as_diff_items( SequenceMatcher(None,cmpdata_l_into_pieces,cmpdata_r_into_pieces).get_opcodes(), cmpdata_l_into_pieces, cmpdata_r_into_pieces )
             diff_data = diff_combine_similar_records(diff_data)
             for part in diff_data:
                 if part.flag=='keep':
@@ -538,8 +603,8 @@ def finddiff_values_text_formatcombined( cmpdata_l, cmpdata_r ):
     else:
         cmpdata_l_into_lines = [ ('' if linenumber==0 else '\n') + (line if len(line)>0 else ' ') for linenumber,line in enumerate(text_split_lines(cmpdata_l)) ]
         cmpdata_r_into_lines = [ ('' if linenumber==0 else '\n') + (line if len(line)>0 else ' ') for linenumber,line in enumerate(text_split_lines(cmpdata_r)) ]
-        diff_data = Myers.diff(cmpdata_l_into_lines,cmpdata_r_into_lines)
-        diff_data = Myers.to_records(diff_data,cmpdata_l_into_lines,cmpdata_r_into_lines)
+        diff_data = SequenceMatcher(None,cmpdata_l_into_lines,cmpdata_r_into_lines).get_opcodes()
+        diff_data = as_diff_items( diff_data, cmpdata_l_into_lines, cmpdata_r_into_lines )
         diff_data = diff_combine_similar_records(diff_data)
         diff_data_l_and_r_by_lines = []
         for part in diff_data:
@@ -561,7 +626,7 @@ def finddiff_values_text_formatcombined( cmpdata_l, cmpdata_r ):
             #     result_this_col_combined['parts'].append( '\n' )
             cmpdata_l_into_pieces = text_split_words(part['l'])
             cmpdata_r_into_pieces = text_split_words(part['r'])
-            diff_data = Myers.to_records(Myers.diff(cmpdata_l_into_pieces,cmpdata_r_into_pieces),cmpdata_l_into_pieces,cmpdata_r_into_pieces)
+            diff_data = as_diff_items( SequenceMatcher(None,cmpdata_l_into_pieces,cmpdata_r_into_pieces).get_opcodes(), cmpdata_l_into_pieces, cmpdata_r_into_pieces )
             diff_data = diff_combine_similar_records(diff_data)
             for part in diff_data:
                 if part.flag=='keep':

@@ -5,7 +5,7 @@
             "name": "Python: MDD read test",
             "type": "python",
             "request": "launch",
-            "program": "src/run_universal.py",
+            "program": "src/launcher.py",
             "console": "integratedTerminal",
             "args": ["--program","read_mdd","--mdd","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\P2301763.mdd\""],
             "justMyCode": true
@@ -14,16 +14,34 @@
             "name": "Python: MDD read test with numeric loop iterations",
             "type": "python",
             "request": "launch",
-            "program": "src/run_universal.py",
+            "program": "src/launcher.py",
             "console": "integratedTerminal",
             "args": ["--program","read_mdd","--mdd","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\R2302101.mdd\""],
+            "justMyCode": true
+        },
+        {
+            "name": "Python: diff output filename test",
+            "type": "python",
+            "request": "launch",
+            "program": "src/launcher.py",
+            "console": "integratedTerminal",
+            "args": ["--program","diff","--cmp-scheme-left", "\"tests\\current\\test_data\\p2301763.mdd.json\"", "--cmp-scheme-right", "\"tests\\current\\test_data\\p2401215.mdd.json\"", "--norun-special-onlyprintoutputfilename"],
+            "justMyCode": true
+        },
+        {
+            "name": "Python: diff output filename test (obsolete program for cmp)",
+            "type": "python",
+            "request": "launch",
+            "program": "src/launcher.py",
+            "console": "integratedTerminal",
+            "args": ["--program","diff_obsolete","--cmp-scheme-left", "\"tests\\current\\test_data\\p2301763.mdd.json\"", "--cmp-scheme-right", "\"tests\\current\\test_data\\p2401215.mdd.json\"", "--norun-special-onlyprintoutputfilename"],
             "justMyCode": true
         },
         {
             "name": "Python: Diff Test (MDD)",
             "type": "python",
             "request": "launch",
-            "program": "src/run_universal.py",
+            "program": "src/launcher.py",
             "console": "integratedTerminal",
             "args": ["--program","diff","--cmp-scheme-left","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\p2301763_prevauto_20240111_clean.mdd.json","--cmp-scheme-right","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\p2401215_auto_20241106_clean.mdd.json"],
             "justMyCode": true
@@ -32,7 +50,7 @@
             "name": "Python: LRW Excel Read Test: sections above bases",
             "type": "python",
             "request": "launch",
-            "program": "src/run_universal.py",
+            "program": "src/launcher.py",
             "console": "integratedTerminal",
             "args": ["--program","read_excel","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\R2401043STK WGT PCT Banner Main Market_FOP 1113.xlsx\""],
             "justMyCode": true
@@ -41,7 +59,7 @@
             "name": "Python: LRW Excel Read Test: \"normal tables\"",
             "type": "python",
             "request": "launch",
-            "program": "src/run_universal.py",
+            "program": "src/launcher.py",
             "console": "integratedTerminal",
             "args": ["--program","read_excel","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\R2401428 WGT HuluBanner1 12122024.xlsx\""],
             "justMyCode": true
@@ -50,7 +68,7 @@
             "name": "Python: LRW Excel Read Test: BES (heavy)",
             "type": "python",
             "request": "launch",
-            "program": "src/run_universal.py",
+            "program": "src/launcher.py",
             "console": "integratedTerminal",
             "args": ["--program","read_excel","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\R2301349 WGT BannerMOC_Us_Total.xlsx\""],
             "justMyCode": true
@@ -59,7 +77,7 @@
             "name": "Python: Excel Read Test - General (AA)",
             "type": "python",
             "request": "launch",
-            "program": "src/run_universal.py",
+            "program": "src/launcher.py",
             "console": "integratedTerminal",
             "args": ["--program","read_excel","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\Author_Specifications_mailchimpsmb_wave19.xlsm\""],
             "justMyCode": true
@@ -68,7 +86,7 @@
             "name": "Python: Diff Test (Excel)",
             "type": "python",
             "request": "launch",
-            "program": "src/run_universal.py",
+            "program": "src/launcher.py",
             "console": "integratedTerminal",
             "args": ["--program","diff","--cmp-scheme-left","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\R2401428 WGT HuluBanner1 12042024.xlsx.json","--cmp-scheme-right","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\R2401428 WGT HuluBanner1 12122024.xlsx.json"],
             "justMyCode": true
@@ -77,7 +95,7 @@
             "name": "Python: Excel Diff Report Test",
             "type": "python",
             "request": "launch",
-            "program": "src/run_universal.py",
+            "program": "src/launcher.py",
             "console": "integratedTerminal",
             "args": ["--program","report","--inpfile","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\report.diff.R2-3-40-0-8-1-3-4-9- WGT BannerMOC_Us_Total.xlsx.json"],
             "justMyCode": true
@@ -86,7 +104,7 @@
             "name": "Python: Excel Diff Test on cmp from flatout maps",
             "type": "python",
             "request": "launch",
-            "program": "src/run_universal.py",
+            "program": "src/launcher.py",
             "console": "integratedTerminal",
             "args": ["--program","diff","--cmp-scheme-left","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\mdd_map_R2401582.xlsx_filled_with_script.xlsx.json","--cmp-scheme-right","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\mdd_map_R2401582_annaverpinsky.xlsx.json"],
             "justMyCode": true
@@ -95,7 +113,7 @@
             "name": "Python: Excel Diff Report Test on cmp from flatout maps",
             "type": "python",
             "request": "launch",
-            "program": "src/run_universal.py",
+            "program": "src/launcher.py",
             "console": "integratedTerminal",
             "args": ["--program","report","--inpfile","\\\\cnc-fsh-107p.elrw.com\\IPS2019\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\report.diff.mdd_map_-R2401582.xlsx_filled_with_script-R2401582_annaverpinsky-.xlsx.json"],
             "justMyCode": true
@@ -104,7 +122,7 @@
             "name": "Python: MDD HTML Report Test",
             "type": "python",
             "request": "launch",
-            "program": "src/run_universal.py",
+            "program": "src/launcher.py",
             "console": "integratedTerminal",
             "args": ["--program","report","--inpfile","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\p2301763_prevauto_20240111_clean.mdd.json"],
             "justMyCode": true
@@ -113,7 +131,7 @@
             "name": "Python: MDD Excel Report Test",
             "type": "python",
             "request": "launch",
-            "program": "src/run_universal.py",
+            "program": "src/launcher.py",
             "console": "integratedTerminal",
             "args": ["--program","report_excel","--inpfile","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\p2301763_prevauto_20240111_clean.mdd.json"],
             "justMyCode": true
@@ -122,7 +140,7 @@
             "name": "Python: LRW Excel Columns Read Test",
             "type": "python",
             "request": "launch",
-            "program": "src/run_universal.py",
+            "program": "src/launcher.py",
             "console": "integratedTerminal",
             "args": ["--program","read_excel","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\R2401043STK WGT PCT Banner Main Market_FOP 1113.xlsx\""],
             "justMyCode": true
@@ -131,7 +149,7 @@
             "name": "Python: Diff Test for non-unique row names",
             "type": "python",
             "request": "launch",
-            "program": "src/run_universal.py",
+            "program": "src/launcher.py",
             "console": "integratedTerminal",
             "args": ["--program","diff","--cmp-scheme-left","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\p2301763_prevauto_20240111_clean_nonunique.mdd.json","--cmp-scheme-right","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\p2401215_auto_20241106_clean.mdd.json"],
             "justMyCode": true
@@ -140,7 +158,7 @@
             "name": "Python: Test MarkItDown",
             "type": "python",
             "request": "launch",
-            "program": "src/run_universal.py",
+            "program": "src/launcher.py",
             "console": "integratedTerminal",
             "args": ["--program","read_msmarkitdown","--inpfile","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\spss_map_240220_removedrecordssheet_early.xlsx"],
             "justMyCode": true
@@ -149,7 +167,7 @@
             "name": "Python: Diff Test (Excel) to check why zeros are lost",
             "type": "python",
             "request": "launch",
-            "program": "src/run_universal.py",
+            "program": "src/launcher.py",
             "console": "integratedTerminal",
             "args": ["--program","diff","--cmp-scheme-left","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\R2400814 UNW Test FanshipVars BeforeUpdate.xlsx.json","--cmp-scheme-right","S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\R2400814 UNW Test FanshipVars WithUpdate.xlsx.json"],
             "justMyCode": true
@@ -158,7 +176,7 @@
             "name": "Python: Excel Columns Keyword Argument sttate issue",
             "type": "python",
             "request": "launch",
-            "program": "src/run_universal.py",
+            "program": "src/launcher.py",
             "console": "integratedTerminal",
             "args": ["--program","read_excel","--inpfile","S:\\Personal Folders\\Putilov\\temp\\seg\\specs\\temp\\unprotected.xlsm"],
             "justMyCode": false
@@ -167,7 +185,7 @@
             "name": "Python: Excel read test: FlatOut map",
             "type": "python",
             "request": "launch",
-            "program": "src/run_universal.py",
+            "program": "src/launcher.py",
             "console": "integratedTerminal",
             "args": ["--program","read_excel","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\mdd_map_R2401582_annaverpinsky.xlsx\""],
             "justMyCode": true
@@ -176,7 +194,7 @@
             "name": "Python: Excel read test: Reporter Exports",
             "type": "python",
             "request": "launch",
-            "program": "src/run_universal.py",
+            "program": "src/launcher.py",
             "console": "integratedTerminal",
             "args": ["--program","read_excel","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\DV_Brand.xlsx\""],
             "justMyCode": true
@@ -185,7 +203,7 @@
             "name": "Python: SPSS read test (only metadata)",
             "type": "python",
             "request": "launch",
-            "program": "src/run_universal.py",
+            "program": "src/launcher.py",
             "console": "integratedTerminal",
             "args": ["--program","read_spss","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\R2401582_FlatOutSPSS.sav\""],
             "justMyCode": true
@@ -194,7 +212,7 @@
             "name": "Python: SPSS read test, with data",
             "type": "python",
             "request": "launch",
-            "program": "src/run_universal.py",
+            "program": "src/launcher.py",
             "console": "integratedTerminal",
             "args": ["--program","read_spss","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\R2401582_FlatOutSPSS.sav\"","--config-read-data","yes","--id-key","Respondent_ID"],
             "justMyCode": true
@@ -203,7 +221,7 @@
             "name": "Python: SPSS read test (test unicode from dmsrun)",
             "type": "python",
             "request": "launch",
-            "program": "src/run_universal.py",
+            "program": "src/launcher.py",
             "console": "integratedTerminal",
             "args": ["--program","read_spss","--inpfile","\"S:\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\R2400814M.sav\""],
             "justMyCode": true

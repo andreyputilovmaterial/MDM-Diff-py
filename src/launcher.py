@@ -10,6 +10,7 @@ import traceback, sys
 
 if __name__ == '__main__':
     # run as a program
+    import diff_obsolete
     import diff
     from lib.mdmreadpy import read_mdd
     from lib.otherformatsreadpy_txt import read as read_txt
@@ -20,6 +21,7 @@ if __name__ == '__main__':
     from lib.mdmexcelreportpy import report_create as report_excel_create
 elif '.' in __name__:
     # package
+    from . import diff_obsolete
     from . import diff
     from .lib.mdmreadpy import read_mdd
     from .lib.otherformatsreadpy_txt import read as read_txt
@@ -30,6 +32,7 @@ elif '.' in __name__:
     from .lib.mdmexcelreportpy import report_create as report_excel_create
 else:
     # included with no parent package
+    import diff_obsolete
     import diff
     from lib.mdmreadpy import read_mdd
     from lib.otherformatsreadpy_txt import read as read_txt
@@ -47,6 +50,9 @@ else:
 from datetime import datetime, timezone
 
 
+
+def call_diff_obsolete_program():
+    return diff_obsolete.entry_point({'arglist_strict':False})
 
 def call_diff_program():
     return diff.entry_point({'arglist_strict':False})
@@ -84,6 +90,7 @@ hello, world!
 
 run_programs = {
     'diff': call_diff_program,
+    'diff_obsolete': call_diff_obsolete_program,
     'read_mdd': call_read_mdd_program,
     'read_txt': call_read_txt_program,
     'read_excel': call_read_excel_program,

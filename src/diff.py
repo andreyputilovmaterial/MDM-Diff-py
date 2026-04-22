@@ -1,26 +1,28 @@
-# import os, time, re, sys
-import os
 from datetime import datetime, timezone
 # from dateutil import tz
 import argparse
 from pathlib import Path
-from random import choices
+# from random import choices
 import re
 import json
 import sys # for error reporting, to print to stderr
 
 
 
+from difflib import SequenceMatcher
 if __name__ == '__main__':
     # run as a program
+    # import helper_diff_wrappers
     import helper_diff_wrappers
     import helper_utility_wrappers
 elif '.' in __name__:
     # package
+    # from . import helper_diff_wrappers
     from . import helper_diff_wrappers
     from . import helper_utility_wrappers
 else:
     # included with no parent package
+    # import helper_diff_wrappers
     import helper_diff_wrappers
     import helper_utility_wrappers
 
@@ -32,117 +34,142 @@ CONFIG_NUM_ROWS_CONSIDERED_DIFFICULT = 3000
 
 
 
+
 def find_diff(data_left,data_right,config):
 
+    def detect_difficulty(metric,data_left,data_right,config):
+        if metric == 'global_col_count':
+            try:
+                if len(data_left['report_scheme']['columns'])>CONFIG_NUM_COLUMNS_CONSIDERED_DIFFICULT or len(data_right['report_scheme']['columns'])>CONFIG_NUM_COLUMNS_CONSIDERED_DIFFICULT:
+                    return True
+            except:
+                pass
+        else:
+            raise NotImplementedError(f'detect difficulty: unknown metric: {metric}')
+        return False
+    
+    def prep_config(config,flags_list_combined):
+        if 'config_use_hierarchical_name_structure' not in config:
+            if 'data-type:mdd' in flags_list_combined:
+                config['config_use_hierarchical_name_structure'] = True
+            elif 'data-type:excel' in flags_list_combined:
+                config['config_use_hierarchical_name_structure'] = False
+            elif 'data-type:spss' in flags_list_combined:
+                config['config_use_hierarchical_name_structure'] = True
+        if ('config_use_hierarchical_name_structure' in config) and config['config_use_hierarchical_name_structure']:
+            if 'data-type:mdd' in flags_list_combined:
+                config['config_hierarchical_name_separator'] = '.'
+            elif 'data-type:spss' in flags_list_combined:
+                config['config_hierarchical_name_separator'] = '\t'
+            elif 'data-type:excel' in flags_list_combined:
+                # config['config_hierarchical_name_separator'] = ' ---->>>> '
+                raise Exception('excel with groups in item names? are you sure? please provide a separator!')
+            else:
+                config['config_hierarchical_name_separator'] = config['config_use_hierarchical_name_structure']
+        if 'config_row_diff_ignorecase' not in config or config['config_row_diff_ignorecase'] is None:
+            config['config_row_diff_ignorecase'] = None
+        if config['config_row_diff_ignorecase'] is None: # having "None" stored means auto-detect
+            if 'data-type:mdd' in flags_list_combined:
+                config['config_row_diff_ignorecase'] = True
+            else:
+                config['config_row_diff_ignorecase'] = False
+        if not ( (config['config_row_diff_ignorecase'] is False) or (config['config_row_diff_ignorecase'] is True) ): # verify/validate - must be explicitly true or false
+            raise Exception(f'not allowed config_row_diff_ignorecasevalue ("{config["config_row_diff_ignorecase"]}") - at this point must be explicitly True or False')
+
+        return config
+    
+    def compile_flags_combined(data_left,data_right,config):
+        flags_list_combined = [ 'data-type:diff' ] + [ flag for flag in (data_left['report_scheme']['flags'] if 'flags' in data_left['report_scheme'] else []) if flag in (data_right['report_scheme']['flags'] if 'flags' in data_right['report_scheme'] else []) ] + [ f'diff_source_left:{flag}' for flag in (data_left['report_scheme']['flags'] if 'flags' in data_left['report_scheme'] else []) ] + [ f'diff_source_right:{flag}' for flag in (data_right['report_scheme']['flags'] if 'flags' in data_right['report_scheme'] else []) ]
+        return flags_list_combined
+    
+    def compile_cols_combined(data_left,data_right,config):
+        columns_list_combined_global = [
+            'flagdiff', 'name'
+        ]
+        data_columns_global_left = data_left.get('report_scheme',{}).get('columns',[])
+        data_columns_global_right = data_right.get('report_scheme',{}).get('columns',[])
+        columns_list_check_global = helper_diff_wrappers.diff_make_combined_list(data_columns_global_left,data_columns_global_right)
+        columns_list_check_global = [r for r in columns_list_check_global if not re.match(r'^\s*name\s*$',r,flags=re.I)]
+        if config['format']=='sidebyside':
+            # add left and right, left and right...
+            for col in columns_list_check_global:
+                columns_list_combined_global.append(f'{col}_left')
+                columns_list_combined_global.append(f'{col}_right')
+        elif config['format']=='sidebyside_distant':
+            # add all left, then all right
+            for col in columns_list_check_global:
+                columns_list_combined_global.append(f'{col}_left')
+            for col in columns_list_check_global:
+                columns_list_combined_global.append(f'{col}_right')
+        elif config['format'] in ['combined','structural']:
+            # no left and right, just columns that contain diffs with added parts and removed
+            if config['format'] == 'structural':
+                columns_list_combined_global = [ 'name', 'flagdiff' ] # reorder, keep "name" first
+            for col in columns_list_check_global:
+                columns_list_combined_global.append(f'{col}')
+        else:
+            raise NotImplementedError(f'diff format=="{config["format"]}": not supported, or not implemented')
+        return columns_list_combined_global
+    
+    def compile_col_headers(data_left,data_right,config):
+        column_headers_combined = {'name':'Item name','flagdiff':'Diff flag'}
+        for key in dict.keys({**data_right.get('report_scheme',{}).get('column_headers',{}),**data_left.get('report_scheme',{}).get('column_headers',{})}):
+            if key in data_left.get('report_scheme',{}).get('column_headers',{}):
+                column_headers_combined[f'{key}'] = f'{data_left.get("report_scheme",{}).get("column_headers",{})[key]}'
+                column_headers_combined[f'{key}_left'] = f'{data_left.get("report_scheme",{}).get("column_headers",{})[key]} (Left file)'
+            if key in data_right.get('report_scheme',{}).get('column_headers',{}):
+                if not( f'{key}' in column_headers_combined ):
+                    column_headers_combined[f'{key}'] = f'{data_right.get("report_scheme",{}).get("column_headers",{})[key]}'
+                column_headers_combined[f'{key}_right'] = f'{data_right.get("report_scheme",{}).get("column_headers",{})[key]} (Right file)'
+        return column_headers_combined
+
     datetime_start = datetime.now()
+    config = {**(config or {})}
     config_default = {
         'format': 'sidebyside'
     }
     config = {**config_default,**config}
     config['verbose_prep_logging'] = False
-    try:
-        if len(data_left['report_scheme']['columns'])>CONFIG_NUM_COLUMNS_CONSIDERED_DIFFICULT or len(data_right['report_scheme']['columns'])>CONFIG_NUM_COLUMNS_CONSIDERED_DIFFICULT:
-            config['verbose_prep_logging'] = True
-    except:
-        pass
+
     if config['verbose_prep_logging']:
-       print('preparation...')
-    if config['verbose_prep_logging']:
-       print('config...')
-    config['format'] = config['format']
-    config_diff_format = None
-    if config['format']=='sidebyside':
-        config_diff_format = 'sidebyside'
-    elif config['format']=='sidebyside_distant':
-        config_diff_format = 'sidebyside'
-    elif config['format']=='combined':
-        config_diff_format = 'combined'
-    else:
-        raise Exception('diff format=="{fmt}": not supported, or not implemented'.format(fmt=config['format']))
-    
-    # if config_diff_format=='combined':
-    #     raise Exception('diff format=="combined": not implemented yet')
+       print('find combined list of flags...')
+    flags_list_combined = compile_flags_combined(data_left,data_right,config)
+
+    config['verbose_prep_logging'] = config['verbose_prep_logging'] or detect_difficulty('global_col_count',data_left,data_right,config)
 
     if config['verbose_prep_logging']:
        print('find combined list of columns...')
-    columns_list_combined_global = [
-        'flagdiff', 'name'
-    ]
-    data_columns_global_left = data_left['report_scheme']['columns']
-    data_columns_global_right = data_right['report_scheme']['columns']
-    columns_list_check_global = [ col for col in helper_diff_wrappers.diff_make_combined_list(data_columns_global_left,data_columns_global_right) if not re.match(r'^\s*?name\s*?$',col,flags=re.I) ]
-    if config['format']=='sidebyside':
-        # add left and right, left and right...
-        for col in columns_list_check_global:
-            columns_list_combined_global.append('{basename}{suffix}'.format(basename=col,suffix='_left'))
-            columns_list_combined_global.append('{basename}{suffix}'.format(basename=col,suffix='_right'))
-    elif config['format']=='sidebyside_distant':
-        # add all left, then all right
-        for col in columns_list_check_global:
-            columns_list_combined_global.append('{basename}{suffix}'.format(basename=col,suffix='_left'))
-        for col in columns_list_check_global:
-            columns_list_combined_global.append('{basename}{suffix}'.format(basename=col,suffix='_right'))
-    elif config['format']=='combined':
-        # no left and right, just columns that contain diffs with added parts and removed
-        for col in columns_list_check_global:
-            columns_list_combined_global.append('{basename}{suffix}'.format(basename=col,suffix=''))
-    else:
-        raise Exception('diff format=="{fmt}": not supported, or not implemented'.format(fmt=config['format']))
-    
-    column_headers_combined = {'name':'Item name','flagdiff':'Diff flag'}
-    for key in dict.keys({**data_right['report_scheme']['column_headers'],**data_left['report_scheme']['column_headers']}):
-        if key in data_left['report_scheme']['column_headers']:
-            column_headers_combined['{name}'.format(name=key)] = '{basename}'.format(basename=data_left['report_scheme']['column_headers'][key])
-            column_headers_combined['{name}_left'.format(name=key)] = '{basename} (Left file)'.format(basename=data_left['report_scheme']['column_headers'][key])
-        if key in data_right['report_scheme']['column_headers']:
-            if not( '{name}'.format(name=key) in column_headers_combined ):
-                column_headers_combined['{name}'.format(name=key)] = '{basename}'.format(basename=data_right['report_scheme']['column_headers'][key])
-            column_headers_combined['{name}_right'.format(name=key)] = '{basename} (Right file)'.format(basename=data_right['report_scheme']['column_headers'][key])
+    columns_list_combined_global = compile_cols_combined(data_left,data_right,config)
+
     if config['verbose_prep_logging']:
-       print('flags...')
-    # flags_list_combined = helper_diff_wrappers.diff_make_combined_list( data_left['report_scheme']['flags'] if 'flags' in data_left['report_scheme'] else [], data_right['report_scheme']['flags'] if 'flags' in data_right['report_scheme'] else [] )
-    flags_list_combined = [ 'data-type:diff' ] + [ flag for flag in (data_left['report_scheme']['flags'] if 'flags' in data_left['report_scheme'] else []) if flag in (data_right['report_scheme']['flags'] if 'flags' in data_right['report_scheme'] else []) ] + [ '{prefix}{flag}'.format(prefix='diff_source_left:',flag=flag) for flag in (data_left['report_scheme']['flags'] if 'flags' in data_left['report_scheme'] else []) ] + [ '{prefix}{flag}'.format(prefix='diff_source_right:',flag=flag) for flag in (data_right['report_scheme']['flags'] if 'flags' in data_right['report_scheme'] else []) ]
-    section_list_combined = helper_diff_wrappers.diff_make_combined_list( [ item['name'] for item in data_left['sections']], [ item['name'] for item in data_right['sections']])
+       print('find column headers...')
+    column_headers_combined = compile_col_headers(data_left,data_right,config)
+
+    if config['verbose_prep_logging']:
+       print('find combined list of sections...')
+    section_list_combined = helper_diff_wrappers.diff_make_combined_list(
+        [ item['name'] for item in data_left['sections']  ],
+        [ item['name'] for item in data_right['sections'] ]
+    )
 
     if config['verbose_prep_logging']:
        print('final config...')
-    if 'config_use_hierarchical_name_structure' not in config:
-        if 'data-type:mdd' in flags_list_combined:
-            config['config_use_hierarchical_name_structure'] = True
-        elif 'data-type:excel' in flags_list_combined:
-            config['config_use_hierarchical_name_structure'] = False
-        elif 'data-type:spss' in flags_list_combined:
-            config['config_use_hierarchical_name_structure'] = True
-    if ('config_use_hierarchical_name_structure' in config) and config['config_use_hierarchical_name_structure']:
-        if 'data-type:mdd' in flags_list_combined:
-            config['config_hierarchical_name_separator'] = '.'
-        elif 'data-type:spss' in flags_list_combined:
-            config['config_hierarchical_name_separator'] = '\t'
-        elif 'data-type:excel' in flags_list_combined:
-            # config['config_hierarchical_name_separator'] = ' ---->>>> '
-            raise Exception('excel with groups in item names? are you sure? please provide a separator!')
-        else:
-            config['config_hierarchical_name_separator'] = config['config_use_hierarchical_name_structure']
-    if 'config_row_diff_ignorecase' not in config or config['config_row_diff_ignorecase'] is None:
-        config['config_row_diff_ignorecase'] = None
-    if config['config_row_diff_ignorecase'] is None: # having "None" stored means auto-detect
-        if 'data-type:mdd' in flags_list_combined:
-            config['config_row_diff_ignorecase'] = True
-        else:
-            config['config_row_diff_ignorecase'] = False
-    if not ( (config['config_row_diff_ignorecase'] is False) or (config['config_row_diff_ignorecase'] is True) ): # verify/validate - must be explicitly true or false
-        raise Exception(f'not allowed config_row_diff_ignorecasevalue ("{config["config_row_diff_ignorecase"]}") - at this point must be explicitly True or False')
+    config = prep_config(config,flags_list_combined)
 
 
+
+
+    if config['verbose_prep_logging']:
+       print('set output template...')
     result = {
         'report_type': 'diff',
-        'source_left': '{path}'.format(path=config['inp_filename_left']),
-        'source_right': '{path}'.format(path=config['inp_filename_right']),
+        'source_left': f'{config["inp_filename_left"]}',
+        'source_right': f'{config["inp_filename_right"]}',
         'report_datetime_utc': datetime_start.astimezone(tz=timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
         'report_datetime_local': datetime_start.strftime('%Y-%m-%dT%H:%M:%SZ'),
         'source_file_metadata': [
-            { 'name': 'source_left', 'value': '{path}'.format(path=config['inp_filename_left']) },
-            { 'name': 'source_right', 'value': '{path}'.format(path=config['inp_filename_right']) },
+            { 'name': 'source_left',  'value': f'{config["inp_filename_left"]}'  },
+            { 'name': 'source_right', 'value': f'{config["inp_filename_right"]}' },
         ],
         'report_scheme': {
             'columns': columns_list_combined_global,
@@ -151,12 +178,15 @@ def find_diff(data_left,data_right,config):
         },
         'sections': [],
     }
+
+
+
     if config['verbose_prep_logging']:
        print('go!')
     for section_name in section_list_combined:
         try:
             
-            print('== processing section {name} =='.format(name=section_name))
+            print(f'== processing section {section_name} ==')
             
             file_l_sections_allmatches = [ section for section in data_left['sections'] if section['name']==section_name ]
             file_r_sections_allmatches = [ section for section in data_right['sections'] if section['name']==section_name ]
@@ -190,8 +220,8 @@ def find_diff(data_left,data_right,config):
             #     section_other_props['columns'] = [ column for column in helper_diff_wrappers.diff_make_combined_list(file_l_section['columns'] if 'columns' in file_l_section else [],file_r_section['columns'] if 'columns' in file_r_section else []) ]
 
             columns_list_check = []
-            data_columns_left = file_l_section['columns'] if 'columns' in file_l_section else data_columns_global_left
-            data_columns_right = file_r_section['columns'] if 'columns' in file_r_section else data_columns_global_right
+            data_columns_left = file_l_section['columns'] if 'columns' in file_l_section else data_left.get('report_scheme',{}).get('columns',[])
+            data_columns_right = file_r_section['columns'] if 'columns' in file_r_section else data_right.get('report_scheme',{}).get('columns',[])
             columns_list_combined = [
                 'flagdiff', 'name'
             ]
@@ -203,20 +233,22 @@ def find_diff(data_left,data_right,config):
             if config['format']=='sidebyside':
                 # add left and right, left and right...
                 for col in columns_list_check:
-                    columns_list_combined.append('{basename}{suffix}'.format(basename=col,suffix='_left'))
-                    columns_list_combined.append('{basename}{suffix}'.format(basename=col,suffix='_right'))
+                    columns_list_combined.append(f'{col}_left')
+                    columns_list_combined.append(f'{col}_right')
             elif config['format']=='sidebyside_distant':
                 # add all left, then all right
                 for col in columns_list_check:
-                    columns_list_combined.append('{basename}{suffix}'.format(basename=col,suffix='_left'))
+                    columns_list_combined.append(f'{col}_left')
                 for col in columns_list_check:
-                    columns_list_combined.append('{basename}{suffix}'.format(basename=col,suffix='_right'))
+                    columns_list_combined.append(f'{col}_right')
             elif config['format']=='combined':
                 # no left and right, just columns that contain diffs with added parts and removed
                 for col in columns_list_check:
-                    columns_list_combined.append('{basename}{suffix}'.format(basename=col,suffix=''))
+                    columns_list_combined.append(f'{col}')
+            elif config['format']=='structural':
+                raise NotImplementedError(f'diff format=="{config["format"]}": not implemented yet')
             else:
-                raise Exception('diff format=="{fmt}": not supported, or not implemented'.format(fmt=config['format']))
+                raise NotImplementedError(f'diff format=="{config["format"]}": not supported, or not implemented')
             section_other_props['columns'] = columns_list_combined
             if 'column_headers' in section_other_props:
                 column_headers_left = (file_l_section['column_headers'] or {}) if 'column_headers' in file_l_section else {}
@@ -226,8 +258,8 @@ def find_diff(data_left,data_right,config):
                 for col_id, lab in ({**column_headers}).items():
                     lab_left = (column_headers_left[col_id] if col_id in column_headers_left else lab) or lab
                     lab_right = (column_headers_right[col_id] if col_id in column_headers_right else lab) or lab
-                    section_other_props['column_headers']['{n}_left'.format(n=col_id)] = '{basename} (Left file)'.format(basename=lab_left)
-                    section_other_props['column_headers']['{n}_right'.format(n=col_id)] = '{basename} (Right file)'.format(basename=lab_right)
+                    section_other_props['column_headers'][f'{col_id}_left'] = f'{lab_left} (Left file)'
+                    section_other_props['column_headers'][f'{col_id}_right'] = f'{lab_right} (Right file)'
 
             result_this_section = []
 
@@ -306,25 +338,28 @@ def find_diff(data_left,data_right,config):
 
                         col_changed = False
 
-                        if config_diff_format == 'sidebyside':
+                        if config['format'] in ['sidebyside','sidebyside_distant']:
 
                             result_this_col_left, result_this_col_right = helper_diff_wrappers.finddiff_values_general_formatsidebyside( file_l_coldata, file_r_coldata )
                             
                             if helper_diff_wrappers.check_if_includes_addedremoved_marker(result_this_col_left) or helper_diff_wrappers.check_if_includes_addedremoved_marker(result_this_col_right):
                                 col_changed = True
-                            row['{col_name}{suffix}'.format(col_name = col,suffix='_left')] = result_this_col_left
-                            row['{col_name}{suffix}'.format(col_name = col,suffix='_right')] = result_this_col_right
+                            row[f'{col}_left'] = result_this_col_left
+                            row[f'{col}_right'] = result_this_col_right
 
-                        elif config_diff_format == 'combined':
+                        elif config['format'] == 'combined':
 
                             result_this_col_combined = helper_diff_wrappers.finddiff_values_general_formatcombined( file_l_coldata, file_r_coldata )
                             
                             if helper_diff_wrappers.check_if_includes_addedremoved_marker(result_this_col_combined):
                                 col_changed = True
-                            row['{col_name}{suffix}'.format(col_name = col,suffix='')] = result_this_col_combined
+                            row[f'{col}'] = result_this_col_combined
+
+                        elif config['format'] == 'structural':
+                            raise NotImplementedError(f'diff format is implemented yet: {config["format"]}')
 
                         else:
-                            raise Exception('other diff format tyhat is not supported: {fmt}'.format(fmt=config_diff_format))
+                            raise NotImplementedError(f'diff format is not supported: {config["format"]}')
                         
                         if col_changed:
                             row_changed = True
@@ -338,7 +373,7 @@ def find_diff(data_left,data_right,config):
                     else:
                         result_this_section.append(row)
                 except Exception as e:
-                    print('ERROR: something happened when processing row {name}'.format(name=row_name),file=sys.stderr)
+                    print(f'ERROR: something happened when processing row {row_name}',file=sys.stderr)
                     raise e
             section_title = section_name
             if section_name in [ item['name'] for item in data_left['sections']]:
@@ -370,66 +405,40 @@ def find_diff(data_left,data_right,config):
                     ]
             result['sections'].append(section_add)
         except Exception as e:
-            print('ERROR: something happened when processing section {name}'.format(name=section_name),file=sys.stderr)
+            print(f'ERROR: something happened when processing section {section_name}',file=sys.stderr)
             raise e
     return result
 
 
-def make_diff_fname_part(fname_l,fname_r):
-    fname_l = '{fname_l}'.format(fname_l=fname_l)
-    fname_r = '{fname_r}'.format(fname_r=fname_r)
-    # fname_l = list(fname_l)
-    # fname_r = list(fname_r)
-    fname_l = helper_diff_wrappers.text_split_words(fname_l)
-    fname_r = helper_diff_wrappers.text_split_words(fname_r)
-    diff_temp = helper_diff_wrappers.diff_raw( fname_l, fname_r )
-    # add a dummy element for trailing part
-    diff_temp.append({
-        'lhs': {
-            'at': len(fname_l),
-            'add': 0,
-            'del': 0
-        },
-        'rhs': {
-            'at': len(fname_r),
-            'add': 0,
-            'del': 0
-        }
-    })
-    # go
-    result = ''
-    last_index = 0
-    for diff_entry in diff_temp:
-        part_l_keep_start = last_index
-        part_l_keep_end = diff_entry['lhs']['at']
-        part_r_keep_shift = diff_entry['rhs']['at'] - diff_entry['lhs']['at']
-        part_l_del_start = diff_entry['lhs']['at']
-        part_l_del_end = diff_entry['lhs']['at'] + diff_entry['lhs']['del']
-        part_r_add_start = diff_entry['rhs']['at']
-        part_r_add_end = diff_entry['rhs']['at'] + diff_entry['rhs']['add']
-        last_index = diff_entry['lhs']['at'] + diff_entry['lhs']['del']
-        # has_part_kept = False
-        # has_part_added = False
-        # has_part_removed = False
-        part_kept = ''
-        part_added = ''
-        part_removed = ''
-        for i in range(part_l_keep_start,part_l_keep_end):
-            # no change - names are good
-            part_kept = part_kept + fname_l[i]
-            # has_part_kept = True
-        for i in range(part_l_del_start,part_l_del_end):
-            # removed
-            part_removed = part_removed + fname_l[i]
-            # has_part_removed = True
-        for i in range(part_r_add_start,part_r_add_end):
-            # added
-            part_added = part_added + fname_r[i]
-            # has_part_added = True
-        result = result + ('-' if ((len(part_kept)>0) and (len(result)>0)) else '') + part_kept
-        result = result + ('-' if ((len(part_removed)>0) and (len(result)>0)) else '') + part_removed
-        result = result + ('-' if ((len(part_added)>0) and (len(result)>0)) else '') + part_added
-    return result
+def make_diff_fname_part(file_name_left,file_name_right):
+    def trim_list(lst):
+        start = 0
+        end = len(lst)
+        while start < end and (lst[start] is None or lst[start] == ''):
+            start += 1
+        while end > start and (lst[end-1] is None or lst[end-1] == ''):
+            end -= 1
+        return lst[start:end]
+    file_name_left = f'{file_name_left}'
+    file_name_right = f'{file_name_right}'
+    f_ar_left = helper_diff_wrappers.text_split_words(file_name_left)
+    f_ar_right = helper_diff_wrappers.text_split_words(file_name_right)
+    sm = SequenceMatcher(None,[s.lower() for s in f_ar_left],[s.lower() for s in f_ar_right])
+    result = []
+    for tag, i1, i2, j1, j2 in sm.get_opcodes():
+        part = ''
+        if tag=='equal':
+            part = "".join(f_ar_left[i1:i2])
+        elif tag == 'replace':
+            part = f'{"".join(f_ar_left[i1:i2])}-{"".join(f_ar_right[j1:j2])}'
+        elif tag == 'insert':
+            part = "".join(f_ar_right[j1:j2])
+        elif tag == 'delete':
+            part = "".join(f_ar_left[i1:i2])
+        else:
+            raise Exception(f'Finding combined compiled output file name: Unrecognized piece from diff chunk {tag}')
+        result.append(part)
+    return '-'.join(trim_list(result))
 
 
 
@@ -461,7 +470,7 @@ def entry_point(runscript_config={}):
     )
     parser.add_argument(
         '--cmp-format',
-        help='Format: print results as 2 separate columns, or combine; possible values: sidebyside (default), sidebyside_distant, combined',
+        help='Format: print results as 2 separate columns, or combine; possible values: sidebyside (default), sidebyside_distant, combined, structural',
         type=str,
         required=False
     )
@@ -524,13 +533,13 @@ def entry_point(runscript_config={}):
     inp_filename_left = ''
     if args.cmp_scheme_left:
         inp_filename_left = Path(args.cmp_scheme_left)
-        inp_filename_left = '{inp_filename_left}'.format(inp_filename_left=inp_filename_left.resolve())
+        inp_filename_left = f'{inp_filename_left.resolve()}'
     else:
         raise FileNotFoundError('Left CMP Source: file not provided; please use --cmp-scheme-left option')
     inp_filename_right = ''
     if args.cmp_scheme_right:
         inp_filename_right = Path(args.cmp_scheme_right)
-        inp_filename_right = '{inp_filename_left}'.format(inp_filename_left=inp_filename_right.resolve())
+        inp_filename_right = f'{inp_filename_right.resolve()}'
     else:
         raise FileNotFoundError('Right CMP Source: file not provided; please use --cmp-scheme-right option')
     # inp_file_specs = open(inp_file_specs_name, encoding="utf8")
@@ -538,9 +547,9 @@ def entry_point(runscript_config={}):
     diff_format = 'sidebyside'
     if args.cmp_format:
         diff_format = args.cmp_format
-        fmts_allowed = ['sidebyside','sidebyside_distant','combined']
+        fmts_allowed = ['sidebyside','sidebyside_distant','combined','structural']
         if not (diff_format in fmts_allowed):
-            raise Exception('diff: unsupported config option: diff format: "{fmt}"; you can only use [ {allowed} ]'.format(fmt=diff_format,alowed=', '.join(fmts_allowed)))
+            raise Exception(f'diff: unsupported config option: diff format: "{diff_format}"; you can only use [ {", ".join(fmts_allowed)} ]')
 
     diff_config = {
         'format': diff_format,
@@ -576,7 +585,7 @@ def entry_point(runscript_config={}):
     else:
         def validate_fname_part(path):
             try:
-                return '{path}'.format(path=path) == '{path}'.format(path=Path(path).name)
+                return f'{path}' == f'{Path(path).name}'
             except Exception:
                 return False
         report_filename_prefixpart = 'report.diff.'
@@ -589,13 +598,8 @@ def entry_point(runscript_config={}):
             report_filename_suffixpart = args.output_filename_suffix
             if not validate_fname_part(report_filename_suffixpart):
                 raise FileNotFoundError('diff script: output filename suffix: not valid name (please check the --output-filename-suffix option you are passing)')
-        # report_filename_filepart = '{fname_prefix}{file_l}-{file_r}{fname_suffix}.json'.format(file_l=report_part_filename_left,file_r=report_part_filename_right,fname_prefix=report_filename_prefixpart,fname_suffix=report_filename_suffixpart)
         report_filename_filepart = '{fname_prefix}{diff_file_name_part_holder}{fname_suffix}.json'.format(diff_file_name_part_holder=make_diff_fname_part(report_part_filename_left,report_part_filename_right),fname_prefix=report_filename_prefixpart,fname_suffix=report_filename_suffixpart)
-        # report_filename_pathpart = Path(inp_filename_left).parents[0]
         report_filename_pathpart = Path(inp_filename_right).parents[0] # right!
-        # the right compared source is now the destination for the report -
-        # we usually compare something from the past to our working copy,
-        # and we need results where are working copy is
         result_final_fname = report_filename_pathpart / report_filename_filepart
     
     if args.norun_special_onlyprintoutputfilename:
@@ -603,9 +607,9 @@ def entry_point(runscript_config={}):
         exit(0)
 
     if not(Path(inp_filename_left).is_file()):
-        raise FileNotFoundError('file not found: {fname}'.format(fname=inp_filename_left))
+        raise FileNotFoundError(f'file not found: {inp_filename_left}')
     if not(Path(inp_filename_right).is_file()):
-        raise FileNotFoundError('file not found: {fname}'.format(fname=inp_filename_right))
+        raise FileNotFoundError(f'file not found: {inp_filename_right}')
     
     data_left = None
     data_right = None
@@ -616,13 +620,13 @@ def entry_point(runscript_config={}):
             except json.JSONDecodeError as e:
                 # just a more descriptive message to the end user
                 # can happen if the tool is started two times in parallel and it is writing to the same json simultaneously
-                raise Exception('Diff: Can\'t read left file as JSON: {msg}'.format(msg=e))
+                raise Exception(f'Diff: Can\'t read left file as JSON: {e}') from e
             try:
                 data_right = json.load(f_r)
             except json.JSONDecodeError as e:
                 # just a more descriptive message to the end user
                 # can happen if the tool is started two times in parallel and it is writing to the same json simultaneously
-                raise Exception('Diff: Can\'t read right file as JSON: {msg}'.format(msg=e))
+                raise Exception(f'Diff: Can\'t read right file as JSON: {e}') from e
     
     print('{script_name}: script started at {dt}'.format(dt=time_start,script_name=script_name))
 
