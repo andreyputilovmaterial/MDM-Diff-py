@@ -26,6 +26,7 @@ ECHO # print('out of mdmtoolsap_bundle') >> dist/mdmtoolsap_bundle.py
 
 PUSHD dist
 COPY ..\run_calling_bundle_mdd.bat .\run_diff_mdd.bat
+COPY ..\run_calling_bundle_aligned_diffs_mdd.bat .\run_diff_aligned_workflows_mdds.bat
 COPY ..\run_calling_bundle_mdd_report.bat .\run_mdd_report.bat
 COPY ..\run_calling_bundle_mdd_report_in_excel.bat .\run_mdd_report_in_excel.bat
 COPY ..\run_calling_bundle_textfile.bat .\run_diff_textfile.bat
@@ -39,6 +40,7 @@ COPY ..\run_calling_bundle_spss.bat .\run_diff_spss.bat
 @REM @REM powershell -Command "(gc 'run_diff_mdd_with_translations.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap.py' | Out-File -encoding 'Default' 'run_diff_mdd_with_translations.bat'"
 @REM powershell -Command "(gc 'run_mdd_report.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap.py' | Out-File -encoding 'Default' 'run_mdd_report.bat'"
 powershell -Command "(gc 'run_diff_mdd.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap_bundle.py' | Out-File -encoding 'Default' 'run_diff_mdd.bat'"
+powershell -Command "(gc 'run_diff_aligned_workflows_mdds.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap_bundle.py' | Out-File -encoding 'Default' 'run_diff_aligned_workflows_mdds.bat'"
 powershell -Command "(gc 'run_mdd_report.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap_bundle.py' | Out-File -encoding 'Default' 'run_mdd_report.bat'"
 powershell -Command "(gc 'run_mdd_report_in_excel.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap_bundle.py' | Out-File -encoding 'Default' 'run_mdd_report_in_excel.bat'"
 powershell -Command "(gc 'run_diff_textfile.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap_bundle.py' | Out-File -encoding 'Default' 'run_diff_textfile.bat'"
