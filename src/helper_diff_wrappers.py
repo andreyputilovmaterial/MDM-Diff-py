@@ -9,7 +9,7 @@ from difflib import SequenceMatcher
 
 
 
-CONFIG_STRUCTURAL_SHORTEN_CTX = 32
+CONFIG_STRUCTURAL_SHORTEN_CTX = 512
 
 
 
@@ -21,6 +21,36 @@ def is_empty(s):
         # attention
         # empty list, empty dict evaluates to empty
         return not s
+
+def is_property_list(data):
+    try:
+        if isinstance(data,list) and ([(True if ('name' in dict.keys(item) and 'value' in dict.keys(item)) else False) for item in data].count(True)==len(data)):
+            return True
+        return False
+    except:
+        return False
+
+def shorten_ctx(txt):
+    is_str = (txt==f'{txt}')
+    if not is_str:
+        return txt
+    if len(txt)>CONFIG_STRUCTURAL_SHORTEN_CTX:
+        include_begin = int(CONFIG_STRUCTURAL_SHORTEN_CTX/4) - 1
+        if include_begin < 1:
+            include_begin = 1
+        include_end = include_begin # int(CONFIG_STRUCTURAL_SHORTEN_CTX - (include_begin+1)) - 1
+        if include_end < 1:
+            include_end = 1
+        # include_ellipsis = '... ...'
+        # include_ellipsis = txt[include_begin:-include_end]
+        include_ellipsis = {'role':'ellipsis','text':txt[include_begin:-include_end]}
+        # txt = txt[:include_begin] + include_ellipsis + txt[-include_end:]
+        txt = {'parts':[
+            txt[:include_begin],
+            include_ellipsis,
+            txt[-include_end:],
+        ]}
+    return txt
 
 
 def text_split_words(s):
@@ -220,6 +250,11 @@ def did_contents_change_deep_inspect(data):
         if '<<REMOVED>>' in data:
             return True
         return False
+    elif is_property_list(data):
+        result = False
+        for slice in data:
+            result = result or did_contents_change_deep_inspect(slice['value'])
+        return result
     elif isinstance(data,list):
         result = False
         for slice in data:
@@ -388,18 +423,22 @@ def diff_combine_similar_records( diff_data ):
 def check_if_includes_addedremoved_marker(data):
     if is_empty(data):
         return False
-    if isinstance(data,list) and ([(True if 'name' in dict.keys(item) else False) for item in data].count(True)==len(data)):
+    elif is_property_list(data):
+        # property list
         result = False
         for prop in data:
             result = result or check_if_includes_addedremoved_marker(prop['value'])
         return result
+    elif isinstance(data,list):
+        # just list of somethigng
+        result = False
+        for e in data:
+            result = result or check_if_includes_addedremoved_marker(e)
+        return result
     elif isinstance(data,dict) and ('role' in dict.keys(data)) and re.match(r'^\s*?(?:role-)?(add|remove|change).*?$',data['role'],flags=re.I):
         return True
     elif isinstance(data,dict) and ('parts' in dict.keys(data)):
-        result = False
-        for part in data['parts']:
-            result = result or check_if_includes_addedremoved_marker(part)
-        return result
+        return check_if_includes_addedremoved_marker(data['parts'])
     elif isinstance(data,dict) and 'text' in dict.keys(data):
         return check_if_includes_addedremoved_marker(data['text'])
     elif isinstance(data,str):
@@ -826,19 +865,6 @@ def finddiff_values_propertylist_formatstructural( cmpdata_l, cmpdata_r ):
     return result_this_col_combined
 
 def finddiff_values_text_formatstructural( cmpdata_l, cmpdata_r ):
-    def shorten_ctx(txt):
-        is_str = (txt==f'{txt}')
-        if not is_str:
-            return txt
-        if len(txt)>CONFIG_STRUCTURAL_SHORTEN_CTX:
-            include_begin = int(CONFIG_STRUCTURAL_SHORTEN_CTX/2) - 1
-            if include_begin < 1:
-                include_begin = 1
-            include_end = int(CONFIG_STRUCTURAL_SHORTEN_CTX - (include_begin+1)) - 1
-            if include_end < 1:
-                include_end = 1
-            txt = txt[:include_begin] + '... ...' + txt[-include_end:]
-        return txt
     if is_empty(cmpdata_l):
         cmpdata_l = ''
     if is_empty(cmpdata_r):

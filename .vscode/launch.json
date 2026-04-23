@@ -56,6 +56,15 @@
             "justMyCode": true
         },
         {
+            "name": "Python: Diff on diffs",
+            "type": "python",
+            "request": "launch",
+            "program": "src/launcher.py",
+            "console": "integratedTerminal",
+            "args": ["--program","diff","--cmp-scheme-left","\"\\\\cnc-fsh-107p.elrw.com\\IPS2019\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\report.diff.p2600752_auto_-20260406-20260410-.mdd.json\"","--cmp-scheme-right","\"\\\\cnc-fsh-107p.elrw.com\\IPS2019\\Personal Folders\\Putilov\\code snippets\\diff\\MDM-Diff-py\\tests\\current\\test_data\\report.diff.p2600752_-v5-v14-.mdd.json\"","--config-casesensitive-item-list-comparison","ignorecase","--config-use-hierarchical-name-structure-ignore-missing-parent"],
+            "justMyCode": true
+        },
+        {
             "name": "Python: LRW Excel Read Test: sections above bases",
             "type": "python",
             "request": "launch",
