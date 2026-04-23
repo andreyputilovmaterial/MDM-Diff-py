@@ -59,26 +59,27 @@ def diff_normalize(input,flags=None):
 
 
 # temporary repeating similar definitions from diff.py so that I can combine rows and it looks similar
-@dataclass(frozen=False)
+@dataclass(frozen=True)
 class DiffItemAbstract:
     line: str
     flag: ClassVar[str] = '???'
     def __str__(self):
         return f'{self.flag}: {self.line}'
 
-@dataclass(frozen=False)
+@dataclass(frozen=True)
 class DiffItemKeep(DiffItemAbstract):
     flag: ClassVar[str] = 'keep'
 
-@dataclass(frozen=False)
+@dataclass(frozen=True)
 class DiffItemInsert(DiffItemAbstract):
     flag: ClassVar[str] = 'insert'
 
-@dataclass(frozen=False)
+@dataclass(frozen=True)
 class DiffItemRemove(DiffItemAbstract):
     flag: ClassVar[str] = 'remove'
 
 def as_diff_items_grouped(opcodes, a, b):
+    # TODO: looks like it is not used
     result = []
     for tag, i1, i2, j1, j2 in opcodes:
         line = None
@@ -95,6 +96,58 @@ def as_diff_items_grouped(opcodes, a, b):
             result += [DiffItemInsert(line)]
         elif tag == 'delete':
             line = a[i1:i2]
+            result += [DiffItemRemove(line)]
+        else:
+            raise Exception(f'Finding combined compiled output file name: Unrecognized piece from diff chunk {tag}')
+    return result
+
+def as_diff_items_concatenated(opcodes, a, b):
+    result = []
+    for tag, i1, i2, j1, j2 in opcodes:
+        line = None
+        if tag=='equal':
+            chunk_ar = a[i1:i2]
+            line = None
+            for piece in chunk_ar:
+                if line is None:
+                    line = piece
+                else:
+                    line += piece
+            result += [DiffItemKeep(line)]
+        elif tag == 'replace':
+            chunk_ar = a[i1:i2]
+            line = None
+            for piece in chunk_ar:
+                if line is None:
+                    line = piece
+                else:
+                    line += piece
+            result += [DiffItemRemove(line)]
+            chunk_ar = b[j1:j2]
+            line = None
+            for piece in chunk_ar:
+                if line is None:
+                    line = piece
+                else:
+                    line += piece
+            result += [DiffItemInsert(line)]
+        elif tag == 'insert':
+            chunk_ar = b[j1:j2]
+            line = None
+            for piece in chunk_ar:
+                if line is None:
+                    line = piece
+                else:
+                    line += piece
+            result += [DiffItemInsert(line)]
+        elif tag == 'delete':
+            chunk_ar = a[i1:i2]
+            line = None
+            for piece in chunk_ar:
+                if line is None:
+                    line = piece
+                else:
+                    line += piece
             result += [DiffItemRemove(line)]
         else:
             raise Exception(f'Finding combined compiled output file name: Unrecognized piece from diff chunk {tag}')
@@ -313,20 +366,22 @@ def finddiff_row_names_respecting_groups(rows_l,rows_r,delimiter,level=None,flag
 # the diffing fn is designed to return a patch
 # but very often I need a list with all items, every item indicated if it was persisted, added, or removed
 # so this is converting patch to a list
+# TODO: remove the definition completely
 def diff_combine_similar_records( diff_data ):
-    for i in range(len(diff_data)):
-        if i>0:
-            if (diff_data[i].flag=='keep') and (diff_data[i-1].flag=='keep'):
-                diff_data[i] = DiffItemKeep(diff_data[i-1].line+diff_data[i].line)
-                diff_data[i-1] = DiffItemKeep('')
-            if (diff_data[i].flag=='insert') and (diff_data[i-1].flag=='insert'):
-                diff_data[i] = DiffItemInsert(diff_data[i-1].line+diff_data[i].line)
-                diff_data[i-1] = DiffItemKeep('')
-            if (diff_data[i].flag=='remove') and (diff_data[i-1].flag=='remove'):
-                diff_data[i] = DiffItemRemove(diff_data[i-1].line+diff_data[i].line)
-                diff_data[i-1] = DiffItemKeep('')
-    diff_data = filter(lambda e:(len(e.line)>0),diff_data)
-    return diff_data
+    raise RuntimeError(f'diff_combine_similar_records: this fn should not be called anymore')
+    # for i in range(len(diff_data)):
+    #     if i>0:
+    #         if (diff_data[i].flag=='keep') and (diff_data[i-1].flag=='keep'):
+    #             diff_data[i] = DiffItemKeep(diff_data[i-1].line+diff_data[i].line)
+    #             diff_data[i-1] = DiffItemKeep('')
+    #         if (diff_data[i].flag=='insert') and (diff_data[i-1].flag=='insert'):
+    #             diff_data[i] = DiffItemInsert(diff_data[i-1].line+diff_data[i].line)
+    #             diff_data[i-1] = DiffItemKeep('')
+    #         if (diff_data[i].flag=='remove') and (diff_data[i-1].flag=='remove'):
+    #             diff_data[i] = DiffItemRemove(diff_data[i-1].line+diff_data[i].line)
+    #             diff_data[i-1] = DiffItemKeep('')
+    # diff_data = filter(lambda e:(len(e.line)>0),diff_data)
+    # return diff_data
 
 
 
@@ -441,8 +496,7 @@ def finddiff_values_text_formatsidebyside( cmpdata_l, cmpdata_r ):
         cmpdata_l_into_lines = [ ('' if linenumber==0 else '\n') + (line if len(line)>0 else ' ') for linenumber,line in enumerate(text_split_lines(cmpdata_l)) ]
         cmpdata_r_into_lines = [ ('' if linenumber==0 else '\n') + (line if len(line)>0 else ' ') for linenumber,line in enumerate(text_split_lines(cmpdata_r)) ]
         diff_data = SequenceMatcher(None,cmpdata_l_into_lines,cmpdata_r_into_lines).get_opcodes()
-        diff_data = as_diff_items( diff_data, cmpdata_l_into_lines, cmpdata_r_into_lines )
-        diff_data = diff_combine_similar_records(diff_data)
+        diff_data = as_diff_items_concatenated( diff_data, cmpdata_l_into_lines, cmpdata_r_into_lines )
         diff_data_l_and_r_by_lines = []
         for part in diff_data:
             if part.flag=='keep':
@@ -465,8 +519,7 @@ def finddiff_values_text_formatsidebyside( cmpdata_l, cmpdata_r ):
             #     result_this_col_right['parts'].append( '\n' )
             cmpdata_l_into_pieces = text_split_words(part['l'])
             cmpdata_r_into_pieces = text_split_words(part['r'])
-            diff_data = as_diff_items( SequenceMatcher(None,cmpdata_l_into_pieces,cmpdata_r_into_pieces).get_opcodes(), cmpdata_l_into_pieces, cmpdata_r_into_pieces )
-            diff_data = diff_combine_similar_records(diff_data)
+            diff_data = as_diff_items_concatenated( SequenceMatcher(None,cmpdata_l_into_pieces,cmpdata_r_into_pieces).get_opcodes(), cmpdata_l_into_pieces, cmpdata_r_into_pieces )
             for part in diff_data:
                 if part.flag=='keep':
                     result_this_col_left['parts'].append(part.line)
@@ -614,8 +667,7 @@ def finddiff_values_text_formatcombined( cmpdata_l, cmpdata_r ):
         cmpdata_l_into_lines = [ ('' if linenumber==0 else '\n') + (line if len(line)>0 else ' ') for linenumber,line in enumerate(text_split_lines(cmpdata_l)) ]
         cmpdata_r_into_lines = [ ('' if linenumber==0 else '\n') + (line if len(line)>0 else ' ') for linenumber,line in enumerate(text_split_lines(cmpdata_r)) ]
         diff_data = SequenceMatcher(None,cmpdata_l_into_lines,cmpdata_r_into_lines).get_opcodes()
-        diff_data = as_diff_items( diff_data, cmpdata_l_into_lines, cmpdata_r_into_lines )
-        diff_data = diff_combine_similar_records(diff_data)
+        diff_data = as_diff_items_concatenated( diff_data, cmpdata_l_into_lines, cmpdata_r_into_lines )
         diff_data_l_and_r_by_lines = []
         for part in diff_data:
             if part.flag=='keep':
@@ -636,8 +688,7 @@ def finddiff_values_text_formatcombined( cmpdata_l, cmpdata_r ):
             #     result_this_col_combined['parts'].append( '\n' )
             cmpdata_l_into_pieces = text_split_words(part['l'])
             cmpdata_r_into_pieces = text_split_words(part['r'])
-            diff_data = as_diff_items( SequenceMatcher(None,cmpdata_l_into_pieces,cmpdata_r_into_pieces).get_opcodes(), cmpdata_l_into_pieces, cmpdata_r_into_pieces )
-            diff_data = diff_combine_similar_records(diff_data)
+            diff_data = as_diff_items_concatenated( SequenceMatcher(None,cmpdata_l_into_pieces,cmpdata_r_into_pieces).get_opcodes(), cmpdata_l_into_pieces, cmpdata_r_into_pieces )
             for part in diff_data:
                 if part.flag=='keep':
                     result_this_col_combined['parts'].append(part.line)
@@ -803,8 +854,7 @@ def finddiff_values_text_formatstructural( cmpdata_l, cmpdata_r ):
         cmpdata_l_into_lines = [ ('' if linenumber==0 else '\n') + (line if len(line)>0 else ' ') for linenumber,line in enumerate(text_split_lines(cmpdata_l)) ]
         cmpdata_r_into_lines = [ ('' if linenumber==0 else '\n') + (line if len(line)>0 else ' ') for linenumber,line in enumerate(text_split_lines(cmpdata_r)) ]
         diff_data = SequenceMatcher(None,cmpdata_l_into_lines,cmpdata_r_into_lines).get_opcodes()
-        diff_data = as_diff_items( diff_data, cmpdata_l_into_lines, cmpdata_r_into_lines )
-        diff_data = diff_combine_similar_records(diff_data)
+        diff_data = as_diff_items_concatenated( diff_data, cmpdata_l_into_lines, cmpdata_r_into_lines )
         diff_data_l_and_r_by_lines = []
         for part in diff_data:
             if part.flag=='keep':
@@ -825,8 +875,7 @@ def finddiff_values_text_formatstructural( cmpdata_l, cmpdata_r ):
             #     result_this_col_combined['parts'].append( '\n' )
             cmpdata_l_into_pieces = text_split_words(part['l'])
             cmpdata_r_into_pieces = text_split_words(part['r'])
-            diff_data = as_diff_items( SequenceMatcher(None,cmpdata_l_into_pieces,cmpdata_r_into_pieces).get_opcodes(), cmpdata_l_into_pieces, cmpdata_r_into_pieces )
-            diff_data = diff_combine_similar_records(diff_data)
+            diff_data = as_diff_items_concatenated( SequenceMatcher(None,cmpdata_l_into_pieces,cmpdata_r_into_pieces).get_opcodes(), cmpdata_l_into_pieces, cmpdata_r_into_pieces )
             for part in diff_data:
                 if part.flag=='keep':
                     result_this_col_combined['parts'].append(shorten_ctx(part.line))
