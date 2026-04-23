@@ -1,4 +1,5 @@
 @ECHO OFF
+SETLOCAL enabledelayedexpansion
 
 
 
@@ -24,8 +25,8 @@ IF "%~2"=="" (
 set "TEXTFILE_OLD_JSON=%TEXTFILE_OLD%.json"
 set "TEXTFILE_RECENT_JSON=%TEXTFILE_RECENT%.json"
 
-@REM FOR /F "delims=" %%i IN ('python -c "import sys;from pathlib import Path;import re;inp_mdd_l = sys.argv[1];inp_mdd_r = sys.argv[2];report_part_mdd_left_filename = re.sub( r'\.mdd\.json', '.mdd', Path(inp_mdd_l).name );report_part_mdd_right_filename = re.sub( r'\.mdd\.json', '.mdd', Path(inp_mdd_r).name );report_filename = 'report.diff.{mdd_l}-{mdd_r}.json'.format(mdd_l=report_part_mdd_left_filename,mdd_r=report_part_mdd_right_filename);result_json_fname = ( Path(inp_mdd_l).parents[0] / report_filename );print(result_json_fname)" "%TEXTFILE_OLD%" "%TEXTFILE_RECENT%"') DO SET "TEXTFILE_FINAL_DIFF_JSON=%%i"
-FOR /F "delims=" %%i IN ('python dist/mdmtoolsap_bundle.py --program diff --cmp-scheme-left "%TEXTFILE_OLD_JSON%" --cmp-scheme-right "%TEXTFILE_RECENT_JSON%" --norun-special-onlyprintoutputfilename') DO SET "TEXTFILE_FINAL_DIFF_JSON=%%i"
+@REM FOR /F "delims=" %%i IN ('python -c "import sys;from pathlib import Path;import re;inp_mdd_l = sys.argv[1];inp_mdd_r = sys.argv[2];report_part_mdd_left_filename = re.sub( r'\.mdd\.json', '.mdd', Path(inp_mdd_l).name );report_part_mdd_right_filename = re.sub( r'\.mdd\.json', '.mdd', Path(inp_mdd_r).name );report_filename = 'report.diff.{mdd_l}-{mdd_r}.json'.format(mdd_l=report_part_mdd_left_filename,mdd_r=report_part_mdd_right_filename);result_json_fname = ( Path(inp_mdd_l).parents[0] / report_filename );print(result_json_fname)" "%TEXTFILE_OLD%" "%TEXTFILE_RECENT%"') DO SET "OUTPUT_FINAL_DIFF_JSON=%%i"
+FOR /F "delims=" %%i IN ('python dist/mdmtoolsap_bundle.py --program diff --cmp-scheme-left "%TEXTFILE_OLD_JSON%" --cmp-scheme-right "%TEXTFILE_RECENT_JSON%" --norun-special-onlyprintoutputfilename') DO SET "OUTPUT_FINAL_DIFF_JSON=%%i"
 
 
 ECHO -
@@ -57,12 +58,12 @@ if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b 
 ECHO -
 ECHO 5. diff
 REM :: you can add  --config-skip-rows-nochange flag
-python dist/mdmtoolsap_bundle.py --program diff --cmp-scheme-left "%TEXTFILE_OLD_JSON%" --cmp-scheme-right "%TEXTFILE_RECENT_JSON%" --cmp-format combined
+python dist/mdmtoolsap_bundle.py --program diff --cmp-scheme-left "%TEXTFILE_OLD_JSON%" --cmp-scheme-right "%TEXTFILE_RECENT_JSON%" --output-file "!TEXTFILE_OLD_JSON!" --cmp-format combined
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b %errorlevel% )
 
 ECHO -
 ECHO 6. final html with diff!
-python dist/mdmtoolsap_bundle.py --program report --inpfile "%TEXTFILE_FINAL_DIFF_JSON%"
+python dist/mdmtoolsap_bundle.py --program report --inpfile "%OUTPUT_FINAL_DIFF_JSON%"
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b %errorlevel% )
 
 ECHO -
@@ -71,7 +72,7 @@ DEL "%TEXTFILE_OLD%.json"
 @REM DEL "%TEXTFILE_OLD%.json.html"
 DEL "%TEXTFILE_RECENT%.json"
 @REM DEL "%TEXTFILE_RECENT%.json.html"
-DEL "%TEXTFILE_FINAL_DIFF_JSON%"
+DEL "%OUTPUT_FINAL_DIFF_JSON%"
 
 ECHO -
 :CLEANUP

@@ -56,8 +56,8 @@ REM :: file names with file schemes in json
 SET "SPSS_A_JSON=%SPSS_A%.json"
 SET "SPSS_B_JSON=%SPSS_B%.json"
 
-@REM FOR /F "delims=" %%i IN ('python -c "import sys;from pathlib import Path;import re;inp_mdd_l = sys.argv[1];inp_mdd_r = sys.argv[2];report_part_mdd_left_filename = re.sub( r'\.mdd\.json', '.mdd', Path(inp_mdd_l).name );report_part_mdd_right_filename = re.sub( r'\.mdd\.json', '.mdd', Path(inp_mdd_r).name );report_filename = 'report.diff.{mdd_l}-{mdd_r}.json'.format(mdd_l=report_part_mdd_left_filename,mdd_r=report_part_mdd_right_filename);result_json_fname = ( Path(inp_mdd_l).parents[0] / report_filename );print(result_json_fname)" "%SPSS_A%" "%SPSS_B%"') DO SET "SPSS_FINAL_DIFF_JSON=%%i"
-FOR /F "delims=" %%i IN ('python dist/mdmtoolsap_bundle.py --program diff --cmp-scheme-left "%SPSS_A_JSON%" --cmp-scheme-right "%SPSS_B_JSON%" --norun-special-onlyprintoutputfilename') DO SET "SPSS_FINAL_DIFF_JSON=%%i"
+@REM FOR /F "delims=" %%i IN ('python -c "import sys;from pathlib import Path;import re;inp_mdd_l = sys.argv[1];inp_mdd_r = sys.argv[2];report_part_mdd_left_filename = re.sub( r'\.mdd\.json', '.mdd', Path(inp_mdd_l).name );report_part_mdd_right_filename = re.sub( r'\.mdd\.json', '.mdd', Path(inp_mdd_r).name );report_filename = 'report.diff.{mdd_l}-{mdd_r}.json'.format(mdd_l=report_part_mdd_left_filename,mdd_r=report_part_mdd_right_filename);result_json_fname = ( Path(inp_mdd_l).parents[0] / report_filename );print(result_json_fname)" "%SPSS_A%" "%SPSS_B%"') DO SET "OUTPUT_FINAL_DIFF_JSON=%%i"
+FOR /F "delims=" %%i IN ('python dist/mdmtoolsap_bundle.py --program diff --cmp-scheme-left "%SPSS_A_JSON%" --cmp-scheme-right "%SPSS_B_JSON%" --norun-special-onlyprintoutputfilename') DO SET "OUTPUT_FINAL_DIFF_JSON=%%i"
 
 
 ECHO -
@@ -90,12 +90,12 @@ IF %CONFIG_PRODUCE_HTML_EACH_SPSS% (
 
 ECHO -
 ECHO 5. diff
-python dist/mdmtoolsap_bundle.py --program diff --cmp-scheme-left "%SPSS_A_JSON%" --cmp-scheme-right "%SPSS_B_JSON%"
+python dist/mdmtoolsap_bundle.py --program diff --cmp-scheme-left "%SPSS_A_JSON%" --cmp-scheme-right "%SPSS_B_JSON%" --output-file "!OUTPUT_FINAL_DIFF_JSON!"
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 ECHO -
 ECHO 6. final html with diff!
-python dist/mdmtoolsap_bundle.py --program report --inpfile "%SPSS_FINAL_DIFF_JSON%"
+python dist/mdmtoolsap_bundle.py --program report --inpfile "%OUTPUT_FINAL_DIFF_JSON%"
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 ECHO -
@@ -104,7 +104,7 @@ DEL "%SPSS_A%.json"
 @REM DEL "%SPSS_A%.json.html"
 DEL "%SPSS_B%.json"
 @REM DEL "%SPSS_B%.json.html"
-DEL "%SPSS_FINAL_DIFF_JSON%"
+DEL "%OUTPUT_FINAL_DIFF_JSON%"
 
 ECHO -
 :CLEANUP

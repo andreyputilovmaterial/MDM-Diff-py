@@ -63,8 +63,8 @@ REM :: file names with file schemes in json
 SET "MDD_A_JSON=%MDD_A%.json"
 SET "MDD_B_JSON=%MDD_B%.json"
 
-@REM FOR /F "delims=" %%i IN ('python -c "import sys;from pathlib import Path;import re;inp_mdd_l = sys.argv[1];inp_mdd_r = sys.argv[2];report_part_mdd_left_filename = re.sub( r'\.mdd\.json', '.mdd', Path(inp_mdd_l).name );report_part_mdd_right_filename = re.sub( r'\.mdd\.json', '.mdd', Path(inp_mdd_r).name );report_filename = 'report.diff.{mdd_l}-{mdd_r}.json'.format(mdd_l=report_part_mdd_left_filename,mdd_r=report_part_mdd_right_filename);result_json_fname = ( Path(inp_mdd_l).parents[0] / report_filename );print(result_json_fname)" "%MDD_A%" "%MDD_B%"') DO SET "MDD_FINAL_DIFF_JSON=%%i"
-FOR /F "delims=" %%i IN ('python src/launcher.py --program diff --cmp-scheme-left "%MDD_A_JSON%" --cmp-scheme-right "%MDD_B_JSON%" --norun-special-onlyprintoutputfilename') DO SET "MDD_FINAL_DIFF_JSON=%%i"
+@REM FOR /F "delims=" %%i IN ('python -c "import sys;from pathlib import Path;import re;inp_mdd_l = sys.argv[1];inp_mdd_r = sys.argv[2];report_part_mdd_left_filename = re.sub( r'\.mdd\.json', '.mdd', Path(inp_mdd_l).name );report_part_mdd_right_filename = re.sub( r'\.mdd\.json', '.mdd', Path(inp_mdd_r).name );report_filename = 'report.diff.{mdd_l}-{mdd_r}.json'.format(mdd_l=report_part_mdd_left_filename,mdd_r=report_part_mdd_right_filename);result_json_fname = ( Path(inp_mdd_l).parents[0] / report_filename );print(result_json_fname)" "%MDD_A%" "%MDD_B%"') DO SET "OUTPUT_FINAL_DIFF_JSON=%%i"
+FOR /F "delims=" %%i IN ('python src/launcher.py --program diff --cmp-scheme-left "%MDD_A_JSON%" --cmp-scheme-right "%MDD_B_JSON%" --norun-special-onlyprintoutputfilename') DO SET "OUTPUT_FINAL_DIFF_JSON=%%i"
 
 
 ECHO -
@@ -97,12 +97,12 @@ IF %CONFIG_PRODUCE_HTML_EACH_MDD% (
 
 ECHO -
 ECHO 5. diff
-python src/launcher.py --program diff --cmp-scheme-left "%MDD_A_JSON%" --cmp-scheme-right "%MDD_B_JSON%" --config-casesensitive-item-list-comparison ignorecase
+python src/launcher.py --program diff --cmp-scheme-left "%MDD_A_JSON%" --cmp-scheme-right "%MDD_B_JSON%" --output-filename "!OUTPUT_FINAL_DIFF_JSON!" --config-casesensitive-item-list-comparison ignorecase
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 ECHO -
 ECHO 6. final html with diff!
-python src/launcher.py --program report --inpfile "%MDD_FINAL_DIFF_JSON%"
+python src/launcher.py --program report --inpfile "%OUTPUT_FINAL_DIFF_JSON%"
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 ECHO -
@@ -111,7 +111,7 @@ DEL "%MDD_A%.json"
 @REM DEL "%MDD_A%.json.html"
 DEL "%MDD_B%.json"
 @REM DEL "%MDD_B%.json.html"
-DEL "%MDD_FINAL_DIFF_JSON%"
+DEL "%OUTPUT_FINAL_DIFF_JSON%"
 
 ECHO -
 :CLEANUP

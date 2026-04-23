@@ -45,7 +45,7 @@ PUSHD "%FOLDER_RECENT%"
 		IF EXIST "!left!" (
             IF EXIST "!right!" (
 				REM :: ECHO calling run_diff_excel...
-                CALL run_diff_excel "!left!" "!right!"
+                CALL run_calling_bundle_excel.bat "!left!" "!right!"
             ) ELSE (
                 ECHO "ERR: right does not exist: !right!"
             )
