@@ -206,6 +206,8 @@ def finddiff_row_names_respecting_groups(rows_l,rows_r,delimiter,level=None,flag
 
         rows_ungrouped_l = []
         groups_l_defs = {}
+        if 'hierarhical_ignore_missing_parent' in flags and flags['hierarhical_ignore_missing_parent']:
+            groups_l_defs = {'':[]}
         for row in rows_inp_l:
             does_row_belong_to_group = True # ('.' in row)
             #grouping_found = grouping_found or does_row_belong_to_group
@@ -229,6 +231,8 @@ def finddiff_row_names_respecting_groups(rows_l,rows_r,delimiter,level=None,flag
                 groups_l_defs[row_group].append(row_rest)
         rows_ungrouped_r = []
         groups_r_defs = {}
+        if 'hierarhical_ignore_missing_parent' in flags and flags['hierarhical_ignore_missing_parent']:
+            groups_r_defs = {'':[]}
         for row in rows_inp_r:
             does_row_belong_to_group = True # ('.' in row)
             #grouping_found = grouping_found or does_row_belong_to_group
@@ -253,6 +257,10 @@ def finddiff_row_names_respecting_groups(rows_l,rows_r,delimiter,level=None,flag
         grouping_found = False
         if delimiter is not None:
             if (not ('' in groups_l_defs)) or (not ('' in groups_r_defs)):
+                # if 'hierarhical_ignore_missing_parent' in flags and flags['hierarhical_ignore_missing_parent']:
+                #     if (not ('' in groups_l_defs)):
+                #         groups_l_defs = {'':}
+                # else:
                 raise MDMDiffWrappersGroupingMissingParentException('diff item names with groupings: every group must include a parent element. For example, if there is "QCData.Flags.Categories...", there should be a parent "QCData.Flags", and its parent "QCData", and its parent "" (a root element, just an empty string)')
         for g in dict.keys(groups_l_defs):
             grouping_found = grouping_found or (len(groups_l_defs[g])>1)

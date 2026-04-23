@@ -279,12 +279,17 @@ def find_diff(data_left,data_right,config):
                 rows_r = rows_r if '' in rows_r else ['']+rows_r
             # confirm that row names are unique
             
+            diff_flags = {}
+            if 'config_row_diff_ignorecase' in config and config['config_row_diff_ignorecase']:
+                diff_flags['ignorecase'] = True
+            if 'config_use_hierarchical_name_structure_ignore_missing_parent' in config and config['config_use_hierarchical_name_structure_ignore_missing_parent']:
+                diff_flags['hierarhical_ignore_missing_parent'] = True
             report_rows_diff = helper_diff_wrappers.finddiff_row_names_respecting_groups(
                 rows_l,
                 rows_r,
                 delimiter=(config['config_hierarchical_name_separator'] if ('config_use_hierarchical_name_structure' in config and config['config_use_hierarchical_name_structure']) else None),
                 level=None,
-                flags={'ignorecase':True} if config['config_row_diff_ignorecase'] else {}
+                flags=diff_flags
             )
             
             performance_counter = iter(helper_utility_wrappers.PerformanceMonitor(config={
@@ -512,6 +517,12 @@ def entry_point(runscript_config={}):
         required=False
     )
     parser.add_argument(
+        '--config-use-hierarchical-name-structure-ignore-missing-parent',
+        help='Special flag for running diffs of diffs',
+        action='store_true',
+        required=False
+    )
+    parser.add_argument(
         '--config-casesensitive-item-list-comparison',
         help='Special flag to indicate if item name is a case-sensitive indentifier, or not and items written in different capitalization should be treated as same item',
         choices=('ignorecase','strict','auto',),
@@ -584,6 +595,8 @@ def entry_point(runscript_config={}):
         diff_config['config_do_not_include_rows_moved'] = True
     if args.config_use_hierarchical_name_structure:
         diff_config['config_use_hierarchical_name_structure'] = True
+    if args.config_use_hierarchical_name_structure_ignore_missing_parent:
+        diff_config['config_use_hierarchical_name_structure_ignore_missing_parent'] = True
     if args.config_casesensitive_item_list_comparison:
         if args.config_casesensitive_item_list_comparison=='auto':
             diff_config['config_row_diff_ignorecase'] = None
