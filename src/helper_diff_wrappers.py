@@ -7,9 +7,14 @@ from dataclasses import dataclass
 from typing import ClassVar
 from difflib import SequenceMatcher
 
+from collections import deque # for find_common_format
+from itertools import zip_longest
+
+
 
 
 CONFIG_STRUCTURAL_SHORTEN_CTX = 512
+
 
 
 
@@ -22,6 +27,7 @@ def is_empty(s):
         # empty list, empty dict evaluates to empty
         return not s
 
+
 def is_property_list(data):
     try:
         if isinstance(data,list) and ([(True if ('name' in dict.keys(item) and 'value' in dict.keys(item)) else False) for item in data].count(True)==len(data)):
@@ -29,6 +35,151 @@ def is_property_list(data):
         return False
     except:
         return False
+
+def detect_format(val,avoid_none=False):
+    if not avoid_none and is_empty(val):
+        return '(none)'
+    elif isinstance(val,list) and len(val)==0:
+        return '(none)'
+    elif is_property_list(val):
+        return '(propertylist)'
+    elif isinstance(val,list):
+        return '(list)'
+    elif isinstance(val,dict):
+        return '(dict)'
+    elif isinstance(val,str):
+        return '(str)'
+    elif is_empty(val):
+        return '(none)'
+    else:
+        return '(uncategorized)'
+
+def as_format_none(inp,source_fmt=None):
+    if is_empty(inp):
+        return None
+    else:
+        raise Exception(f'Can\'t convert to (none): {inp}')
+
+def as_format_uncategorized(inp,source_fmt=None):
+    return inp
+
+def as_format_str(inp,source_fmt=None):
+    if is_empty(inp):
+        return ''
+    else:
+        return f'{inp}'
+
+def as_format_propertylist(inp,source_fmt=None):
+    if source_fmt in ['(list)']:
+        return [ { 'name': f'_{i}', 'value': val } for i,val in enumerate(inp) ]
+    else:
+        return as_format_propertylist(as_format_list(inp,source_fmt),source_fmt='(list)')
+
+def as_format_list(inp,source_fmt=None):
+    if source_fmt in ['(propertylist)','(list)']:
+        return inp
+    else:
+        if is_empty(inp):
+            return []
+        else:
+            return [inp]
+
+def as_format_dict(inp,source_fmt=None):
+    if source_fmt in ['(propertylist)','(list)']:
+        return {'parts':inp}
+    else:
+        return {'text':inp}
+
+possible_transformations = {
+        '(sysmissing)': {},
+        '(none)': {
+            '(propertylist)' : as_format_propertylist,
+            '(list)': as_format_list,
+            '(dict)': as_format_dict,
+            '(str)': as_format_str,
+        },
+        '(uncategorized)': {
+            '(str)': as_format_str,
+        },
+
+        '(str)': {
+            '(propertylist)': as_format_propertylist,
+            '(list)': as_format_list,
+            '(dict)': as_format_dict,
+        },
+        '(list)': {
+            '(dict)': as_format_dict,
+            '(uncategorized)': as_format_uncategorized,
+        },
+        '(propertylist)': {
+            '(list)': as_format_list,
+            '(uncategorized)': as_format_uncategorized,
+        },
+        '(dict)': {
+            '(uncategorized)': as_format_uncategorized,
+        },
+    }
+
+def as_format(inp, format_source, format_dest):
+    if format_source==format_dest:
+        return inp
+    converter = possible_transformations.get(format_source,{}).get(format_dest,None)
+    if not converter:
+        raise Exception(f'Hmmm, reading compared values for diff, called to convert format from {format_source} to {format_dest} but converter fn is not found')
+    result = converter(inp,format_source)
+    # assert detect_format(result) in [format_dest,'(none)','(uncategorized)'], f'Hmmm, reading compared values for diff, called to convert format from {format_source} to {format_dest}, successfully converted but the target format does not match the dest ({detect_format(result)})'
+    return result
+
+class CommonFormatNotFound(Exception):
+    """Raised when common of 2 formats is not found, and should be caught"""
+    pass
+def find_common_format_denominator(sig1, sig2):
+
+    def reachable_with_distance(start):
+        distances = {start: 0}
+        queue = deque([start])
+
+        steps_secure_no_inifinite_loop = 0
+        while queue:
+            steps_secure_no_inifinite_loop += 1
+            if steps_secure_no_inifinite_loop>100:
+                raise CommonFormatNotFound(f'Common of {sig1} and {sig2} not found. Can\'t find derived format that is common for both input signatiures (step overflow)')
+            node = queue.popleft()
+            for nxt in possible_transformations.get(node, {}):
+                if nxt not in distances:
+                    distances[nxt] = distances[node] + 1
+                    queue.append(nxt)
+
+        return distances
+
+
+    def closest_common(a, b):
+        da = reachable_with_distance(a)
+        db = reachable_with_distance(b)
+
+        common = set(da) & set(db)
+
+        if not common:
+            raise CommonFormatNotFound(f'Common of {a} and {b} not found. Can\'t find derived format that is common for both input signatiures')
+
+        return min(common, key=lambda x: da[x] + db[x])
+
+    return closest_common(sig1,sig2)
+    # return tuple(closest_common(spec1,spec2) for spec1,spec2 in zip(sig1,sig2))
+
+def find_common_format_denominator_with_fallback_str(*args):
+    try:
+        return find_common_format_denominator(*args)
+    except CommonFormatNotFound:
+        return '(str)'
+
+
+
+
+
+
+
+
 
 def shorten_ctx(txt):
     is_str = (txt==f'{txt}')
@@ -51,6 +202,47 @@ def shorten_ctx(txt):
             txt[-include_end:],
         ]}
     return txt
+
+def wrap_hide_ctx(o):
+    result = o
+    fmt = detect_format(o)
+    if isinstance(o,str):
+        result = shorten_ctx(o)
+    elif fmt=='(none)':
+        result = o
+    elif fmt=='(propertylist)':
+        result = [{'name':d['name'],'value':wrap_hide_ctx(d['value'])} for d in o]
+    elif fmt=='(list)':
+        result = [wrap_hide_ctx(d) for d in o]
+    elif fmt=='(dict)':
+        result = {**o}
+        if 'parts' in result:
+            result['parts'] = wrap_hide_ctx(o['result'])
+        if 'text' in result:
+            result['text'] = wrap_hide_ctx(o['result'])
+    return {'role':'ctx','text':result}
+
+
+
+def detect_format(val,avoid_none=False):
+    if not avoid_none and is_empty(val):
+        return '(none)'
+    elif isinstance(val,list) and len(val)==0:
+        return '(none)'
+    elif is_property_list(val):
+        return '(propertylist)'
+    elif isinstance(val,list):
+        return '(list)'
+    elif isinstance(val,dict):
+        return '(dict)'
+    elif isinstance(val,str):
+        return '(str)'
+    elif is_empty(val):
+        return '(none)'
+    else:
+        return '(uncategorized)'
+
+
 
 
 def text_split_words(s):
@@ -85,6 +277,10 @@ def diff_normalize(input,flags=None):
     if ('ignoreaccents' in options) and (options['ignoreaccents']):
         raise NotImplementedError('Ignore accepts is not implemented in current implementation of diff')
     return result
+
+
+
+
 
 
 
@@ -218,6 +414,9 @@ def as_diff_items(*args,**argv):
 
 
 
+
+
+
 def diff_make_combined_list(a,b):
     sm = SequenceMatcher(None,a,b)
     result = []
@@ -243,34 +442,8 @@ def diff_raw(list_l,list_r):
 
 
 
-def did_contents_change_deep_inspect(data):
-    if isinstance(data,str):
-        if '<<ADDED>>' in data:
-            return True
-        if '<<REMOVED>>' in data:
-            return True
-        return False
-    elif is_property_list(data):
-        result = False
-        for slice in data:
-            result = result or did_contents_change_deep_inspect(slice['value'])
-        return result
-    elif isinstance(data,list):
-        result = False
-        for slice in data:
-            result = result or did_contents_change_deep_inspect(slice)
-        return result
-    elif isinstance(data,dict) and 'text' in data:
-        if 'role' in data:
-            if re.match(r'^\s*?(?:role-)?(?:added|removed).*?',data['role'],flags=re.I):
-                return True
-        return did_contents_change_deep_inspect(data['text'])
-    elif isinstance(data,dict) and 'parts' in data:
-        return did_contents_change_deep_inspect(data['parts'])
-    elif isinstance(data,dict) and 'name' in data and 'value' in data:
-        return did_contents_change_deep_inspect(data['value'])
-    else:
-        return did_contents_change_deep_inspect('{f}'.format(f=data))
+
+
 
 
 
@@ -397,68 +570,9 @@ def finddiff_row_names_respecting_groups(rows_l,rows_r,delimiter,level=None,flag
 
 
 
-# this is a very common function that I am using
-# the diffing fn is designed to return a patch
-# but very often I need a list with all items, every item indicated if it was persisted, added, or removed
-# so this is converting patch to a list
-# TODO: remove the definition completely
-def diff_combine_similar_records( diff_data ):
-    raise RuntimeError(f'diff_combine_similar_records: this fn should not be called anymore')
-    # for i in range(len(diff_data)):
-    #     if i>0:
-    #         if (diff_data[i].flag=='keep') and (diff_data[i-1].flag=='keep'):
-    #             diff_data[i] = DiffItemKeep(diff_data[i-1].line+diff_data[i].line)
-    #             diff_data[i-1] = DiffItemKeep('')
-    #         if (diff_data[i].flag=='insert') and (diff_data[i-1].flag=='insert'):
-    #             diff_data[i] = DiffItemInsert(diff_data[i-1].line+diff_data[i].line)
-    #             diff_data[i-1] = DiffItemKeep('')
-    #         if (diff_data[i].flag=='remove') and (diff_data[i-1].flag=='remove'):
-    #             diff_data[i] = DiffItemRemove(diff_data[i-1].line+diff_data[i].line)
-    #             diff_data[i-1] = DiffItemKeep('')
-    # diff_data = filter(lambda e:(len(e.line)>0),diff_data)
-    # return diff_data
 
 
 
-def check_if_includes_addedremoved_marker(data):
-    if is_empty(data):
-        return False
-    elif is_property_list(data):
-        # property list
-        result = False
-        for prop in data:
-            result = result or check_if_includes_addedremoved_marker(prop['value'])
-        return result
-    elif isinstance(data,list):
-        # just list of somethigng
-        result = False
-        for e in data:
-            result = result or check_if_includes_addedremoved_marker(e)
-        return result
-    elif isinstance(data,dict) and ('role' in dict.keys(data)) and re.match(r'^\s*?(?:role-)?(add|remove|change).*?$',data['role'],flags=re.I):
-        return True
-    elif isinstance(data,dict) and ('parts' in dict.keys(data)):
-        return check_if_includes_addedremoved_marker(data['parts'])
-    elif isinstance(data,dict) and 'text' in dict.keys(data):
-        return check_if_includes_addedremoved_marker(data['text'])
-    elif isinstance(data,str):
-        # TODO: drop support of <<ADDED>>, <<REMOVED>> markers
-        if ('<<ADDED>>' in '{fmt}'.format(fmt=data)) or ('<<REMOVED>>' in '{fmt}'.format(fmt=data)):
-            return True
-        return False
-    elif isinstance(data,dict) or isinstance(data,list):
-        # raise ValueError('Can\'t handle this type of data: {d}'.format(d=data))
-        #return check_if_includes_addedremoved_marker(json.dumps(data))
-        return check_if_includes_addedremoved_marker('{d}'.format(d=data))
-    elif ('{fmt}'.format(fmt=data)==data):
-        # TODO: drop support of <<ADDED>>, <<REMOVED>> markers
-        if ('<<ADDED>>' in '{fmt}'.format(fmt=data)) or ('<<REMOVED>>' in '{fmt}'.format(fmt=data)):
-            return True
-        return False
-    else:
-        # raise ValueError('Can\'t handle this type of data: {d}'.format(d=data))
-        #return check_if_includes_addedremoved_marker(json.dumps(data))
-        return check_if_includes_addedremoved_marker('{d}'.format(d=data))
 
 
 
@@ -473,18 +587,18 @@ def finddiff_values_propertylist_formatsidebyside( cmpdata_l, cmpdata_r ):
     prop_names_list_combined = diff_make_combined_list(cmpdata_l_prop_names,cmpdata_r_prop_names)
     result_this_col_left = []
     result_this_col_right = []
-    cmpdata_l_structural = {}
+    cmpdata_l_asdict = {}
     for r in cmpdata_l:
-        cmpdata_l_structural[r['name']] = r['value']
-    cmpdata_r_structural = {}
+        cmpdata_l_asdict[r['name']] = r['value']
+    cmpdata_r_asdict = {}
     for r in cmpdata_r:
-        cmpdata_r_structural[r['name']] = r['value']
+        cmpdata_r_asdict[r['name']] = r['value']
     for propname in prop_names_list_combined:
         prop_val_left = {'parts':[]}
         prop_val_right = {'parts':[]}
         if( ( propname in cmpdata_l_prop_names ) and ( propname in cmpdata_r_prop_names ) ):
-            value_left = cmpdata_l_structural[propname]
-            value_right = cmpdata_r_structural[propname]
+            value_left = cmpdata_l_asdict[propname]
+            value_right = cmpdata_r_asdict[propname]
             if value_left==value_right:
                 prop_val_left = value_left
                 prop_val_right = value_right
@@ -499,10 +613,10 @@ def finddiff_values_propertylist_formatsidebyside( cmpdata_l, cmpdata_r ):
             else:
                 prop_val_left, prop_val_right = finddiff_values_text_formatsidebyside(value_left,value_right)
         elif( propname in cmpdata_l_prop_names ):
-            value_left = cmpdata_l_structural[propname]
+            value_left = cmpdata_l_asdict[propname]
             prop_val_left = {'text':value_left,'role':'removed'}
         elif( propname in cmpdata_r_prop_names ):
-            value_right = cmpdata_r_structural[propname]
+            value_right = cmpdata_r_asdict[propname]
             prop_val_right = {'text':value_right,'role':'added'}
         if propname in cmpdata_l_prop_names:
             result_this_col_left.append({'name':propname,'value':prop_val_left})
@@ -591,17 +705,28 @@ def finddiff_values_list_formatsidebyside( cmpdata_l, cmpdata_r ):
         cmpdata_l = []
     if is_empty(cmpdata_r):
         cmpdata_r = []
-    list_combined = diff_make_combined_list( cmpdata_l, cmpdata_r )
+    cmpdata_l_hashed = [f'{v}' for v in cmpdata_l]
+    cmpdata_r_hashed = [f'{v}' for v in cmpdata_r]
+    # list_combined = diff_make_combined_list( cmpdata_l_hashed, cmpdata_r_hashed )
+    sm = SequenceMatcher( None,cmpdata_l_hashed, cmpdata_r_hashed )
     result_l = []
     result_r = []
-    for item in list_combined:
-        if (item in cmpdata_l) and (item in cmpdata_r):
-            result_l.append({'text':item})
-            result_r.append({'text':item})
-        elif not (item in cmpdata_l) and (item in cmpdata_r):
-            result_r.append({'text':item,'role':'added'})
-        elif (item in cmpdata_l) and not (item in cmpdata_r):
-            result_l.append({'text':item,'role':'removed'})
+    for tag, i1, i2, j1, j2 in sm.get_opcodes():
+        items_l = cmpdata_l[i1:i2]
+        items_r = cmpdata_r[j1:j2]
+        list_combined = list(zip_longest(items_l, items_r))
+        for item_l, item_r in list_combined:
+            item = finddiff_values_general_formatcombined( item_l, item_r )
+            if tag == 'equal':
+                result_l.append({'text':item})
+                result_r.append({'text':item})
+            elif tag == 'replace':
+                result_l.append({'text':item_l,'role':'removed'})
+                result_r.append({'text':item_r,'role':'added'})
+            elif tag == 'insert':
+                result_r.append({'text':item_r,'role':'added'})
+            elif tag == 'delete':
+                result_l.append({'text':item_l,'role':'removed'})
     return result_l, result_r
 
 def finddiff_values_dict_formatsidebyside( cmpdata_l, cmpdata_r ):
@@ -617,47 +742,40 @@ def finddiff_values_dict_formatsidebyside( cmpdata_l, cmpdata_r ):
     for prop in props_combined:
         value_left = cmpdata_l[prop] if prop in cmpdata_l else None
         value_right = cmpdata_r[prop] if prop in cmpdata_r else None
-        value_resulting = finddiff_values_general_formatcombined( value_left, value_right )
+        value_resulting_l, value_resulting_r = finddiff_values_general_formatsidebyside( value_left, value_right )
         if prop in cmpdata_l:
-            result_l[prop] = value_resulting
+            result_l[prop] = value_resulting_l
         if prop in cmpdata_r:
-            result_r[prop] = value_resulting
+            result_r[prop] = value_resulting_r
     return result_l,result_r
 
 def finddiff_values_general_formatsidebyside( cmpdata_l, cmpdata_r ):
     if is_empty(cmpdata_l) and is_empty(cmpdata_r):
         return '',''
     else:
-        # TODO: I updated similar code in finddiff_values_general_formatcombined - please check if it should be updated here
-        def detect_format(val):
-            if is_empty(val):
-                return 'none'
-            elif isinstance(val,list) and len(val)==0:
-                return 'none'
-            elif isinstance(val,list) and (len([v for v in val if isinstance(v,dict) and 'name' in v])==len(val)):
-                return 'propertylist'
-            elif isinstance(val,list) and (len([v for v in val if isinstance(v,str)])==len(val)):
-                return 'list'
-            elif isinstance(val,dict):
-                return 'dict'
-            elif isinstance(val,str):
-                return 'str'
-            else:
-                return 'unrecognized'
         cmpdata_l_format = detect_format(cmpdata_l)
         cmpdata_r_format = detect_format(cmpdata_r)
-        if cmpdata_l_format=='none':
+        common_format = find_common_format_denominator_with_fallback_str(cmpdata_l_format,cmpdata_r_format)
+        cmpdata_l = as_format(cmpdata_l,cmpdata_l_format,common_format)
+        cmpdata_r = as_format(cmpdata_r,cmpdata_r_format,common_format)
+        cmpdata_l_format = common_format
+        cmpdata_r_format = common_format
+        if cmpdata_l_format=='(none)':
             cmpdata_l_format = cmpdata_r_format
-        if cmpdata_r_format=='none':
+        if cmpdata_r_format=='(none)':
             cmpdata_r_format = cmpdata_l_format
         if (cmpdata_l_format==cmpdata_r_format):
-            if cmpdata_l_format=='str':
+            if cmpdata_l_format=='(str)':
                 return finddiff_values_text_formatsidebyside( cmpdata_l, cmpdata_r )
-            elif cmpdata_l_format=='list':
+            elif cmpdata_l_format=='(list)':
                 return finddiff_values_list_formatsidebyside( cmpdata_l, cmpdata_r )
-            elif cmpdata_l_format=='dict':
+            elif cmpdata_l_format=='(dict)':
+                # cmpdata_l = clean_role_underlying(cmpdata_l)
+                # cmpdata_r = clean_role_underlying(cmpdata_r)
+                if 'role' in cmpdata_l and cmpdata_l['role']=='ctx' and 'ctx' in cmpdata_r and cmpdata_r['role']=='ctx':
+                    return cmpdata_r, cmpdata_r
                 return finddiff_values_dict_formatsidebyside( cmpdata_l, cmpdata_r )
-            elif cmpdata_l_format=='propertylist':
+            elif cmpdata_l_format=='(propertylist)':
                 return finddiff_values_propertylist_formatsidebyside( cmpdata_l, cmpdata_r )
             else:
                 return finddiff_values_general_formatsidebyside( '{f}'.format(f=cmpdata_l), '{f}'.format(f=cmpdata_r) )
@@ -678,15 +796,15 @@ def finddiff_values_propertylist_formatcombined( cmpdata_l, cmpdata_r ):
     cmpdata_r_prop_names = [ prop['name'] for prop in cmpdata_r ]
     prop_names_list_combined = diff_make_combined_list(cmpdata_l_prop_names,cmpdata_r_prop_names)
     result_this_col_combined = []
-    cmpdata_l_structural = {}
+    cmpdata_l_asdict = {}
     for r in cmpdata_l:
-        cmpdata_l_structural[r['name']] = r['value']
-    cmpdata_r_structural = {}
+        cmpdata_l_asdict[r['name']] = r['value']
+    cmpdata_r_asdict = {}
     for r in cmpdata_r:
-        cmpdata_r_structural[r['name']] = r['value']
+        cmpdata_r_asdict[r['name']] = r['value']
     for propname in prop_names_list_combined:
-        value_left = cmpdata_l_structural[propname] if propname in cmpdata_l_structural else ''
-        value_right = cmpdata_r_structural[propname] if propname in cmpdata_r_structural else ''
+        value_left = cmpdata_l_asdict[propname] if propname in cmpdata_l_asdict else ''
+        value_right = cmpdata_r_asdict[propname] if propname in cmpdata_r_asdict else ''
         result_this_col_combined.append({'name':propname,'value':finddiff_values_general_formatcombined(value_left,value_right)})
     return result_this_col_combined
 
@@ -697,11 +815,11 @@ def finddiff_values_text_formatcombined( cmpdata_l, cmpdata_r ):
         cmpdata_r = ''
     result_this_col_combined = {'parts':[]}
     if cmpdata_l==cmpdata_r:
-        result_this_col_combined = cmpdata_l
+        result_this_col_combined = wrap_hide_ctx( cmpdata_l )
     elif( (len(cmpdata_l)>0) and (len(cmpdata_r)==0) ):
-        result_this_col_combined = {'parts':[{'text':cmpdata_l,'role':'removed'}]}
+        result_this_col_combined = {'text':cmpdata_l,'role':'removed'}
     elif( (len(cmpdata_l)==0) and (len(cmpdata_r)>0) ):
-        result_this_col_combined = {'parts':[{'text':cmpdata_r,'role':'added'}]}
+        result_this_col_combined = {'text':cmpdata_r,'role':'added'}
     else:
         cmpdata_l_into_lines = [ ('' if linenumber==0 else '\n') + (line if len(line)>0 else ' ') for linenumber,line in enumerate(text_split_lines(cmpdata_l)) ]
         cmpdata_r_into_lines = [ ('' if linenumber==0 else '\n') + (line if len(line)>0 else ' ') for linenumber,line in enumerate(text_split_lines(cmpdata_r)) ]
@@ -742,15 +860,26 @@ def finddiff_values_list_formatcombined( cmpdata_l, cmpdata_r ):
         cmpdata_l = []
     if is_empty(cmpdata_r):
         cmpdata_r = []
-    list_combined = diff_make_combined_list( cmpdata_l, cmpdata_r )
+    cmpdata_l_hashed = [f'{v}' for v in cmpdata_l]
+    cmpdata_r_hashed = [f'{v}' for v in cmpdata_r]
+    # list_combined = diff_make_combined_list( cmpdata_l_hashed, cmpdata_r_hashed )
+    sm = SequenceMatcher( None,cmpdata_l_hashed, cmpdata_r_hashed )
     result = []
-    for item in list_combined:
-        if (item in cmpdata_l) and (item in cmpdata_r):
-            result.append({'text':item})
-        elif not (item in cmpdata_l) and (item in cmpdata_r):
-            result.append({'text':item,'role':'added'})
-        elif (item in cmpdata_l) and not (item in cmpdata_r):
-            result.append({'text':item,'role':'removed'})
+    for tag, i1, i2, j1, j2 in sm.get_opcodes():
+        items_l = cmpdata_l[i1:i2]
+        items_r = cmpdata_r[j1:j2]
+        list_combined = list(zip_longest(items_l, items_r))
+        for item_l, item_r in list_combined:
+            item = finddiff_values_general_formatcombined( item_l, item_r )
+            if tag == 'equal':
+                result.append({'text':item})
+            elif tag == 'replace':
+                result.append({'text':item_l,'role':'removed'})
+                result.append({'text':item_r,'role':'added'})
+            elif tag == 'insert':
+                result.append({'text':item_r,'role':'added'})
+            elif tag == 'delete':
+                result.append({'text':item_l,'role':'removed'})
     return result
 
 def finddiff_values_dict_formatcombined( cmpdata_l, cmpdata_r ):
@@ -770,41 +899,24 @@ def finddiff_values_dict_formatcombined( cmpdata_l, cmpdata_r ):
     return result
 
 def finddiff_values_general_formatcombined( cmpdata_l, cmpdata_r ):
-    def detect_format(val):
-        if False and is_empty(val):
-            return 'none' # none should not override dicts or lists
-        elif isinstance(val,list) and len(val)==0:
-            # return 'none'
-            return 'list'
-        elif isinstance(val,list) and (len([v for v in val if isinstance(v,dict) and 'name' in v])==len(val)):
-            return 'propertylist'
-        elif isinstance(val,list) and (len([v for v in val if isinstance(v,str)])==len(val)):
-            return 'list'
-        elif isinstance(val,dict):
-            return 'dict'
-        elif isinstance(val,str):
-            return 'str'
-        elif is_empty(val):
-            return 'none'
-        else:
-            return 'unrecognized'
     if is_empty(cmpdata_l) and is_empty(cmpdata_r):
         # return '' # wrong, if we compare {}'s, or {} to None, the result should be of the same type, not str
         # return None # and this is wrong too
-        cmpdata_l_format = detect_format(cmpdata_l)
-        cmpdata_r_format = detect_format(cmpdata_r)
-        if cmpdata_l_format=='none':
-            cmpdata_l_format = cmpdata_r_format
-        if cmpdata_r_format=='none':
-            cmpdata_r_format = cmpdata_l_format
+        cmpdata_l_format = detect_format(cmpdata_l,avoid_none=True)
+        cmpdata_r_format = detect_format(cmpdata_r,avoid_none=True)
+        common_format = find_common_format_denominator_with_fallback_str(cmpdata_l_format,cmpdata_r_format)
+        cmpdata_l = as_format(cmpdata_l,cmpdata_l_format,common_format)
+        cmpdata_r = as_format(cmpdata_r,cmpdata_r_format,common_format)
+        cmpdata_l_format = common_format
+        cmpdata_r_format = common_format
         if (cmpdata_l_format==cmpdata_r_format):
-            if cmpdata_l_format=='str':
+            if cmpdata_l_format=='(str)':
                 return ''
-            elif cmpdata_l_format=='list':
+            elif cmpdata_l_format=='(list)':
                 return []
-            elif cmpdata_l_format=='dict':
+            elif cmpdata_l_format=='(dict)':
                 return {}
-            elif cmpdata_l_format=='propertylist':
+            elif cmpdata_l_format=='(propertylist)':
                 return []
             else:
                 return None
@@ -813,22 +925,26 @@ def finddiff_values_general_formatcombined( cmpdata_l, cmpdata_r ):
     else:
         cmpdata_l_format = detect_format(cmpdata_l)
         cmpdata_r_format = detect_format(cmpdata_r)
-        if cmpdata_l_format=='list' and len(cmpdata_l)==0 and cmpdata_r_format=='propertylist':
-            cmpdata_l_format = 'propertylist'
-        if cmpdata_r_format=='list' and len(cmpdata_r)==0 and cmpdata_l_format=='propertylist':
-            cmpdata_r_format = 'propertylist'
-        if cmpdata_l_format=='none':
-            cmpdata_l_format = cmpdata_r_format
-        if cmpdata_r_format=='none':
-            cmpdata_r_format = cmpdata_l_format
+        common_format = find_common_format_denominator_with_fallback_str(cmpdata_l_format,cmpdata_r_format)
+        cmpdata_l = as_format(cmpdata_l,cmpdata_l_format,common_format)
+        cmpdata_r = as_format(cmpdata_r,cmpdata_r_format,common_format)
+        cmpdata_l_format = common_format
+        cmpdata_r_format = common_format
         if (cmpdata_l_format==cmpdata_r_format):
-            if cmpdata_l_format=='str':
+            if cmpdata_l_format=='(str)':
                 return finddiff_values_text_formatcombined( cmpdata_l, cmpdata_r )
-            elif cmpdata_l_format=='list':
+            elif cmpdata_l_format=='(list)':
                 return finddiff_values_list_formatcombined( cmpdata_l, cmpdata_r )
-            elif cmpdata_l_format=='dict':
+            elif cmpdata_l_format=='(dict)':
+                # cmpdata_l = clean_role_underlying(cmpdata_l)
+                # cmpdata_r = clean_role_underlying(cmpdata_r)
+                if 'role' in cmpdata_l and cmpdata_l['role']=='ctx' and 'ctx' in cmpdata_r and cmpdata_r['role']=='ctx':
+                    if cmpdata_l==cmpdata_r:
+                        return cmpdata_l
+                    else:
+                        return wrap_hide_ctx('... ...')
                 return finddiff_values_dict_formatcombined( cmpdata_l, cmpdata_r )
-            elif cmpdata_l_format=='propertylist':
+            elif cmpdata_l_format=='(propertylist)':
                 return finddiff_values_propertylist_formatcombined( cmpdata_l, cmpdata_r )
             else:
                 return finddiff_values_general_formatcombined( '{f}'.format(f=cmpdata_l), '{f}'.format(f=cmpdata_r) )
@@ -849,19 +965,22 @@ def finddiff_values_propertylist_formatstructural( cmpdata_l, cmpdata_r ):
     cmpdata_r_prop_names = [ prop['name'] for prop in cmpdata_r ]
     prop_names_list_combined = diff_make_combined_list(cmpdata_l_prop_names,cmpdata_r_prop_names)
     result_this_col_combined = []
-    cmpdata_l_structural = {}
+    cmpdata_l_asdict = {}
     for r in cmpdata_l:
-        cmpdata_l_structural[r['name']] = r['value']
-    cmpdata_r_structural = {}
+        cmpdata_l_asdict[r['name']] = r['value']
+    cmpdata_r_asdict = {}
     for r in cmpdata_r:
-        cmpdata_r_structural[r['name']] = r['value']
+        cmpdata_r_asdict[r['name']] = r['value']
     for propname in prop_names_list_combined:
-        value_left = cmpdata_l_structural[propname] if propname in cmpdata_l_structural else ''
-        value_right = cmpdata_r_structural[propname] if propname in cmpdata_r_structural else ''
-        value = finddiff_values_general_formatcombined(value_left,value_right)
-        did_change = did_contents_change_deep_inspect(value)
+        value_left = cmpdata_l_asdict[propname] if propname in cmpdata_l_asdict else ''
+        value_right = cmpdata_r_asdict[propname] if propname in cmpdata_r_asdict else ''
+        value = finddiff_values_general_formatstructural(value_left,value_right)
+        did_change = not(value_left==value_right) # did_contents_change_deep_inspect(value) # TODO: only print changed in structural?
         if did_change:
             result_this_col_combined.append({'name':propname,'value':value})
+        else:
+            # result_this_col_combined.append({'name':propname,'value':wrap_hide_ctx(value)})
+            pass
     return result_this_col_combined
 
 def finddiff_values_text_formatstructural( cmpdata_l, cmpdata_r ):
@@ -873,9 +992,9 @@ def finddiff_values_text_formatstructural( cmpdata_l, cmpdata_r ):
     if cmpdata_l==cmpdata_r:
         result_this_col_combined = None
     elif( (len(cmpdata_l)>0) and (len(cmpdata_r)==0) ):
-        result_this_col_combined = {'parts':[{'text':cmpdata_l,'role':'removed'}]}
+        result_this_col_combined = {'text':cmpdata_l,'role':'removed'}
     elif( (len(cmpdata_l)==0) and (len(cmpdata_r)>0) ):
-        result_this_col_combined = {'parts':[{'text':cmpdata_r,'role':'added'}]}
+        result_this_col_combined = {'text':cmpdata_r,'role':'added'}
     else:
         cmpdata_l_into_lines = [ ('' if linenumber==0 else '\n') + (line if len(line)>0 else ' ') for linenumber,line in enumerate(text_split_lines(cmpdata_l)) ]
         cmpdata_r_into_lines = [ ('' if linenumber==0 else '\n') + (line if len(line)>0 else ' ') for linenumber,line in enumerate(text_split_lines(cmpdata_r)) ]
@@ -904,7 +1023,7 @@ def finddiff_values_text_formatstructural( cmpdata_l, cmpdata_r ):
             diff_data = as_diff_items_concatenated( SequenceMatcher(None,cmpdata_l_into_pieces,cmpdata_r_into_pieces).get_opcodes(), cmpdata_l_into_pieces, cmpdata_r_into_pieces )
             for part in diff_data:
                 if part.flag=='keep':
-                    result_this_col_combined['parts'].append(shorten_ctx(part.line))
+                    result_this_col_combined['parts'].append(wrap_hide_ctx(part.line))
                 elif part.flag=='insert':
                     result_this_col_combined['parts'].append( {'text':part.line,'role':'added'} )
                 elif part.flag=='remove':
@@ -912,7 +1031,7 @@ def finddiff_values_text_formatstructural( cmpdata_l, cmpdata_r ):
             # result_this_col_combined = {
             #     **result_this_col_combined,
             #     'parts': [
-            #         shorten_ctx(chunk) for chunk in result_this_col_combined['parts']
+            #         wrap_hide_ctx(chunk) for chunk in result_this_col_combined['parts']
             #     ]
             # }
     return result_this_col_combined
@@ -922,16 +1041,26 @@ def finddiff_values_list_formatstructural( cmpdata_l, cmpdata_r ):
         cmpdata_l = []
     if is_empty(cmpdata_r):
         cmpdata_r = []
-    list_combined = diff_make_combined_list( cmpdata_l, cmpdata_r )
+    cmpdata_l_hashed = [f'{v}' for v in cmpdata_l]
+    cmpdata_r_hashed = [f'{v}' for v in cmpdata_r]
+    # list_combined = diff_make_combined_list( cmpdata_l_hashed, cmpdata_r_hashed )
+    sm = SequenceMatcher( None,cmpdata_l_hashed, cmpdata_r_hashed )
     result = []
-    for item in list_combined:
-        if (item in cmpdata_l) and (item in cmpdata_r):
-            # result.append({'text':item})
-            pass
-        elif not (item in cmpdata_l) and (item in cmpdata_r):
-            result.append({'text':item,'role':'added'})
-        elif (item in cmpdata_l) and not (item in cmpdata_r):
-            result.append({'text':item,'role':'removed'})
+    for tag, i1, i2, j1, j2 in sm.get_opcodes():
+        items_l = cmpdata_l[i1:i2]
+        items_r = cmpdata_r[j1:j2]
+        list_combined = list(zip_longest(items_l, items_r))
+        for item_l, item_r in list_combined:
+            item = finddiff_values_general_formatstructural( item_l, item_r )
+            if tag == 'equal':
+                result.append({'text':item})
+            elif tag == 'replace':
+                result.append({'text':item_r,'role':'added'})
+                result.append({'text':item_l,'role':'removed'})
+            elif tag == 'insert':
+                result.append({'text':item_r,'role':'added'})
+            elif tag == 'delete':
+                result.append({'text':item_l,'role':'removed'})
     return result
 
 def finddiff_values_dict_formatstructural( cmpdata_l, cmpdata_r ):
@@ -947,47 +1076,30 @@ def finddiff_values_dict_formatstructural( cmpdata_l, cmpdata_r ):
         value_left = cmpdata_l[prop] if prop in cmpdata_l else None
         value_right = cmpdata_r[prop] if prop in cmpdata_r else None
         value_resulting = finddiff_values_general_formatstructural( value_left, value_right )
-        did_change = (value_left==value_right)
+        did_change = not(value_left==value_right)
         if did_change:
             result[prop] = value_resulting
     return result
 
 def finddiff_values_general_formatstructural( cmpdata_l, cmpdata_r ):
-    def detect_format(val):
-        if False and is_empty(val):
-            return 'none' # none should not override dicts or lists
-        elif isinstance(val,list) and len(val)==0:
-            # return 'none'
-            return 'list'
-        elif isinstance(val,list) and (len([v for v in val if isinstance(v,dict) and 'name' in v])==len(val)):
-            return 'propertylist'
-        elif isinstance(val,list) and (len([v for v in val if isinstance(v,str)])==len(val)):
-            return 'list'
-        elif isinstance(val,dict):
-            return 'dict'
-        elif isinstance(val,str):
-            return 'str'
-        elif is_empty(val):
-            return 'none'
-        else:
-            return 'unrecognized'
     if is_empty(cmpdata_l) and is_empty(cmpdata_r):
         # return '' # wrong, if we compare {}'s, or {} to None, the result should be of the same type, not str
         # return None # and this is wrong too
-        cmpdata_l_format = detect_format(cmpdata_l)
-        cmpdata_r_format = detect_format(cmpdata_r)
-        if cmpdata_l_format=='none':
-            cmpdata_l_format = cmpdata_r_format
-        if cmpdata_r_format=='none':
-            cmpdata_r_format = cmpdata_l_format
+        cmpdata_l_format = detect_format(cmpdata_l,avoid_none=True)
+        cmpdata_r_format = detect_format(cmpdata_r,avoid_none=True)
+        common_format = find_common_format_denominator_with_fallback_str(cmpdata_l_format,cmpdata_r_format)
+        cmpdata_l = as_format(cmpdata_l,cmpdata_l_format,common_format)
+        cmpdata_r = as_format(cmpdata_r,cmpdata_r_format,common_format)
+        cmpdata_l_format = common_format
+        cmpdata_r_format = common_format
         if (cmpdata_l_format==cmpdata_r_format):
-            if cmpdata_l_format=='str':
+            if cmpdata_l_format=='(str)':
                 return ''
-            elif cmpdata_l_format=='list':
+            elif cmpdata_l_format=='(list)':
                 return []
-            elif cmpdata_l_format=='dict':
+            elif cmpdata_l_format=='(dict)':
                 return {}
-            elif cmpdata_l_format=='propertylist':
+            elif cmpdata_l_format=='(propertylist)':
                 return []
             else:
                 return None
@@ -996,22 +1108,26 @@ def finddiff_values_general_formatstructural( cmpdata_l, cmpdata_r ):
     else:
         cmpdata_l_format = detect_format(cmpdata_l)
         cmpdata_r_format = detect_format(cmpdata_r)
-        if cmpdata_l_format=='list' and len(cmpdata_l)==0 and cmpdata_r_format=='propertylist':
-            cmpdata_l_format = 'propertylist'
-        if cmpdata_r_format=='list' and len(cmpdata_r)==0 and cmpdata_l_format=='propertylist':
-            cmpdata_r_format = 'propertylist'
-        if cmpdata_l_format=='none':
-            cmpdata_l_format = cmpdata_r_format
-        if cmpdata_r_format=='none':
-            cmpdata_r_format = cmpdata_l_format
+        common_format = find_common_format_denominator_with_fallback_str(cmpdata_l_format,cmpdata_r_format)
+        cmpdata_l = as_format(cmpdata_l,cmpdata_l_format,common_format)
+        cmpdata_r = as_format(cmpdata_r,cmpdata_r_format,common_format)
+        cmpdata_l_format = common_format
+        cmpdata_r_format = common_format
         if (cmpdata_l_format==cmpdata_r_format):
-            if cmpdata_l_format=='str':
+            if cmpdata_l_format=='(str)':
                 return finddiff_values_text_formatstructural( cmpdata_l, cmpdata_r )
-            elif cmpdata_l_format=='list':
+            elif cmpdata_l_format=='(list)':
                 return finddiff_values_list_formatstructural( cmpdata_l, cmpdata_r )
-            elif cmpdata_l_format=='dict':
+            elif cmpdata_l_format=='(dict)':
+                # cmpdata_l = clean_role_underlying(cmpdata_l)
+                # cmpdata_r = clean_role_underlying(cmpdata_r)
+                if 'role' in cmpdata_l and cmpdata_l['role']=='ctx' and 'ctx' in cmpdata_r and cmpdata_r['role']=='ctx':
+                    if cmpdata_l==cmpdata_r:
+                        return cmpdata_l
+                    else:
+                        return wrap_hide_ctx('... ...')
                 return finddiff_values_dict_formatstructural( cmpdata_l, cmpdata_r )
-            elif cmpdata_l_format=='propertylist':
+            elif cmpdata_l_format=='(propertylist)':
                 return finddiff_values_propertylist_formatstructural( cmpdata_l, cmpdata_r )
             else:
                 return finddiff_values_general_formatstructural( '{f}'.format(f=cmpdata_l), '{f}'.format(f=cmpdata_r) )

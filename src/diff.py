@@ -14,16 +14,19 @@ if __name__ == '__main__':
     # run as a program
     # import helper_diff_wrappers
     import helper_diff_wrappers
+    import helper_filtering_wrappers
     import helper_utility_wrappers
 elif '.' in __name__:
     # package
     # from . import helper_diff_wrappers
     from . import helper_diff_wrappers
+    from . import helper_filtering_wrappers
     from . import helper_utility_wrappers
 else:
     # included with no parent package
     # import helper_diff_wrappers
     import helper_diff_wrappers
+    import helper_filtering_wrappers
     import helper_utility_wrappers
 
 
@@ -49,7 +52,7 @@ def find_diff(data_left,data_right,config):
         return False
     
     def prep_config(config,flags_list_combined):
-        if 'config_use_hierarchical_name_structure' not in config:
+        if 'config_use_hierarchical_name_structure' not in config or config['config_use_hierarchical_name_structure'] is None:
             if 'data-type:mdd' in flags_list_combined:
                 config['config_use_hierarchical_name_structure'] = True
             elif 'data-type:excel' in flags_list_combined:
@@ -343,6 +346,8 @@ def find_diff(data_left,data_right,config):
 
                         file_l_coldata = file_l_rowdata[col] if col in file_l_rowdata else None
                         file_r_coldata = file_r_rowdata[col] if col in file_r_rowdata else None
+                        file_l_coldata = helper_filtering_wrappers.clean_role_underlying_deep(file_l_coldata)
+                        file_r_coldata = helper_filtering_wrappers.clean_role_underlying_deep(file_r_coldata)
 
                         col_changed = False
 
@@ -350,7 +355,7 @@ def find_diff(data_left,data_right,config):
 
                             result_this_col_left, result_this_col_right = helper_diff_wrappers.finddiff_values_general_formatsidebyside( file_l_coldata, file_r_coldata )
                             
-                            if helper_diff_wrappers.check_if_includes_addedremoved_marker(result_this_col_left) or helper_diff_wrappers.check_if_includes_addedremoved_marker(result_this_col_right):
+                            if helper_filtering_wrappers.check_if_includes_addedremoved_marker(result_this_col_left) or helper_filtering_wrappers.check_if_includes_addedremoved_marker(result_this_col_right):
                                 col_changed = True
                             row[f'{col}_left'] = result_this_col_left
                             row[f'{col}_right'] = result_this_col_right
@@ -359,7 +364,7 @@ def find_diff(data_left,data_right,config):
 
                             result_this_col_combined = helper_diff_wrappers.finddiff_values_general_formatcombined( file_l_coldata, file_r_coldata )
                             
-                            if helper_diff_wrappers.check_if_includes_addedremoved_marker(result_this_col_combined):
+                            if helper_filtering_wrappers.check_if_includes_addedremoved_marker(result_this_col_combined):
                                 col_changed = True
                             row[f'{col}'] = result_this_col_combined
 
@@ -367,7 +372,7 @@ def find_diff(data_left,data_right,config):
 
                             result_this_col_combined = helper_diff_wrappers.finddiff_values_general_formatstructural( file_l_coldata, file_r_coldata )
                             
-                            if helper_diff_wrappers.check_if_includes_addedremoved_marker(result_this_col_combined):
+                            if helper_filtering_wrappers.check_if_includes_addedremoved_marker(result_this_col_combined):
                                 col_changed = True
                             row[f'{col}'] = result_this_col_combined
 
@@ -517,6 +522,12 @@ def entry_point(runscript_config={}):
         required=False
     )
     parser.add_argument(
+        '--config-dont-use-hierarchical-name-structure',
+        help='Special flag to control if items names should be treated hierarhical',
+        action='store_true',
+        required=False
+    )
+    parser.add_argument(
         '--config-use-hierarchical-name-structure-ignore-missing-parent',
         help='Special flag for running diffs of diffs',
         action='store_true',
@@ -595,6 +606,10 @@ def entry_point(runscript_config={}):
         diff_config['config_do_not_include_rows_moved'] = True
     if args.config_use_hierarchical_name_structure:
         diff_config['config_use_hierarchical_name_structure'] = True
+    if args.config_dont_use_hierarchical_name_structure:
+        if args.config_use_hierarchical_name_structure:
+            raise Exception('--config-use-hierarchical-name-structure and --config-dont-use-hierarchical-name-structure can\'t be passed together')
+        diff_config['config_use_hierarchical_name_structure'] = False
     if args.config_use_hierarchical_name_structure_ignore_missing_parent:
         diff_config['config_use_hierarchical_name_structure_ignore_missing_parent'] = True
     if args.config_casesensitive_item_list_comparison:
