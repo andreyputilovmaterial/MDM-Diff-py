@@ -5,7 +5,7 @@
 	path = src/lib/mdmreadpy
 	url = https://github.com/andreyputilovmaterial/MDD-read-py.git
 [submodule "lib/diff-lib"]
-	path = src/lib/difflib
+	path = src/diff_older/lib/difflib
 	url = https://github.com/andreyputilovmaterial/diff-lib.git
 [submodule "src-make/pinliner"]
 	path = src-make/lib/pinliner

@@ -10,7 +10,7 @@ import traceback, sys
 
 if __name__ == '__main__':
     # run as a program
-    import diff_obsolete
+    from diff_older import diff_obsolete
     import diff
     from lib.mdmreadpy import read_mdd
     from lib.otherformatsreadpy_txt import read as read_txt
@@ -21,7 +21,7 @@ if __name__ == '__main__':
     from lib.mdmexcelreportpy import report_create as report_excel_create
 elif '.' in __name__:
     # package
-    from . import diff_obsolete
+    from .diff_older import diff_obsolete
     from . import diff
     from .lib.mdmreadpy import read_mdd
     from .lib.otherformatsreadpy_txt import read as read_txt
@@ -32,7 +32,7 @@ elif '.' in __name__:
     from .lib.mdmexcelreportpy import report_create as report_excel_create
 else:
     # included with no parent package
-    import diff_obsolete
+    from diff_older import diff_obsolete
     import diff
     from lib.mdmreadpy import read_mdd
     from lib.otherformatsreadpy_txt import read as read_txt
@@ -51,34 +51,34 @@ from datetime import datetime, timezone
 
 
 
-def call_diff_obsolete_program():
+def call_diff_obsolete_program(*argcs,**kwargs):
     return diff_obsolete.entry_point({'arglist_strict':False})
 
-def call_diff_program():
-    return diff.entry_point({'arglist_strict':False})
+def call_diff_program(*argcs,**kwargs):
+    return diff.entry_point(*argcs,**kwargs)
 
-def call_read_mdd_program():
+def call_read_mdd_program(*argcs,**kwargs):
     return read_mdd.entry_point({'arglist_strict':False})
 
-def call_read_excel_program():
+def call_read_excel_program(*argcs,**kwargs):
     return read_excel.entry_point({'arglist_strict':False})
 
-def call_read_spss_program():
+def call_read_spss_program(*argcs,**kwargs):
     return read_spss.entry_point({'arglist_strict':False})
 
-def call_read_txt_program():
+def call_read_txt_program(*argcs,**kwargs):
     return read_txt.entry_point({'arglist_strict':False})
 
-def call_read_msmarkitdown_program():
+def call_read_msmarkitdown_program(*argcs,**kwargs):
     return read_msmarkitdown.entry_point({'arglist_strict':False})
 
-def call_report_html_program():
+def call_report_html_program(*argcs,**kwargs):
     return report_html_create.entry_point({'arglist_strict':False})
 
-def call_report_excel_program():
+def call_report_excel_program(*argcs,**kwargs):
     return report_excel_create.entry_point({'arglist_strict':False})
 
-def call_test_program():
+def call_test_program(*argcs,**kwargs):
     msg = '''
 hello, world!
     '''
@@ -120,7 +120,7 @@ def main():
         if args.program:
             program = '{arg}'.format(arg=args.program)
             if program in run_programs:
-                run_programs[program]()
+                run_programs[program](args_rest)
             else:
                 raise AttributeError('program to run not recognized: {program}'.format(program=args.program))
         else:

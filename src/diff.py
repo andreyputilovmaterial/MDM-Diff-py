@@ -12,22 +12,31 @@ import sys # for error reporting, to print to stderr
 from difflib import SequenceMatcher
 if __name__ == '__main__':
     # run as a program
-    # import helper_diff_wrappers
-    import helper_diff_wrappers
-    import helper_filtering_wrappers
-    import helper_utility_wrappers
+    # import diff_functions
+    from diff_engine import diff_functions
+    from diff_engine.common_types import (
+        filter_diff_input_from_diff_classes,
+        did_change,
+    )
+    from helper_utility.perfmonitor import PerformanceMonitor
 elif '.' in __name__:
     # package
-    # from . import helper_diff_wrappers
-    from . import helper_diff_wrappers
-    from . import helper_filtering_wrappers
-    from . import helper_utility_wrappers
+    # from . import diff_functions
+    from .diff_engine import diff_functions
+    from .diff_engine.common_types import (
+        filter_diff_input_from_diff_classes,
+        did_change,
+    )
+    from .helper_utility.perfmonitor import PerformanceMonitor
 else:
     # included with no parent package
-    # import helper_diff_wrappers
-    import helper_diff_wrappers
-    import helper_filtering_wrappers
-    import helper_utility_wrappers
+    # import diff_functions
+    from diff_engine import diff_functions
+    from diff_engine.common_types import (
+        filter_diff_input_from_diff_classes,
+        did_change,
+    )
+    from helper_utility.perfmonitor import PerformanceMonitor
 
 
 
@@ -53,7 +62,9 @@ def find_diff(data_left,data_right,config):
     
     def prep_config(config,flags_list_combined):
         if 'config_use_hierarchical_name_structure' not in config or config['config_use_hierarchical_name_structure'] is None:
-            if 'data-type:mdd' in flags_list_combined:
+            if 'diff_source_left:data-type:diff' in flags_list_combined or 'diff_source_right:data-type:diff' in flags_list_combined:
+                config['config_use_hierarchical_name_structure'] = False
+            elif 'data-type:mdd' in flags_list_combined:
                 config['config_use_hierarchical_name_structure'] = True
             elif 'data-type:excel' in flags_list_combined:
                 config['config_use_hierarchical_name_structure'] = False
@@ -76,8 +87,9 @@ def find_diff(data_left,data_right,config):
                 config['config_row_diff_ignorecase'] = True
             else:
                 config['config_row_diff_ignorecase'] = False
-        if not ( (config['config_row_diff_ignorecase'] is False) or (config['config_row_diff_ignorecase'] is True) ): # verify/validate - must be explicitly true or false
-            raise Exception(f'not allowed config_row_diff_ignorecasevalue ("{config["config_row_diff_ignorecase"]}") - at this point must be explicitly True or False')
+        assert ( (config['config_row_diff_ignorecase'] is False) or (config['config_row_diff_ignorecase'] is True) ), f'not allowed config_row_diff_ignorecasevalue - must be explicitly "True" or "False" at this point ("{config["config_row_diff_ignorecase"]}") - at this point must be explicitly True or False' # verify/validate - must be explicitly true or false
+        if 'diff_source_left:data-type:diff' in flags_list_combined or 'diff_source_right:data-type:diff' in flags_list_combined:
+            config['input_is_diff'] = True
 
         return config
     
@@ -91,7 +103,7 @@ def find_diff(data_left,data_right,config):
         ]
         data_columns_global_left = data_left.get('report_scheme',{}).get('columns',[])
         data_columns_global_right = data_right.get('report_scheme',{}).get('columns',[])
-        columns_list_check_global = helper_diff_wrappers.diff_make_combined_list(data_columns_global_left,data_columns_global_right)
+        columns_list_check_global = diff_functions.diff_make_combined_list(data_columns_global_left,data_columns_global_right)
         columns_list_check_global = [r for r in columns_list_check_global if not re.match(r'^\s*name\s*$',r,flags=re.I)]
         if config['format']=='sidebyside':
             # add left and right, left and right...
@@ -104,10 +116,8 @@ def find_diff(data_left,data_right,config):
                 columns_list_combined_global.append(f'{col}_left')
             for col in columns_list_check_global:
                 columns_list_combined_global.append(f'{col}_right')
-        elif config['format'] in ['combined','structural']:
+        elif config['format'] in ['combined']:
             # no left and right, just columns that contain diffs with added parts and removed
-            if config['format'] == 'structural':
-                columns_list_combined_global = [ 'name', 'flagdiff' ] # reorder, keep "name" first
             for col in columns_list_check_global:
                 columns_list_combined_global.append(f'{col}')
         else:
@@ -150,7 +160,7 @@ def find_diff(data_left,data_right,config):
 
     if config['verbose_prep_logging']:
        print('find combined list of sections...')
-    section_list_combined = helper_diff_wrappers.diff_make_combined_list(
+    section_list_combined = diff_functions.diff_make_combined_list(
         [ item['name'] for item in data_left['sections']  ],
         [ item['name'] for item in data_right['sections'] ]
     )
@@ -218,9 +228,9 @@ def find_diff(data_left,data_right,config):
             rows_l = [ name for name in file_l_sectiondata.keys() ]
             rows_r = [ name for name in file_r_sectiondata.keys() ]
             
-            section_other_props = helper_diff_wrappers.finddiff_values_general_formatcombined( {**file_l_section,'content':None}, {**file_r_section,'content':None} )
+            section_other_props = diff_functions.finddiff_values_general_formatsimple( {**file_l_section,'content':None}, {**file_r_section,'content':None} )
             # if 'columns' in file_l_section or 'columns' in file_r_section:
-            #     section_other_props['columns'] = [ column for column in helper_diff_wrappers.diff_make_combined_list(file_l_section['columns'] if 'columns' in file_l_section else [],file_r_section['columns'] if 'columns' in file_r_section else []) ]
+            #     section_other_props['columns'] = [ column for column in diff_functions.diff_make_combined_list(file_l_section['columns'] if 'columns' in file_l_section else [],file_r_section['columns'] if 'columns' in file_r_section else []) ]
 
             columns_list_check = []
             data_columns_left = file_l_section['columns'] if 'columns' in file_l_section else data_left.get('report_scheme',{}).get('columns',[])
@@ -232,7 +242,7 @@ def find_diff(data_left,data_right,config):
                 config['verbose_prep_logging'] = True
             if config['verbose_prep_logging']:
                 print('compiling combined column list...')
-            columns_list_check = [ col for col in helper_diff_wrappers.diff_make_combined_list(data_columns_left,data_columns_right) if not re.match(r'^\s*?name\s*?$',col,flags=re.I) ]
+            columns_list_check = [ col for col in diff_functions.diff_make_combined_list(data_columns_left,data_columns_right) if not re.match(r'^\s*?name\s*?$',col,flags=re.I) ]
             if config['format']=='sidebyside':
                 # add left and right, left and right...
                 for col in columns_list_check:
@@ -245,10 +255,6 @@ def find_diff(data_left,data_right,config):
                 for col in columns_list_check:
                     columns_list_combined.append(f'{col}_right')
             elif config['format']=='combined':
-                # no left and right, just columns that contain diffs with added parts and removed
-                for col in columns_list_check:
-                    columns_list_combined.append(f'{col}')
-            elif config['format']=='structural':
                 # no left and right, just columns that contain diffs with added parts and removed
                 for col in columns_list_check:
                     columns_list_combined.append(f'{col}')
@@ -285,9 +291,7 @@ def find_diff(data_left,data_right,config):
             diff_flags = {}
             if 'config_row_diff_ignorecase' in config and config['config_row_diff_ignorecase']:
                 diff_flags['ignorecase'] = True
-            if 'config_use_hierarchical_name_structure_ignore_missing_parent' in config and config['config_use_hierarchical_name_structure_ignore_missing_parent']:
-                diff_flags['hierarhical_ignore_missing_parent'] = True
-            report_rows_diff = helper_diff_wrappers.finddiff_row_names_respecting_groups(
+            report_rows_diff = diff_functions.finddiff_row_names_respecting_groups(
                 rows_l,
                 rows_r,
                 delimiter=(config['config_hierarchical_name_separator'] if ('config_use_hierarchical_name_structure' in config and config['config_use_hierarchical_name_structure']) else None),
@@ -295,7 +299,7 @@ def find_diff(data_left,data_right,config):
                 flags=diff_flags
             )
             
-            performance_counter = iter(helper_utility_wrappers.PerformanceMonitor(config={
+            performance_counter = iter(PerformanceMonitor(config={
                 'total_records': len(report_rows_diff),
                 'report_frequency_records_count': 150,
                 'report_frequency_timeinterval': 6
@@ -332,6 +336,15 @@ def find_diff(data_left,data_right,config):
                         row_changed = True
                     col_any_changed = False
                     row['flagdiff'] = flag
+                    if 'input_is_diff' in config and config['input_is_diff']:
+                        diff_on_diff_diffflag_relabel = {
+                            '(keep)': '(exists in both left and right)',
+                            '(removed)': '(only in left)',
+                            '(added)': '(only in right)',
+                            '(moved from here)': '(exists in both but position is different)',
+                            '(moved here)': '(exists in both but position is different)',
+                        }
+                        row['flagdiff'] = diff_on_diff_diffflag_relabel.get(row['flagdiff'],row['flagdiff'])
                     file_l_rowdata = {}
                     file_r_rowdata = {}
                     if( ( (row_name in rows_l) and (row_name in rows_r) ) and (row_diff_item.flag == 'remove') and ('config_do_not_show_content_rows_moved_from' in config and config['config_do_not_show_content_rows_moved_from']) ):
@@ -343,52 +356,56 @@ def find_diff(data_left,data_right,config):
                         if( row_name in rows_r ):
                             file_r_rowdata = file_r_sectiondata[row_name] if row_name in file_r_sectiondata else {}
                     for col in columns_list_check:
+                        try:
 
-                        file_l_coldata = file_l_rowdata[col] if col in file_l_rowdata else None
-                        file_r_coldata = file_r_rowdata[col] if col in file_r_rowdata else None
-                        file_l_coldata = helper_filtering_wrappers.clean_role_underlying_deep(file_l_coldata)
-                        file_r_coldata = helper_filtering_wrappers.clean_role_underlying_deep(file_r_coldata)
+                            file_l_coldata = file_l_rowdata[col] if col in file_l_rowdata else None
+                            file_r_coldata = file_r_rowdata[col] if col in file_r_rowdata else None
+                            if 'input_is_diff' in config and config['input_is_diff']:
+                                try:
+                                    file_l_coldata = filter_diff_input_from_diff_classes(file_l_coldata)
+                                except Exception as e:
+                                    col_err = f'{file_l_coldata}'[:64]
+                                    raise Exception(f'Reading contents from previous diff to comapre, trying to filter underlying diff classes - could not detect block type. Every segment should be of "change block" type or "context" type. Reading "{col_err}", failed at "{e}"') from e
+                                try:
+                                    file_r_coldata = filter_diff_input_from_diff_classes(file_r_coldata)
+                                except Exception as e:
+                                    col_err = f'{file_r_coldata}'[:64]
+                                    raise Exception(f'Reading contents from previous diff to comapre, trying to filter underlying diff classes - could not detect block type. Every segment should be of "change block" type or "context" type. Reading "{col_err}", failed at "{e}"') from e
+                            col_changed = False
 
-                        col_changed = False
+                            if config['format'] in ['sidebyside','sidebyside_distant']:
 
-                        if config['format'] in ['sidebyside','sidebyside_distant']:
+                                result_this_col_left, result_this_col_right = diff_functions.finddiff_values_general_formatsidebyside( file_l_coldata, file_r_coldata )
+                                
+                                col_changed = col_changed or did_change(result_this_col_left) or did_change(result_this_col_right)
+                                row[f'{col}_left'] = result_this_col_left
+                                row[f'{col}_right'] = result_this_col_right
 
-                            result_this_col_left, result_this_col_right = helper_diff_wrappers.finddiff_values_general_formatsidebyside( file_l_coldata, file_r_coldata )
+                            elif config['format'] == 'combined':
+
+                                result_this_col_combined = diff_functions.finddiff_values_general_formatcombined( file_l_coldata, file_r_coldata )
+                                
+                                col_changed = col_changed or did_change(result_this_col_combined)
+                                row[f'{col}'] = result_this_col_combined
+
+                            else:
+                                raise NotImplementedError(f'diff format is not supported: {config["format"]}')
                             
-                            if helper_filtering_wrappers.check_if_includes_addedremoved_marker(result_this_col_left) or helper_filtering_wrappers.check_if_includes_addedremoved_marker(result_this_col_right):
-                                col_changed = True
-                            row[f'{col}_left'] = result_this_col_left
-                            row[f'{col}_right'] = result_this_col_right
-
-                        elif config['format'] == 'combined':
-
-                            result_this_col_combined = helper_diff_wrappers.finddiff_values_general_formatcombined( file_l_coldata, file_r_coldata )
+                            if col_changed:
+                                col_any_changed = True
+                                # row_changed = True
                             
-                            if helper_filtering_wrappers.check_if_includes_addedremoved_marker(result_this_col_combined):
-                                col_changed = True
-                            row[f'{col}'] = result_this_col_combined
+                        except Exception as e:
+                            print(f'ERROR: Something happened when processing column {col}',file=sys.stderr)
+                            raise e
 
-                        elif config['format'] == 'structural':
-
-                            result_this_col_combined = helper_diff_wrappers.finddiff_values_general_formatstructural( file_l_coldata, file_r_coldata )
-                            
-                            if helper_filtering_wrappers.check_if_includes_addedremoved_marker(result_this_col_combined):
-                                col_changed = True
-                            row[f'{col}'] = result_this_col_combined
-
-                        else:
-                            raise NotImplementedError(f'diff format is not supported: {config["format"]}')
-                        
-                        if col_changed:
-                            col_any_changed = True
-                            # row_changed = True
                     row_changed = row_changed or col_any_changed
                     if 'config_skip_rows_nochange' in config and config['config_skip_rows_nochange'] and not row_changed:
                         pass
-                    elif (config['format']=='structural') and not row_changed:
-                        pass # skip - do not add unchanged rows in structural diff format
-                    elif( ( (row_name in rows_l) and (row_name in rows_r) ) and (row_diff_item.flag in ['remove','insert']) and not col_any_changed and ('config_do_not_include_rows_moved' in config and config['config_do_not_include_rows_moved']) ):
-                        pass # skip if set in config
+                    # elif (config['format']=='structural') and not row_changed:
+                    #     pass # skip - do not add unchanged rows in structural diff format
+                    # elif( ( (row_name in rows_l) and (row_name in rows_r) ) and (row_diff_item.flag in ['remove','insert']) and not col_any_changed and ('config_do_not_include_rows_moved' in config and config['config_do_not_include_rows_moved']) ):
+                    #     pass # skip if set in config
                     else:
                         if row_changed:
                             section_changed = True
@@ -400,11 +417,11 @@ def find_diff(data_left,data_right,config):
                     raise e
             section_title = section_name
             if section_name in [ item['name'] for item in data_left['sections']]:
-                section_left = [ item for item in data_left['sections']][0]
+                section_left = [ item for item in data_left['sections'] if item['name']==section_name][0]
                 if 'title' in section_left:
                     section_title = section_left['title']
             if section_name in [ item['name'] for item in data_right['sections']]:
-                section_left = [ item for item in data_right['sections']][0]
+                section_left = [ item for item in data_right['sections'] if item['name']==section_name][0]
                 if 'title' in section_left:
                     section_title = section_left['title']
             section_add = {
@@ -444,8 +461,8 @@ def make_diff_fname_part(file_name_left,file_name_right):
         return lst[start:end]
     file_name_left = f'{file_name_left}'
     file_name_right = f'{file_name_right}'
-    f_ar_left = helper_diff_wrappers.text_split_words(file_name_left)
-    f_ar_right = helper_diff_wrappers.text_split_words(file_name_right)
+    f_ar_left = diff_functions.text_split_words(file_name_left)
+    f_ar_right = diff_functions.text_split_words(file_name_right)
     sm = SequenceMatcher(None,[s.lower() for s in f_ar_left],[s.lower() for s in f_ar_right])
     result = []
     for tag, i1, i2, j1, j2 in sm.get_opcodes():
@@ -468,7 +485,7 @@ def make_diff_fname_part(file_name_left,file_name_right):
 
 
 
-def entry_point(runscript_config={}):
+def entry_point(*argcs,**kwargs):
 
     time_start = datetime.now()
     script_name = 'mdmtoolsap diff script'
@@ -493,7 +510,7 @@ def entry_point(runscript_config={}):
     )
     parser.add_argument(
         '--cmp-format',
-        help='Format: print results as 2 separate columns, or combine; possible values: sidebyside (default), sidebyside_distant, combined, structural',
+        help='Format: print results as 2 separate columns, or combine; possible values: sidebyside (default), sidebyside_distant, combined',
         type=str,
         required=False
     )
@@ -509,30 +526,12 @@ def entry_point(runscript_config={}):
         action='store_true',
         required=False
     )
-    parser.add_argument(
-        '--config-do-not-include-rows-moved',
-        help='Special flag to indicate that we should not print contents of "moved" rows',
-        action='store_true',
-        required=False
-    )
-    parser.add_argument(
-        '--config-use-hierarchical-name-structure',
-        help='Special flag to control if items names should be treated hierarhical',
-        action='store_true',
-        required=False
-    )
-    parser.add_argument(
-        '--config-dont-use-hierarchical-name-structure',
-        help='Special flag to control if items names should be treated hierarhical',
-        action='store_true',
-        required=False
-    )
-    parser.add_argument(
-        '--config-use-hierarchical-name-structure-ignore-missing-parent',
-        help='Special flag for running diffs of diffs',
-        action='store_true',
-        required=False
-    )
+    # parser.add_argument(
+    #     '--config-use-hierarchical-name-structure',
+    #     help='Special flag to control if items names should be treated hierarhical',
+    #     action='store_true',
+    #     required=False
+    # )
     parser.add_argument(
         '--config-casesensitive-item-list-comparison',
         help='Special flag to indicate if item name is a case-sensitive indentifier, or not and items written in different capitalization should be treated as same item',
@@ -564,12 +563,12 @@ def entry_point(runscript_config={}):
         action='store_true',
         required=False
     )
-    args = None
-    args_rest = None
-    if( ('arglist_strict' in runscript_config) and (not runscript_config['arglist_strict']) ):
-        args, args_rest = parser.parse_known_args()
-    else:
-        args = parser.parse_args()
+    # args = None
+    # args_rest = None
+    # if( ('arglist_strict' in runscript_config) and (not runscript_config['arglist_strict']) ):
+    #     args, args_rest = parser.parse_known_args()
+    # else:
+    args = parser.parse_args(*argcs,**kwargs)
     
     inp_filename_left = ''
     if args.cmp_scheme_left:
@@ -588,7 +587,7 @@ def entry_point(runscript_config={}):
     diff_format = 'sidebyside'
     if args.cmp_format:
         diff_format = args.cmp_format
-        fmts_allowed = ['sidebyside','sidebyside_distant','combined','structural']
+        fmts_allowed = ['sidebyside','sidebyside_distant','combined',]
         if not (diff_format in fmts_allowed):
             raise Exception(f'diff: unsupported config option: diff format: "{diff_format}"; you can only use [ {", ".join(fmts_allowed)} ]')
 
@@ -597,21 +596,13 @@ def entry_point(runscript_config={}):
         'inp_filename_left': inp_filename_left,
         'inp_filename_right': inp_filename_right
     }
-    # TODO: simplify (but not break api!)
     if args.config_skip_rows_nochange:
         diff_config['config_skip_rows_nochange'] = True
     if args.config_do_not_show_content_rows_moved_from:
         diff_config['config_do_not_show_content_rows_moved_from'] = True
-    if args.config_do_not_include_rows_moved:
-        diff_config['config_do_not_include_rows_moved'] = True
-    if args.config_use_hierarchical_name_structure:
-        diff_config['config_use_hierarchical_name_structure'] = True
-    if args.config_dont_use_hierarchical_name_structure:
-        if args.config_use_hierarchical_name_structure:
-            raise Exception('--config-use-hierarchical-name-structure and --config-dont-use-hierarchical-name-structure can\'t be passed together')
-        diff_config['config_use_hierarchical_name_structure'] = False
-    if args.config_use_hierarchical_name_structure_ignore_missing_parent:
-        diff_config['config_use_hierarchical_name_structure_ignore_missing_parent'] = True
+    # if args.config_use_hierarchical_name_structure:
+    #     raise Exception('Support of config_use_hierarchical_name_structure is dropped, it should always eb auto - too hard to control all user-defined scenarios')
+    #     # diff_config['config_use_hierarchical_name_structure'] = True
     if args.config_casesensitive_item_list_comparison:
         if args.config_casesensitive_item_list_comparison=='auto':
             diff_config['config_row_diff_ignorecase'] = None
@@ -693,4 +684,4 @@ def entry_point(runscript_config={}):
 
 
 if __name__ == '__main__':
-    entry_point({'arglist_strict':True})
+    entry_point()

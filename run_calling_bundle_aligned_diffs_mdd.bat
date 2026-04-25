@@ -102,7 +102,7 @@ IF %CONFIG_PRODUCE_HTML_EACH_MDD% (
 
 ECHO -
 ECHO 5. diff
-python dist/mdmtoolsap_bundle.py --program diff --cmp-scheme-left "%MDD_WORKFLOW1_BEFORE_JSON%" --cmp-scheme-right "%MDD_WORKFLOW1_AFTER_JSON%" --output-filename "!DIFF_WORKFLOW1_JSON!" --config-casesensitive-item-list-comparison ignorecase --cmp-format structural --config-do-not-include-rows-moved
+python dist/mdmtoolsap_bundle.py --program diff --cmp-scheme-left "%MDD_WORKFLOW1_BEFORE_JSON%" --cmp-scheme-right "%MDD_WORKFLOW1_AFTER_JSON%" --output-filename "!DIFF_WORKFLOW1_JSON!" --cmp-format combined
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 IF %CONFIG_PRODUCE_HTML_EACH_MDD% (
@@ -153,7 +153,7 @@ IF %CONFIG_PRODUCE_HTML_EACH_MDD% (
 
 ECHO -
 ECHO 11. diff
-python dist/mdmtoolsap_bundle.py --program diff --cmp-scheme-left "%MDD_WORKFLOW2_BEFORE_JSON%" --cmp-scheme-right "%MDD_WORKFLOW2_AFTER_JSON%" --output-filename "!DIFF_WORKFLOW2_JSON!" --config-casesensitive-item-list-comparison ignorecase --cmp-format structural --config-do-not-include-rows-moved
+python dist/mdmtoolsap_bundle.py --program diff --cmp-scheme-left "%MDD_WORKFLOW2_BEFORE_JSON%" --cmp-scheme-right "%MDD_WORKFLOW2_AFTER_JSON%" --output-filename "!DIFF_WORKFLOW2_JSON!" --cmp-format combined
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 IF %CONFIG_PRODUCE_HTML_EACH_MDD% (
@@ -172,7 +172,7 @@ ECHO 13. FINAL DIFF
 @REM FOR /F "delims=" %%i IN ('python -c "import sys;from pathlib import Path;import re;inp_mdd_l = sys.argv[1];inp_mdd_r = sys.argv[2];report_part_mdd_left_filename = re.sub( r'\.mdd\.json', '.mdd', Path(inp_mdd_l).name );report_part_mdd_right_filename = re.sub( r'\.mdd\.json', '.mdd', Path(inp_mdd_r).name );report_filename = 'report.diff.{mdd_l}-{mdd_r}.json'.format(mdd_l=report_part_mdd_left_filename,mdd_r=report_part_mdd_right_filename);result_json_fname = ( Path(inp_mdd_l).parents[0] / report_filename );print(result_json_fname)" "%MDD_WORKFLOW2_BEFORE%" "%MDD_WORKFLOW2_AFTER%"') DO SET "DIFF_WORKFLOW2_JSON=%%i"
 FOR /F "delims=" %%i IN ('python dist/mdmtoolsap_bundle.py --program diff --cmp-scheme-left "%DIFF_WORKFLOW1_JSON%" --cmp-scheme-right "%DIFF_WORKFLOW2_JSON%" --norun-special-onlyprintoutputfilename') DO SET "DIFF_FINAL_JSON=%%i"
 
-python dist/mdmtoolsap_bundle.py --program diff --cmp-scheme-left "%DIFF_WORKFLOW1_JSON%" --cmp-scheme-right "%DIFF_WORKFLOW2_JSON%" --output-filename "!DIFF_FINAL_JSON!" --config-casesensitive-item-list-comparison ignorecase --config-use-hierarchical-name-structure-ignore-missing-parent --config-dont-use-hierarchical-name-structure
+python dist/mdmtoolsap_bundle.py --program diff --cmp-scheme-left "%DIFF_WORKFLOW1_JSON%" --cmp-scheme-right "%DIFF_WORKFLOW2_JSON%" --output-filename "!DIFF_FINAL_JSON!"
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 

@@ -12,15 +12,15 @@ import sys # for error reporting, to print to stderr
 if __name__ == '__main__':
     # run as a program
     import helper_diff_wrappers_obsolete as helper_diff_wrappers
-    import helper_utility_wrappers
+    import helper_utility_perfmonitor_wrappers
 elif '.' in __name__:
     # package
     from . import helper_diff_wrappers_obsolete as helper_diff_wrappers
-    from . import helper_utility_wrappers
+    from . import helper_utility_perfmonitor_wrappers
 else:
     # included with no parent package
     import helper_diff_wrappers_obsolete as helper_diff_wrappers
-    import helper_utility_wrappers
+    import helper_utility_perfmonitor_wrappers
 
 
 
@@ -251,7 +251,7 @@ def find_diff(data_left,data_right,config):
                 flags={'ignorecase':True} if config['config_row_diff_ignorecase'] else {}
             )
             
-            performance_counter = iter(helper_utility_wrappers.PerformanceMonitor(config={
+            performance_counter = iter(helper_utility_perfmonitor_wrappers.PerformanceMonitor(config={
                 'total_records': len(report_rows_diff),
                 'report_frequency_records_count': 150,
                 'report_frequency_timeinterval': 6
