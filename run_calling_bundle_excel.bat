@@ -58,7 +58,7 @@ if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b 
 ECHO -
 ECHO 5. diff
 REM :: you can add  --config-skip-rows-nochange flag
-python dist/mdmtoolsap_bundle.py --program diff --cmp-scheme-left "%TEXTFILE_OLD_JSON%" --cmp-scheme-right "%TEXTFILE_RECENT_JSON%" --output-file "!TEXTFILE_OLD_JSON!" --cmp-format combined
+python dist/mdmtoolsap_bundle.py --program diff --cmp-scheme-left "%TEXTFILE_OLD_JSON%" --cmp-scheme-right "%TEXTFILE_RECENT_JSON%" --output-filename "!TEXTFILE_OLD_JSON!" --cmp-format combined
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b %errorlevel% )
 
 ECHO -

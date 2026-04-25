@@ -90,7 +90,7 @@ IF %CONFIG_PRODUCE_HTML_EACH_SPSS% (
 
 ECHO -
 ECHO 5. diff
-python dist/mdmtoolsap_bundle.py --program diff --cmp-scheme-left "%SPSS_A_JSON%" --cmp-scheme-right "%SPSS_B_JSON%" --output-file "!OUTPUT_FINAL_DIFF_JSON!"
+python dist/mdmtoolsap_bundle.py --program diff --cmp-scheme-left "%SPSS_A_JSON%" --cmp-scheme-right "%SPSS_B_JSON%" --output-filename "!OUTPUT_FINAL_DIFF_JSON!"
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 ECHO -
