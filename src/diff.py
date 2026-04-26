@@ -14,8 +14,8 @@ if __name__ == '__main__':
     # run as a program
     # import diff_functions
     from diff_engine import diff_functions
-    from diff_engine.common_types import (
-        filter_diff_input_from_diff_classes,
+    from diff_engine.common_functions import (
+        normalize_input_relocate_diff_markers,
         did_change,
     )
     from helper_utility.perfmonitor import PerformanceMonitor
@@ -23,8 +23,8 @@ elif '.' in __name__:
     # package
     # from . import diff_functions
     from .diff_engine import diff_functions
-    from .diff_engine.common_types import (
-        filter_diff_input_from_diff_classes,
+    from .diff_engine.common_functions import (
+        normalize_input_relocate_diff_markers,
         did_change,
     )
     from .helper_utility.perfmonitor import PerformanceMonitor
@@ -32,8 +32,8 @@ else:
     # included with no parent package
     # import diff_functions
     from diff_engine import diff_functions
-    from diff_engine.common_types import (
-        filter_diff_input_from_diff_classes,
+    from diff_engine.common_functions import (
+        normalize_input_relocate_diff_markers,
         did_change,
     )
     from helper_utility.perfmonitor import PerformanceMonitor
@@ -362,12 +362,12 @@ def find_diff(data_left,data_right,config):
                             file_r_coldata = file_r_rowdata[col] if col in file_r_rowdata else None
                             if 'input_is_diff' in config and config['input_is_diff']:
                                 try:
-                                    file_l_coldata = filter_diff_input_from_diff_classes(file_l_coldata)
+                                    file_l_coldata = normalize_input_relocate_diff_markers(file_l_coldata)
                                 except Exception as e:
                                     col_err = f'{file_l_coldata}'[:64]
                                     raise Exception(f'Reading contents from previous diff to comapre, trying to filter underlying diff classes - could not detect block type. Every segment should be of "change block" type or "context" type. Reading "{col_err}", failed at "{e}"') from e
                                 try:
-                                    file_r_coldata = filter_diff_input_from_diff_classes(file_r_coldata)
+                                    file_r_coldata = normalize_input_relocate_diff_markers(file_r_coldata)
                                 except Exception as e:
                                     col_err = f'{file_r_coldata}'[:64]
                                     raise Exception(f'Reading contents from previous diff to comapre, trying to filter underlying diff classes - could not detect block type. Every segment should be of "change block" type or "context" type. Reading "{col_err}", failed at "{e}"') from e
@@ -653,6 +653,8 @@ def entry_point(*argcs,**kwargs):
     
     data_left = None
     data_right = None
+    print('{script_name}: reading cmp source left "{fname}"'.format(fname=inp_filename_left,script_name=script_name))
+    print('{script_name}: and right "{fname}"'.format(fname=inp_filename_right,script_name=script_name))
     with open(inp_filename_left) as f_l:
         with open(inp_filename_right) as f_r:
             try:

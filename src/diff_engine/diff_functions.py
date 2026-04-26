@@ -2,6 +2,7 @@
 
 import re
 
+
 # from collections import namedtuple
 from dataclasses import dataclass
 from typing import ClassVar
@@ -12,19 +13,16 @@ from itertools import zip_longest
 
 
 
-from .common_types import (
+from .common_functions import (
     as_format,
-    # as_format_dict,
-    # as_format_list,
-    # as_format_none,
-    # as_format_propertylist,
-    # as_format_str,
-    # as_format_uncategorized,
     detect_format,
     # find_common_format_denominator,
     find_common_format_denominator_with_fallback_str,
     is_empty,
     is_property_list,
+    is_diff_segment_dict,
+    is_segment_context,
+    detect_diffsegment_type_noncompulsory,
     as_segment_context,
     as_segment_change,
 )
@@ -45,24 +43,6 @@ CONFIG_STRUCTURAL_SHORTEN_CTX = 512
 
 
 
-
-def detect_format(val,avoid_none=False):
-    if not avoid_none and is_empty(val):
-        return '(none)'
-    elif isinstance(val,list) and len(val)==0:
-        return '(none)'
-    elif is_property_list(val):
-        return '(propertylist)'
-    elif isinstance(val,list):
-        return '(list)'
-    elif isinstance(val,dict):
-        return '(dict)'
-    elif isinstance(val,str):
-        return '(str)'
-    elif is_empty(val):
-        return '(none)'
-    else:
-        return '(uncategorized)'
 
 
 
@@ -405,39 +385,31 @@ def finddiff_values_propertylist_formatsidebyside( cmpdata_l, cmpdata_r ):
     prop_names_list_combined = diff_make_combined_list(cmpdata_l_prop_names,cmpdata_r_prop_names)
     result_left = []
     result_right = []
-    cmpdata_l_asdict = {}
-    for r in cmpdata_l:
-        cmpdata_l_asdict[r['name']] = r['value']
-    cmpdata_r_asdict = {}
-    for r in cmpdata_r:
-        cmpdata_r_asdict[r['name']] = r['value']
+    cmpdata_l_asdict = { record['name']: record['value'] for record in cmpdata_l }
+    cmpdata_r_asdict = { record['name']: record['value'] for record in cmpdata_r }
     for propname in prop_names_list_combined:
-        prop_val_left = {'parts':[]}
-        prop_val_right = {'parts':[]}
+        value_left = cmpdata_l_asdict.get(propname,None)
+        value_right = cmpdata_r_asdict.get(propname,None)
         if( ( propname in cmpdata_l_prop_names ) and ( propname in cmpdata_r_prop_names ) ):
-            value_left = cmpdata_l_asdict[propname]
-            value_right = cmpdata_r_asdict[propname]
             if value_left==value_right:
-                prop_val_left = as_segment_context(value_left)
-                prop_val_right = as_segment_context(value_right)
-            elif( (len(value_left)>0) and (len(value_right)==0) ):
-                prop_val_left = as_segment_change(value_left,op='removed')
-                prop_val_right = ''
-            elif( (len(value_left)==0) and (len(value_right)>0) ):
-                prop_val_left = ''
-                prop_val_right = as_segment_change(value_right,op='added')
+                value_left = as_segment_context(value_left)
+                value_right = as_segment_context(value_right)
+            # elif( not is_empty(value_left) and is_empty(value_right) ):
+            #     value_left = as_segment_change(value_left,op='removed') if not is_segment_context(value_left) else value_left
+            #     value_right = as_format(None,'(none)',detect_format(value_left))
+            # elif( is_empty(value_left) and not is_empty(value_right) ):
+            #     value_left = as_format(None,'(none)',detect_format(value_right))
+            #     value_right = as_segment_change(value_right,op='added') if not is_segment_context(value_right) else value_right
             else:
-                prop_val_left, prop_val_right = finddiff_values_general_formatsidebyside(value_left,value_right)
+                value_left, value_right = finddiff_values_general_formatsidebyside(value_left,value_right)
         elif( propname in cmpdata_l_prop_names ):
-            value_left = cmpdata_l_asdict[propname]
-            prop_val_left = as_segment_change(value_left,op='removed')
+            value_left = as_segment_change(value_left,op='removed') if not is_segment_context(value_left) else value_left
         elif( propname in cmpdata_r_prop_names ):
-            value_right = cmpdata_r_asdict[propname]
-            prop_val_right = as_segment_change(value_right,op='added')
+            value_right = as_segment_change(value_right,op='added') if not is_segment_context(value_right) else value_right
         if propname in cmpdata_l_prop_names:
-            result_left.append({'name':propname,'value':prop_val_left})
+            result_left.append({'name':propname,'value':value_left})
         if propname in cmpdata_r_prop_names:
-            result_right.append({'name':propname,'value':prop_val_right})
+            result_right.append({'name':propname,'value':value_right})
     return result_left, result_right
 
 
@@ -519,8 +491,8 @@ def finddiff_values_list_formatsidebyside( cmpdata_l, cmpdata_r ):
         cmpdata_l = []
     if is_empty(cmpdata_r):
         cmpdata_r = []
-    cmpdata_l_hashed = [f'{v}' for v in cmpdata_l]
-    cmpdata_r_hashed = [f'{v}' for v in cmpdata_r]
+    cmpdata_l_hashed = [(detect_diffsegment_type_noncompulsory(v),f'{v}') for v in cmpdata_l]
+    cmpdata_r_hashed = [(detect_diffsegment_type_noncompulsory(v),f'{v}') for v in cmpdata_r]
     # list_combined = diff_make_combined_list( cmpdata_l_hashed, cmpdata_r_hashed )
     sm = SequenceMatcher( None,cmpdata_l_hashed, cmpdata_r_hashed )
     result_l = []
@@ -532,38 +504,73 @@ def finddiff_values_list_formatsidebyside( cmpdata_l, cmpdata_r ):
         for item_l, item_r in list_combined:
             item = finddiff_values_general_formatcombined( item_l, item_r )
             if tag == 'equal':
-                result_l.append(item)
-                result_r.append(item)
+                result_l.append(as_segment_context(item))
+                result_r.append(as_segment_context(item))
             elif tag == 'replace':
-                result_l.append(as_segment_change(item_l,op='removed'))
-                result_r.append(as_segment_change(item_r,op='added'))
+                result_l.append(as_segment_change(item_l,op='removed') if not is_segment_context(item_l) else item_l)
+                result_r.append(as_segment_change(item_r,op='added') if not is_segment_context(item_r) else item_r)
             elif tag == 'insert':
-                result_r.append(as_segment_change(item_r,op='added'))
+                result_r.append(as_segment_change(item_r,op='added') if not is_segment_context(item_r) else item_r)
             elif tag == 'delete':
-                result_l.append(as_segment_change(item_l,op='removed'))
+                result_l.append(as_segment_change(item_l,op='removed') if not is_segment_context(item_l) else item_l)
     return result_l, result_r
 
-def finddiff_values_dict_formatsidebyside( cmpdata_l, cmpdata_r ):
+def finddiff_values_segment_formatsidebyside( cmpdata_l, cmpdata_r ):
+    # clean inputs
     if is_empty(cmpdata_l):
         cmpdata_l = {}
     if is_empty(cmpdata_r):
         cmpdata_r = {}
+    # verify roles (aka "diff segment types")
     role_left = cmpdata_l.get('role',None)
     role_right = cmpdata_r.get('role',None)
+    # cast to same denominator, of on is blank/missing and the other indicates something -> make both point to that same something
     if is_empty(role_left) and is_empty(cmpdata_l) and not is_empty(role_right):
         role_left = role_right
     if is_empty(role_right) and is_empty(cmpdata_r) and not is_empty(role_left):
         role_right = role_left
     if not ( (role_left==role_right) or (is_empty(role_left) and is_empty(role_right)) ):
-        chunk_removed_left, chunk_removed_right = finddiff_values_general_formatsidebyside(cmpdata_l,{'role':role_left})
-        chunk_removed_left = as_segment_change(chunk_removed_left,op='removed')
-        chunk_removed_right = as_segment_change(chunk_removed_right,op='removed')
-        chunk_added_left, chunk_added_right = finddiff_values_general_formatsidebyside({'role':role_right},cmpdata_r)
-        chunk_added_left = as_segment_change(chunk_added_left,op='added')
-        chunk_added_right = as_segment_change(chunk_added_right,op='added')
-        return [chunk_removed_left,chunk_added_left], [chunk_removed_right,chunk_added_right]
-    elif role_left==role_right and role_left=='context':
+        # if roles are different, don't compare -> instead, treat it as "replaced" - first compared to blank and a separate blank compared to second
+        # eres
+        # # if (role_left=='context' and not is_empty(cmpdata_l)) or (role_right=='context' and not is_empty(cmpdata_r)):
+        # #     pass
+        # # chunk_removed_left, chunk_removed_right = finddiff_values_general_formatsidebyside(cmpdata_l,{'role':role_left})
+        # # chunk_removed_left = as_segment_change(chunk_removed_left,op='removed')
+        # # chunk_removed_right = as_segment_change(chunk_removed_right,op='removed')
+        # # chunk_added_left, chunk_added_right = finddiff_values_general_formatsidebyside({'role':role_right},cmpdata_r)
+        # # chunk_added_left = as_segment_change(chunk_added_left,op='added')
+        # # chunk_added_right = as_segment_change(chunk_added_right,op='added')
+        # # return [chunk_removed_left,chunk_added_left], [chunk_removed_right,chunk_added_right]
+        return finddiff_values_list_formatsidebyside( [cmpdata_l,None], [None,cmpdata_r] )
+    elif role_left=='context' and role_right=='context':
+        # or, both roles are "context" -> then, effectively do not not run diff
         return as_segment_context(cmpdata_l), as_segment_context(cmpdata_r)
+    
+    # work, find final generated chunks
+    result_l = {'role':role_left}
+    result_r = {'role':role_right}
+    # cast to same structure
+    if 'parts' in cmpdata_l or 'parts' in cmpdata_r:
+        payload_l = cmpdata_l['parts'] if 'parts' in cmpdata_l else as_format(cmpdata_l['text'],detect_format(cmpdata_l['text']),'(list)') if 'text' in cmpdata_l else None
+        payload_r = cmpdata_r['parts'] if 'parts' in cmpdata_r else as_format(cmpdata_r['text'],detect_format(cmpdata_r['text']),'(list)') if 'text' in cmpdata_r else None
+        diff_l, diff_r = finddiff_values_general_formatsidebyside( payload_l, payload_r )
+        result_l['parts'] = diff_l
+        result_r['parts'] = diff_r
+    else:
+        payload_l = cmpdata_l['text'] if 'text' in cmpdata_l else None
+        payload_r = cmpdata_r['text'] if 'text' in cmpdata_r else None
+        diff_l, diff_r = finddiff_values_general_formatsidebyside( payload_l, payload_r )
+        result_l['text'] = diff_l
+        result_r['text'] = diff_r
+
+    return result_l,result_r
+
+def finddiff_values_dict_formatsidebyside( cmpdata_l, cmpdata_r ):
+    # clean inputs
+    if is_empty(cmpdata_l):
+        cmpdata_l = {}
+    if is_empty(cmpdata_r):
+        cmpdata_r = {}
     props_left = [prop for prop in dict.keys(cmpdata_l)]
     props_right = [prop for prop in dict.keys(cmpdata_r)]
     props_combined = diff_make_combined_list( props_left, props_right )
@@ -581,37 +588,30 @@ def finddiff_values_dict_formatsidebyside( cmpdata_l, cmpdata_r ):
 
 def finddiff_values_general_formatsidebyside( cmpdata_l, cmpdata_r ):
     if is_empty(cmpdata_l) and is_empty(cmpdata_r):
-        return '',''
+        cmpdata_l_format = detect_format(cmpdata_l)
+        cmpdata_r_format = detect_format(cmpdata_r)
+        common_format = find_common_format_denominator_with_fallback_str(cmpdata_l_format,cmpdata_r_format)
+        return as_format(None,'(none)',common_format),as_format(None,'(none)',common_format)
     else:
         cmpdata_l_format = detect_format(cmpdata_l)
         cmpdata_r_format = detect_format(cmpdata_r)
         common_format = find_common_format_denominator_with_fallback_str(cmpdata_l_format,cmpdata_r_format)
-        cmpdata_l_role = cmpdata_l.get('role',None) if isinstance(cmpdata_l,dict) else None
-        cmpdata_r_role = cmpdata_r.get('role',None) if isinstance(cmpdata_r,dict) else None
-        if common_format == '(dict)':
-            if is_empty(cmpdata_l) and is_empty(cmpdata_l_role) and not is_empty(cmpdata_r_role):
-                cmpdata_l_role = cmpdata_r_role
-            if is_empty(cmpdata_r) and is_empty(cmpdata_r_role) and not is_empty(cmpdata_l_role):
-                cmpdata_r_role = cmpdata_l_role
         cmpdata_l = as_format(cmpdata_l,cmpdata_l_format,common_format)
         cmpdata_r = as_format(cmpdata_r,cmpdata_r_format,common_format)
         cmpdata_l_format = common_format
         cmpdata_r_format = common_format
-        if common_format == '(dict)':
-            if is_empty(cmpdata_l.get('role',None)) and cmpdata_l_role:
-                cmpdata_l['role'] = cmpdata_l_role
-            if is_empty(cmpdata_r.get('role',None)) and cmpdata_r_role:
-                cmpdata_r['role'] = cmpdata_r_role
         if (cmpdata_l_format==cmpdata_r_format):
             if cmpdata_l_format=='(str)':
                 return finddiff_values_text_formatsidebyside( cmpdata_l, cmpdata_r )
             elif cmpdata_l_format=='(list)':
                 return finddiff_values_list_formatsidebyside( cmpdata_l, cmpdata_r )
+            elif cmpdata_l_format=='(segment)':
+                # cmpdata_l = normalize_input_relocate_diff_markers(cmpdata_l)
+                # cmpdata_r = normalize_input_relocate_diff_markers(cmpdata_r)
+                return finddiff_values_segment_formatsidebyside( cmpdata_l, cmpdata_r )
             elif cmpdata_l_format=='(dict)':
-                # cmpdata_l = clean_role_underlying(cmpdata_l)
-                # cmpdata_r = clean_role_underlying(cmpdata_r)
-                if 'role' in cmpdata_l and cmpdata_l['role']=='ctx' and 'ctx' in cmpdata_r and cmpdata_r['role']=='ctx':
-                    return cmpdata_r, cmpdata_r
+                # cmpdata_l = normalize_input_relocate_diff_markers(cmpdata_l)
+                # cmpdata_r = normalize_input_relocate_diff_markers(cmpdata_r)
                 return finddiff_values_dict_formatsidebyside( cmpdata_l, cmpdata_r )
             elif cmpdata_l_format=='(propertylist)':
                 return finddiff_values_propertylist_formatsidebyside( cmpdata_l, cmpdata_r )
@@ -634,12 +634,8 @@ def finddiff_values_propertylist_formatcombined( cmpdata_l, cmpdata_r ):
     cmpdata_r_prop_names = [ prop['name'] for prop in cmpdata_r ]
     prop_names_list_combined = diff_make_combined_list(cmpdata_l_prop_names,cmpdata_r_prop_names)
     result = []
-    cmpdata_l_asdict = {}
-    for r in cmpdata_l:
-        cmpdata_l_asdict[r['name']] = r['value']
-    cmpdata_r_asdict = {}
-    for r in cmpdata_r:
-        cmpdata_r_asdict[r['name']] = r['value']
+    cmpdata_l_asdict = { record['name']: record['value'] for record in cmpdata_l }
+    cmpdata_r_asdict = { record['name']: record['value'] for record in cmpdata_r }
     for propname in prop_names_list_combined:
         value_left = cmpdata_l_asdict[propname] if propname in cmpdata_l_asdict else ''
         value_right = cmpdata_r_asdict[propname] if propname in cmpdata_r_asdict else ''
@@ -700,8 +696,8 @@ def finddiff_values_list_formatcombined( cmpdata_l, cmpdata_r ):
         cmpdata_l = []
     if is_empty(cmpdata_r):
         cmpdata_r = []
-    cmpdata_l_hashed = [f'{v}' for v in cmpdata_l]
-    cmpdata_r_hashed = [f'{v}' for v in cmpdata_r]
+    cmpdata_l_hashed = [(detect_diffsegment_type_noncompulsory(v),f'{v}') for v in cmpdata_l]
+    cmpdata_r_hashed = [(detect_diffsegment_type_noncompulsory(v),f'{v}') for v in cmpdata_r]
     # list_combined = diff_make_combined_list( cmpdata_l_hashed, cmpdata_r_hashed )
     sm = SequenceMatcher( None,cmpdata_l_hashed, cmpdata_r_hashed )
     result = []
@@ -711,35 +707,66 @@ def finddiff_values_list_formatcombined( cmpdata_l, cmpdata_r ):
         list_combined = list(zip_longest(items_l, items_r))
         for item_l, item_r in list_combined:
             item = finddiff_values_general_formatcombined( item_l, item_r )
-            if tag == 'equal':
-                result.append(item)
-            elif tag == 'replace':
-                result.append(as_segment_change(item_l,op='removed'))
-                result.append(as_segment_change(item_r,op='added'))
-            elif tag == 'insert':
-                result.append(as_segment_change(item_r,op='added'))
-            elif tag == 'delete':
-                result.append(as_segment_change(item_l,op='removed'))
+            # if tag == 'equal':
+            #     result.append(item)
+            # elif tag == 'replace':
+            #     result.append(as_segment_change(item_l,op='removed'))
+            #     result.append(as_segment_change(item_r,op='added'))
+            # elif tag == 'insert':
+            #     result.append(as_segment_change(item_r,op='added'))
+            # elif tag == 'delete':
+            #     result.append(as_segment_change(item_l,op='removed'))
+            result.append(item)
     return result
 
-def finddiff_values_dict_formatcombined( cmpdata_l, cmpdata_r ):
+def finddiff_values_segment_formatcombined( cmpdata_l, cmpdata_r ):
+    # clean inputs
     if is_empty(cmpdata_l):
         cmpdata_l = {}
     if is_empty(cmpdata_r):
         cmpdata_r = {}
+    # verify roles (aka "diff segment types")
     role_left = cmpdata_l.get('role',None)
     role_right = cmpdata_r.get('role',None)
+    # cast to same denominator, of on is blank/missing and the other indicates something -> make both point to that same something
     if is_empty(role_left) and is_empty(cmpdata_l) and not is_empty(role_right):
         role_left = role_right
     if is_empty(role_right) and is_empty(cmpdata_r) and not is_empty(role_left):
         role_right = role_left
     if not ( (role_left==role_right) or (is_empty(role_left) and is_empty(role_right)) ):
-        return [
-            as_segment_change(finddiff_values_general_formatcombined(cmpdata_l,{'role':role_left}),op='removed'),
-            as_segment_change(finddiff_values_general_formatcombined({'role':role_right},cmpdata_r),op='added'),
-        ]
-    elif role_left==role_right and role_left=='context':
+        # if roles are different, don't compare -> instead, treat it as "replaced" - first compared to blank and a separate blank compared to second
+        # return [
+        #     as_segment_change(finddiff_values_general_formatcombined(cmpdata_l,{'role':role_left}),op='removed'),
+        #     as_segment_change(finddiff_values_general_formatcombined({'role':role_right},cmpdata_r),op='added'),
+        # ]
+        return finddiff_values_list_formatcombined([cmpdata_l,None],[None,cmpdata_r])
+    elif role_left=='context' and role_right=='context':
+        # or, both roles are "context" -> then, effectively do not not run diff
         return as_segment_context(finddiff_values_general_formatsimple(cmpdata_l,cmpdata_r))
+    
+    # work, find final generated chunks
+    assert role_left==role_right, 'Khmmm, roles should be the same at this point; please look'
+    result = {'role':role_left}
+    # cast to same structure
+    if 'parts' in cmpdata_l or 'parts' in cmpdata_r:
+        payload_l = cmpdata_l['parts'] if 'parts' in cmpdata_l else as_format(cmpdata_l['text'],detect_format(cmpdata_l['text']),'(list)') if 'text' in cmpdata_l else None
+        payload_r = cmpdata_r['parts'] if 'parts' in cmpdata_r else as_format(cmpdata_r['text'],detect_format(cmpdata_r['text']),'(list)') if 'text' in cmpdata_r else None
+        diff = finddiff_values_general_formatcombined( payload_l, payload_r )
+        result['parts'] = diff
+    else:
+        payload_l = cmpdata_l['text'] if 'text' in cmpdata_l else None
+        payload_r = cmpdata_r['text'] if 'text' in cmpdata_r else None
+        diff = finddiff_values_general_formatcombined( payload_l, payload_r )
+        result['text'] = diff
+
+    return result
+
+def finddiff_values_dict_formatcombined( cmpdata_l, cmpdata_r ):
+    # clean inputs
+    if is_empty(cmpdata_l):
+        cmpdata_l = {}
+    if is_empty(cmpdata_r):
+        cmpdata_r = {}
     props_left = [prop for prop in dict.keys(cmpdata_l)]
     props_right = [prop for prop in dict.keys(cmpdata_r)]
     props_combined = diff_make_combined_list( props_left, props_right )
@@ -753,28 +780,10 @@ def finddiff_values_dict_formatcombined( cmpdata_l, cmpdata_r ):
 
 def finddiff_values_general_formatcombined( cmpdata_l, cmpdata_r ):
     if is_empty(cmpdata_l) and is_empty(cmpdata_r):
-        # return '' # wrong, if we compare {}'s, or {} to None, the result should be of the same type, not str
-        # return None # and this is wrong too
-        cmpdata_l_format = detect_format(cmpdata_l,avoid_none=True)
-        cmpdata_r_format = detect_format(cmpdata_r,avoid_none=True)
+        cmpdata_l_format = detect_format(cmpdata_l)
+        cmpdata_r_format = detect_format(cmpdata_r)
         common_format = find_common_format_denominator_with_fallback_str(cmpdata_l_format,cmpdata_r_format)
-        cmpdata_l = as_format(cmpdata_l,cmpdata_l_format,common_format)
-        cmpdata_r = as_format(cmpdata_r,cmpdata_r_format,common_format)
-        cmpdata_l_format = common_format
-        cmpdata_r_format = common_format
-        if (cmpdata_l_format==cmpdata_r_format):
-            if cmpdata_l_format=='(str)':
-                return ''
-            elif cmpdata_l_format=='(list)':
-                return []
-            elif cmpdata_l_format=='(dict)':
-                return {}
-            elif cmpdata_l_format=='(propertylist)':
-                return []
-            else:
-                return None
-        else:
-            return None
+        return as_format(None,'(none)',common_format)
     else:
         cmpdata_l_format = detect_format(cmpdata_l)
         cmpdata_r_format = detect_format(cmpdata_r)
@@ -788,6 +797,10 @@ def finddiff_values_general_formatcombined( cmpdata_l, cmpdata_r ):
                 return finddiff_values_text_formatcombined( cmpdata_l, cmpdata_r )
             elif cmpdata_l_format=='(list)':
                 return finddiff_values_list_formatcombined( cmpdata_l, cmpdata_r )
+            elif cmpdata_l_format=='(segment)':
+                # cmpdata_l = normalize_input_relocate_diff_markers(cmpdata_l)
+                # cmpdata_r = normalize_input_relocate_diff_markers(cmpdata_r)
+                return finddiff_values_segment_formatcombined( cmpdata_l, cmpdata_r )
             elif cmpdata_l_format=='(dict)':
                 return finddiff_values_dict_formatcombined( cmpdata_l, cmpdata_r )
             elif cmpdata_l_format=='(propertylist)':
@@ -809,12 +822,8 @@ def finddiff_values_propertylist_formatsimple( cmpdata_l, cmpdata_r ):
     cmpdata_r_prop_names = [ prop['name'] for prop in cmpdata_r ]
     prop_names_list_combined = diff_make_combined_list(cmpdata_l_prop_names,cmpdata_r_prop_names)
     result = []
-    cmpdata_l_asdict = {}
-    for r in cmpdata_l:
-        cmpdata_l_asdict[r['name']] = r['value']
-    cmpdata_r_asdict = {}
-    for r in cmpdata_r:
-        cmpdata_r_asdict[r['name']] = r['value']
+    cmpdata_l_asdict = { record['name']: record['value'] for record in cmpdata_l }
+    cmpdata_r_asdict = { record['name']: record['value'] for record in cmpdata_r }
     for propname in prop_names_list_combined:
         value_left = cmpdata_l_asdict[propname] if propname in cmpdata_l_asdict else ''
         value_right = cmpdata_r_asdict[propname] if propname in cmpdata_r_asdict else ''
@@ -842,8 +851,8 @@ def finddiff_values_list_formatsimple( cmpdata_l, cmpdata_r ):
         cmpdata_l = []
     if is_empty(cmpdata_r):
         cmpdata_r = []
-    cmpdata_l_hashed = [f'{v}' for v in cmpdata_l]
-    cmpdata_r_hashed = [f'{v}' for v in cmpdata_r]
+    cmpdata_l_hashed = [(detect_diffsegment_type_noncompulsory(v),f'{v}') for v in cmpdata_l]
+    cmpdata_r_hashed = [(detect_diffsegment_type_noncompulsory(v),f'{v}') for v in cmpdata_r]
     # list_combined = diff_make_combined_list( cmpdata_l_hashed, cmpdata_r_hashed )
     sm = SequenceMatcher( None,cmpdata_l_hashed, cmpdata_r_hashed )
     result = []
@@ -856,7 +865,11 @@ def finddiff_values_list_formatsimple( cmpdata_l, cmpdata_r ):
             result.append(item)
     return result
 
+def finddiff_values_segment_formatsimple( cmpdata_l, cmpdata_r ):
+    return finddiff_values_dict_formatsimple( cmpdata_l, cmpdata_r )
+
 def finddiff_values_dict_formatsimple( cmpdata_l, cmpdata_r ):
+    # clean inputs
     if is_empty(cmpdata_l):
         cmpdata_l = {}
     if is_empty(cmpdata_r):
@@ -872,30 +885,13 @@ def finddiff_values_dict_formatsimple( cmpdata_l, cmpdata_r ):
         result[prop] = value_resulting
     return result
 
+
 def finddiff_values_general_formatsimple( cmpdata_l, cmpdata_r ):
     if is_empty(cmpdata_l) and is_empty(cmpdata_r):
-        # return '' # wrong, if we compare {}'s, or {} to None, the result should be of the same type, not str
-        # return None # and this is wrong too
-        cmpdata_l_format = detect_format(cmpdata_l,avoid_none=True)
-        cmpdata_r_format = detect_format(cmpdata_r,avoid_none=True)
+        cmpdata_l_format = detect_format(cmpdata_l)
+        cmpdata_r_format = detect_format(cmpdata_r)
         common_format = find_common_format_denominator_with_fallback_str(cmpdata_l_format,cmpdata_r_format)
-        cmpdata_l = as_format(cmpdata_l,cmpdata_l_format,common_format)
-        cmpdata_r = as_format(cmpdata_r,cmpdata_r_format,common_format)
-        cmpdata_l_format = common_format
-        cmpdata_r_format = common_format
-        if (cmpdata_l_format==cmpdata_r_format):
-            if cmpdata_l_format=='(str)':
-                return ''
-            elif cmpdata_l_format=='(list)':
-                return []
-            elif cmpdata_l_format=='(dict)':
-                return {}
-            elif cmpdata_l_format=='(propertylist)':
-                return []
-            else:
-                return None
-        else:
-            return None
+        return as_format(None,'(none)',common_format)
     else:
         cmpdata_l_format = detect_format(cmpdata_l)
         cmpdata_r_format = detect_format(cmpdata_r)
@@ -909,6 +905,10 @@ def finddiff_values_general_formatsimple( cmpdata_l, cmpdata_r ):
                 return finddiff_values_text_formatsimple( cmpdata_l, cmpdata_r )
             elif cmpdata_l_format=='(list)':
                 return finddiff_values_list_formatsimple( cmpdata_l, cmpdata_r )
+            elif cmpdata_l_format=='(segment)':
+                # cmpdata_l = normalize_input_relocate_diff_markers(cmpdata_l)
+                # cmpdata_r = normalize_input_relocate_diff_markers(cmpdata_r)
+                return finddiff_values_segment_formatsimple( cmpdata_l, cmpdata_r )
             elif cmpdata_l_format=='(dict)':
                 return finddiff_values_dict_formatsimple( cmpdata_l, cmpdata_r )
             elif cmpdata_l_format=='(propertylist)':
