@@ -19,6 +19,7 @@ if __name__ == '__main__':
         did_change,
     )
     from helper_utility.perfmonitor import PerformanceMonitor
+    from helper_make_diffflag_row_text import make_diffflag_text
 elif '.' in __name__:
     # package
     # from . import diff_functions
@@ -28,6 +29,7 @@ elif '.' in __name__:
         did_change,
     )
     from .helper_utility.perfmonitor import PerformanceMonitor
+    from .helper_make_diffflag_row_text import make_diffflag_text
 else:
     # included with no parent package
     # import diff_functions
@@ -37,6 +39,7 @@ else:
         did_change,
     )
     from helper_utility.perfmonitor import PerformanceMonitor
+    from helper_make_diffflag_row_text import make_diffflag_text
 
 
 
@@ -314,37 +317,18 @@ def find_diff(data_left,data_right,config):
                     row = {}
                     row['name'] = row_name
 
-                    flag = '???'
 
                     row_changed = False
-
-                    if row_diff_item.flag == 'keep':
-                        flag = '(keep)'
-                    elif( (row_name in rows_l) and (row_name in rows_r) ):
-                        if row_diff_item.flag == 'remove':
-                            flag = '(moved from here)'
-                        elif row_diff_item.flag == 'insert':
-                            flag = '(moved here)'
-                        else:
-                            raise Exception('Please check diff flag!!!')
+                    if not (row_diff_item.flag == 'keep'):
                         row_changed = True
-                    elif( row_name in rows_l ):
-                        flag = '(removed)'
-                        row_changed = True
-                    elif( row_name in rows_r ):
-                        flag = '(added)'
-                        row_changed = True
+                    flag = make_diffflag_text(
+                        row_name in rows_l,
+                        row_name in rows_r,
+                        row_diff_item.flag,
+                        'input_is_diff' in config and config['input_is_diff']
+                    )
                     col_any_changed = False
-                    row['flagdiff'] = flag
-                    if 'input_is_diff' in config and config['input_is_diff']:
-                        diff_on_diff_diffflag_relabel = {
-                            '(keep)': '(exists in both left and right)',
-                            '(removed)': '(only in left)',
-                            '(added)': '(only in right)',
-                            '(moved from here)': '(exists in both but position is different)',
-                            '(moved here)': '(exists in both but position is different)',
-                        }
-                        row['flagdiff'] = diff_on_diff_diffflag_relabel.get(row['flagdiff'],row['flagdiff'])
+                    row['flagdiff'] = {'role':'context','text':flag}
                     file_l_rowdata = {}
                     file_r_rowdata = {}
                     if( ( (row_name in rows_l) and (row_name in rows_r) ) and (row_diff_item.flag == 'remove') and ('config_do_not_show_content_rows_moved_from' in config and config['config_do_not_show_content_rows_moved_from']) ):
