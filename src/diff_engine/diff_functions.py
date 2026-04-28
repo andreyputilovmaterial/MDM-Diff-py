@@ -75,7 +75,7 @@ def diff_normalize(input,flags=None):
     if ('ignorewhitespace' in options) and (options['ignorewhitespace']):
         raise NotImplementedError('Ignore whitespace is not implemented in current implementation of diff')
     if ('ignorecase' in options) and (options['ignorecase']):
-        result = [r for r in result]
+        result = [r.lower() for r in result]
     if ('ignoreaccents' in options) and (options['ignoreaccents']):
         raise NotImplementedError('Ignore accepts is not implemented in current implementation of diff')
     return result

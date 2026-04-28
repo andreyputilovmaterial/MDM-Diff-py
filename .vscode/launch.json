@@ -56,7 +56,16 @@
             "justMyCode": true
         },
         {
-            "name": "Python: Structural Diff Test (MDD)",
+            "name": "Python: MDD Diff,to check case sensitivity",
+            "type": "python",
+            "request": "launch",
+            "program": "src/launcher.py",
+            "console": "integratedTerminal",
+            "args": ["--program","diff","--cmp-scheme-left","\"tests\\current\\test_data\\P2501730Q1_SE_0226.mdd.json\"","--cmp-scheme-right","\"tests\\current\\test_data\\P2501730Q1_WA_0224.mdd.json\""],
+            "justMyCode": true
+        },
+        {
+            "name": "Python: MDD Diff, as pre-step for next diff on diff",
             "type": "python",
             "request": "launch",
             "program": "src/launcher.py",

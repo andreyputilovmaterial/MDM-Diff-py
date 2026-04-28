@@ -302,6 +302,10 @@ def find_diff(data_left,data_right,config):
                 flags=diff_flags
             )
             
+            norm = lambda row: diff_functions.diff_normalize([row],flags=diff_flags)[0]
+            rows_lookup_left = { norm(r): r for r in rows_l }
+            rows_lookup_right = { norm(r): r for r in rows_r }
+            
             performance_counter = iter(PerformanceMonitor(config={
                 'total_records': len(report_rows_diff),
                 'report_frequency_records_count': 150,
@@ -319,11 +323,15 @@ def find_diff(data_left,data_right,config):
 
 
                     row_changed = False
+                    is_included_in_left = norm(row_name) in rows_lookup_left
+                    is_included_in_right = norm(row_name) in rows_lookup_right
+                    row_name_l = rows_lookup_left[norm(row_name)] if is_included_in_left else row_name
+                    row_name_r = rows_lookup_right[norm(row_name)] if is_included_in_right else row_name
                     if not (row_diff_item.flag == 'keep'):
                         row_changed = True
                     flag = make_diffflag_text(
-                        row_name in rows_l,
-                        row_name in rows_r,
+                        is_included_in_left,
+                        is_included_in_right,
                         row_diff_item.flag,
                         'input_is_diff' in config and config['input_is_diff']
                     )
@@ -331,14 +339,14 @@ def find_diff(data_left,data_right,config):
                     row['flagdiff'] = {'role':'context','text':flag}
                     file_l_rowdata = {}
                     file_r_rowdata = {}
-                    if( ( (row_name in rows_l) and (row_name in rows_r) ) and (row_diff_item.flag == 'remove') and ('config_do_not_show_content_rows_moved_from' in config and config['config_do_not_show_content_rows_moved_from']) ):
+                    if( ( (is_included_in_left) and (is_included_in_right) ) and (row_diff_item.flag == 'remove') and ('config_do_not_show_content_rows_moved_from' in config and config['config_do_not_show_content_rows_moved_from']) ):
                         # skip for rows moved at their old position
                         pass
                     else:
-                        if( row_name in rows_l ):
-                            file_l_rowdata = file_l_sectiondata[row_name] if row_name in file_l_sectiondata else {}
-                        if( row_name in rows_r ):
-                            file_r_rowdata = file_r_sectiondata[row_name] if row_name in file_r_sectiondata else {}
+                        if( is_included_in_left ):
+                            file_l_rowdata = file_l_sectiondata[row_name_l] if row_name_l in file_l_sectiondata else {}
+                        if( is_included_in_right ):
+                            file_r_rowdata = file_r_sectiondata[row_name_r] if row_name_r in file_r_sectiondata else {}
                     for col in columns_list_check:
                         try:
 
@@ -388,7 +396,7 @@ def find_diff(data_left,data_right,config):
                         pass
                     # elif (config['format']=='structural') and not row_changed:
                     #     pass # skip - do not add unchanged rows in structural diff format
-                    # elif( ( (row_name in rows_l) and (row_name in rows_r) ) and (row_diff_item.flag in ['remove','insert']) and not col_any_changed and ('config_do_not_include_rows_moved' in config and config['config_do_not_include_rows_moved']) ):
+                    # elif( ( (is_included_in_left) and (is_included_in_right) ) and (row_diff_item.flag in ['remove','insert']) and not col_any_changed and ('config_do_not_include_rows_moved' in config and config['config_do_not_include_rows_moved']) ):
                     #     pass # skip if set in config
                     else:
                         if row_changed:
