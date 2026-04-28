@@ -56,7 +56,7 @@
             "justMyCode": true
         },
         {
-            "name": "Python: MDD Diff,to check case sensitivity",
+            "name": "Python: MDD Diff (Amazon), to check case sensitivity",
             "type": "python",
             "request": "launch",
             "program": "src/launcher.py",
@@ -65,7 +65,16 @@
             "justMyCode": true
         },
         {
-            "name": "Python: MDD Diff, as pre-step for next diff on diff",
+            "name": "Python: Diff on diffs (Amazon)",
+            "type": "python",
+            "request": "launch",
+            "program": "src/launcher.py",
+            "console": "integratedTerminal",
+            "args": ["--program","diff","--cmp-scheme-left","\"tests\\current\\test_data\\report.diff.P2501730Q1_WA_-0224-0402-.mdd.json\"","--cmp-scheme-right","\"tests\\current\\test_data\\report.diff.P2501730Q1_-P2501730Q2_-SE_-0226-0407-.mdd.json\""],
+            "justMyCode": true
+        },
+        {
+            "name": "Python: MDD Diff (Keiser WTNG), as pre-step for next diff on diff",
             "type": "python",
             "request": "launch",
             "program": "src/launcher.py",
@@ -74,7 +83,7 @@
             "justMyCode": true
         },
         {
-            "name": "Python: Diff on diffs",
+            "name": "Python: Diff on diffs (Keiser WTNG)",
             "type": "python",
             "request": "launch",
             "program": "src/launcher.py",

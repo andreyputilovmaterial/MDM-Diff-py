@@ -83,6 +83,8 @@ def find_diff(data_left,data_right,config):
                 raise Exception('excel with groups in item names? are you sure? please provide a separator!')
             else:
                 config['config_hierarchical_name_separator'] = config['config_use_hierarchical_name_structure']
+        if 'diff_source_left:data-type:diff' in flags_list_combined or 'diff_source_right:data-type:diff' in flags_list_combined:
+            config['input_is_diff'] = True
         if 'config_row_diff_ignorecase' not in config or config['config_row_diff_ignorecase'] is None:
             config['config_row_diff_ignorecase'] = None
         if config['config_row_diff_ignorecase'] is None: # having "None" stored means auto-detect
@@ -91,8 +93,14 @@ def find_diff(data_left,data_right,config):
             else:
                 config['config_row_diff_ignorecase'] = False
         assert ( (config['config_row_diff_ignorecase'] is False) or (config['config_row_diff_ignorecase'] is True) ), f'not allowed config_row_diff_ignorecasevalue - must be explicitly "True" or "False" at this point ("{config["config_row_diff_ignorecase"]}") - at this point must be explicitly True or False' # verify/validate - must be explicitly true or false
-        if 'diff_source_left:data-type:diff' in flags_list_combined or 'diff_source_right:data-type:diff' in flags_list_combined:
-            config['input_is_diff'] = True
+        if 'config_row_diff_ordered' not in config or config['config_row_diff_ordered'] is None:
+            config['config_row_diff_ordered'] = None
+        if config['config_row_diff_ordered'] is None: # having "None" stored means auto-detect
+            if 'input_is_diff' in config and config['input_is_diff']:
+                config['config_row_diff_ordered'] = False
+            else:
+                config['config_row_diff_ordered'] = True # the default
+        assert ( (config['config_row_diff_ordered'] is False) or (config['config_row_diff_ordered'] is True) ), f'not allowed config_row_diff_orderedvalue - must be explicitly "True" or "False" at this point ("{config["config_row_diff_ordered"]}") - at this point must be explicitly True or False' # verify/validate - must be explicitly true or false
 
         return config
     
@@ -305,7 +313,7 @@ def find_diff(data_left,data_right,config):
             norm = lambda row: diff_functions.diff_normalize([row],flags=diff_flags)[0]
             rows_lookup_left = { norm(r): r for r in rows_l }
             rows_lookup_right = { norm(r): r for r in rows_r }
-            
+
             performance_counter = iter(PerformanceMonitor(config={
                 'total_records': len(report_rows_diff),
                 'report_frequency_records_count': 150,
@@ -327,13 +335,18 @@ def find_diff(data_left,data_right,config):
                     is_included_in_right = norm(row_name) in rows_lookup_right
                     row_name_l = rows_lookup_left[norm(row_name)] if is_included_in_left else row_name
                     row_name_r = rows_lookup_right[norm(row_name)] if is_included_in_right else row_name
-                    if not (row_diff_item.flag == 'keep'):
-                        row_changed = True
+                    if 'input_is_diff' in config and config['input_is_diff']:
+                        row_changed = False # on "diff" mode - only indicate if something changed in any col; do not trigger this if whole row is new (added/inserted), or removed/deleted - it is still a weak indication if something changed
+                    elif 'config_row_diff_ordered' in config and config['config_row_diff_ordered']:
+                        if not (row_diff_item.flag == 'keep'):
+                            row_changed = True
+                    else:
+                        row_changed = not ( is_included_in_left == is_included_in_right )
                     flag = make_diffflag_text(
                         is_included_in_left,
                         is_included_in_right,
                         row_diff_item.flag,
-                        'input_is_diff' in config and config['input_is_diff']
+                        config=config
                     )
                     col_any_changed = False
                     row['flagdiff'] = {'role':'context','text':flag}
@@ -532,6 +545,13 @@ def entry_point(*argcs,**kwargs):
         required=False
     )
     parser.add_argument(
+        '--config-unordered-item-list-comparison',
+        help='Special flag to indicate if different position of a row in input scheme is considered a change itself, without anything indicating a change in some column',
+        choices=('ordered','unordered','auto',),
+        default='auto',
+        required=False
+    )
+    parser.add_argument(
         '--output-filename',
         help='Set preferred output file name, with path',
         type=str,
@@ -603,7 +623,16 @@ def entry_point(*argcs,**kwargs):
         elif args.config_casesensitive_item_list_comparison=='strict':
             diff_config['config_row_diff_ignorecase'] = False
         else:
-            raise Exception(f'Unrecognized option: config-casesensitive-item-list-comparison = "{args.config_casesensitive_item_list_comparison}"')
+            raise Exception(f'Unrecognized option: --config-casesensitive-item-list-comparison = "{args.config_casesensitive_item_list_comparison}"')
+    if args.config_unordered_item_list_comparison:
+        if args.config_unordered_item_list_comparison=='auto':
+            diff_config['config_row_diff_ordered'] = None
+        elif args.config_unordered_item_list_comparison=='ordered':
+            diff_config['config_row_diff_ordered'] = True
+        elif args.config_unordered_item_list_comparison=='unordered':
+            diff_config['config_row_diff_ordered'] = False
+        else:
+            raise Exception(f'Unrecognized option: --config-unordered-item-list-comparison = "{args.config_unordered_item_list_comparison}"')
 
     report_part_filename_left = re.sub( r'\.json\s*?$', '', Path(inp_filename_left).name )
     report_part_filename_right = re.sub( r'\.json\s*?$', '', Path(inp_filename_right).name )
