@@ -74,6 +74,15 @@
             "justMyCode": true
         },
         {
+            "name": "Python: Diff on diffs (Amazon) - casesensitive",
+            "type": "python",
+            "request": "launch",
+            "program": "src/launcher.py",
+            "console": "integratedTerminal",
+            "args": ["--program","diff","--cmp-scheme-left","\"tests\\current\\test_data\\report.diff.P2501730Q1_WA_-0224-0402-casesensitive.mdd.json\"","--cmp-scheme-right","\"tests\\current\\test_data\\report.diff.P2501730Q1_-P2501730Q2_-SE_-0226-0407-casesensitive.mdd.json\"","--config-casesensitive-item-list-comparison","strict"],
+            "justMyCode": true
+        },
+        {
             "name": "Python: MDD Diff (Keiser WTNG), as pre-step for next diff on diff",
             "type": "python",
             "request": "launch",

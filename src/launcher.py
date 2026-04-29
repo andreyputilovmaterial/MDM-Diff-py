@@ -17,7 +17,7 @@ if __name__ == '__main__':
     from lib.otherformatsreadpy_general_msmarkitdown import read as read_msmarkitdown
     from lib.otherformatsreadpy_excel import read_excel_entry as read_excel
     from lib.otherformatsreadpy_spss import read as read_spss
-    from lib.mdmreadpy.lib.mdmreportpy import report_create as report_html_create
+    from lib.mdmreadpy.lib.mdmreportpy.src import report_create as report_html_create
     from lib.mdmexcelreportpy import report_create as report_excel_create
 elif '.' in __name__:
     # package
@@ -28,7 +28,7 @@ elif '.' in __name__:
     from .lib.otherformatsreadpy_general_msmarkitdown import read as read_msmarkitdown
     from .lib.otherformatsreadpy_excel import read_excel_entry as read_excel
     from .lib.otherformatsreadpy_spss import read as read_spss
-    from .lib.mdmreadpy.lib.mdmreportpy import report_create as report_html_create
+    from .lib.mdmreadpy.lib.mdmreportpy.src import report_create as report_html_create
     from .lib.mdmexcelreportpy import report_create as report_excel_create
 else:
     # included with no parent package
@@ -39,7 +39,7 @@ else:
     from lib.otherformatsreadpy_general_msmarkitdown import read as read_msmarkitdown
     from lib.otherformatsreadpy_excel import read_excel_entry as read_excel
     from lib.otherformatsreadpy_spss import read as read_spss
-    from lib.mdmreadpy.lib.mdmreportpy import report_create as report_html_create
+    from lib.mdmreadpy.lib.mdmreportpy.src import report_create as report_html_create
     from lib.mdmexcelreportpy import report_create as report_excel_create
 
 
@@ -58,7 +58,7 @@ def call_diff_program(*argcs,**kwargs):
     return diff.entry_point(*argcs,**kwargs)
 
 def call_read_mdd_program(*argcs,**kwargs):
-    return read_mdd.entry_point({'arglist_strict':False})
+    return read_mdd.entry_point(*argcs,**kwargs)
 
 def call_read_excel_program(*argcs,**kwargs):
     return read_excel.entry_point({'arglist_strict':False})
@@ -73,7 +73,7 @@ def call_read_msmarkitdown_program(*argcs,**kwargs):
     return read_msmarkitdown.entry_point({'arglist_strict':False})
 
 def call_report_html_program(*argcs,**kwargs):
-    return report_html_create.entry_point({'arglist_strict':False})
+    return report_html_create.entry_point(*argcs,**kwargs)
 
 def call_report_excel_program(*argcs,**kwargs):
     return report_excel_create.entry_point({'arglist_strict':False})
