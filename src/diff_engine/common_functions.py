@@ -1,7 +1,33 @@
 
 
 from collections import deque # for find_common_format
+import re
 
+
+
+
+
+def text_split_words(s):
+    class Splitter:
+        def __init__(self,data):
+            self.data = data
+            self.delimiter = r"(?:\w*?_|\w+|\s+|.)"
+            
+        def __iter__(self):
+            delimiters = re.finditer(self.delimiter,self.data,flags=re.M|re.DOTALL|re.I)
+            delimiters = [ delim.start(0) for delim in delimiters ]
+            parts = []
+            start = 0
+            for delim in delimiters:
+                pos = delim
+                parts.append(self.data[start:pos])
+                start = pos
+            parts.append(self.data[start:])
+            return iter(parts)
+    return [a for a in Splitter(s)]
+
+def text_split_lines(s):
+    return f'{s}'.split("\n")
 
 
 
@@ -317,4 +343,92 @@ def find_common_format_denominator_with_fallback_str(*args):
         return find_common_format_denominator(*args)
     except CommonFormatNotFound:
         return '(str)'
+
+
+
+def as_plain_text(inp_value,flags=[]):
+    def is_property_list(input):
+        try:
+            if isinstance(input,list) and ([(True if ('name' in dict.keys(item) and 'value' in dict.keys(item)) else False) for item in input].count(True)==len(input)):
+                return True
+            return False
+        except:
+            return False
+    def is_diff_segment_dict(input):
+        if isinstance(input,dict):
+            has_payload_textfield = 'text' in input
+            has_payload_partsfield = 'parts' in input and isinstance(input['parts'],list)
+            has_payload = has_payload_textfield or has_payload_partsfield
+            has_conflicting_payloads = has_payload_textfield and has_payload_partsfield
+            all_keys = input.keys()
+            nonstd_keys = set(all_keys) - {'text','parts','role'}
+            if has_payload and not has_conflicting_payloads and (len(nonstd_keys)==0):
+                return True
+        return False
+    def is_empty(input):
+        if input==0:
+            return False
+        elif is_diff_segment_dict(input):
+            if not input:
+                return True
+            if 'text' in input and not is_empty(input['text']):
+                return False
+            if 'parts' in input and not is_empty(input['parts']):
+                return False
+            return True
+        elif isinstance(input,dict):
+            return not input
+        elif is_property_list(input):
+            if not input:
+                return True
+            result = True
+            for piece in input:
+                result = result and is_empty(piece['value'])
+            return result
+        elif isinstance(input,list):
+            if not input:
+                return True
+            result = True
+            for piece in input:
+                result = result and is_empty(piece)
+            return result
+        else:
+            # attention
+            # empty list, empty dict evaluates to empty
+            return not input
+    if is_empty(inp_value):
+        return ''
+    elif is_property_list(inp_value):
+        def esc(s):
+            return f'{s}'.replace('"','""')
+        return '[ '+', '.join([f'{record["name"]} = "{esc(record["value"])}"' for record in inp_value])+' ]'
+    elif is_diff_segment_dict(inp_value) and 'text' in inp_value:
+        return as_plain_text(inp_value['text'])
+    elif is_diff_segment_dict(inp_value) and 'parts' in inp_value:
+        return as_plain_text(inp_value['parts'])
+    elif isinstance(inp_value,list):
+        return ''.join([as_plain_text(s) for s in inp_value])
+    else:
+        return f'{inp_value}'
+
+def as_hash(input):
+    value = as_plain_text(input)
+    role = detect_diffsegment_type_noncompulsory(input)
+    return (role,value)
+
+
+def count_linebreaks(input):
+    return len(text_split_lines(as_plain_text(input)))
+
+def fill_same_number_linebreaks(left,right):
+    len_left = count_linebreaks(left)
+    len_right = count_linebreaks(right)
+    len_common = len_left if len_left > len_right else len_right
+    add_left = len_common - len_left
+    add_right = len_common - len_right
+    result_left = ( [ left, as_segment_context('\n'*add_left) ] if not (detect_format(left)=='(list)') else left + [ as_segment_context('\n'*add_left) ] ) if add_left>0 else left
+    result_right = ( [ right, as_segment_context('\n'*add_right) ] if not (detect_format(right)=='(list)') else right + [ as_segment_context('\n'*add_right) ] ) if add_right>0 else right
+    return result_left, result_right
+
+
 

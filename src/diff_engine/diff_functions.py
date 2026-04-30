@@ -25,6 +25,10 @@ from .common_functions import (
     detect_diffsegment_type_noncompulsory,
     as_segment_context,
     as_segment_change,
+    as_hash,
+    text_split_words,
+    text_split_lines,
+    fill_same_number_linebreaks,
 )
 
 
@@ -46,28 +50,6 @@ CONFIG_STRUCTURAL_SHORTEN_CTX = 512
 
 
 
-
-def text_split_words(s):
-    class Splitter:
-        def __init__(self,data):
-            self.data = data
-            self.delimiter = r"(?:\w*?_|\w+|\s+|.)"
-            
-        def __iter__(self):
-            delimiters = re.finditer(self.delimiter,self.data,flags=re.M|re.DOTALL|re.I)
-            delimiters = [ delim.start(0) for delim in delimiters ]
-            parts = []
-            start = 0
-            for delim in delimiters:
-                pos = delim
-                parts.append(self.data[start:pos])
-                start = pos
-            parts.append(self.data[start:])
-            return iter(parts)
-    return [a for a in Splitter(s)]
-
-def text_split_lines(s):
-    return f'{s}'.split("\n")
 
 def diff_normalize(input,flags=None):
     options = flags or {}
@@ -425,9 +407,9 @@ def finddiff_values_text_formatsidebyside( cmpdata_l, cmpdata_r ):
         result_right = as_segment_context(cmpdata_r)
     elif( not is_empty(cmpdata_l) and is_empty(cmpdata_r) ):
         result_left = as_segment_change(cmpdata_l,op='removed')
-        result_right = ''
+        result_right = as_segment_context(None)
     elif( is_empty(cmpdata_l) and not is_empty(cmpdata_r) ):
-        result_left = ''
+        result_left = as_segment_context(None)
         result_right = as_segment_change(cmpdata_r,op='added')
     else:
         cmpdata_l_into_lines = [ ('' if linenumber==0 else '\n') + (line if len(line)>0 else ' ') for linenumber,line in enumerate(text_split_lines(cmpdata_l)) ]
@@ -449,8 +431,8 @@ def finddiff_values_text_formatsidebyside( cmpdata_l, cmpdata_r ):
                     diff_data_l_and_r_by_lines[-1]['l'] = part.line
                 else:
                     diff_data_l_and_r_by_lines.append({'l':part.line,'r':''})
-        result_left = {'parts':[]}
-        result_right = {'parts':[]}
+        result_left = []
+        result_right = []
         for linenumber,part in enumerate(diff_data_l_and_r_by_lines):
             # if linenumber>0:
             #     result_left['parts'].append( '\n' )
@@ -461,29 +443,18 @@ def finddiff_values_text_formatsidebyside( cmpdata_l, cmpdata_r ):
             diff_data = as_diff_items_concatenated( SequenceMatcher(None,cmpdata_l_into_pieces,cmpdata_r_into_pieces).get_opcodes(), cmpdata_l_into_pieces, cmpdata_r_into_pieces )
             for part in diff_data:
                 if part.flag=='keep':
-                    result_left['parts'].append(as_segment_context(part.line))
-                    result_right['parts'].append(as_segment_context(part.line))
+                    result_left.append(as_segment_context(part.line))
+                    result_right.append(as_segment_context(part.line))
                 elif part.flag=='insert':
                     txt_lines = part.line.split('\n')
-                    result_left['parts'].append( as_segment_change('\n '.join('' for p in txt_lines),op='added') )
-                    result_right['parts'].append( as_segment_change('\n'.join((p if len(p)>0 else ' ') for p in txt_lines),op='added') )
+                    result_left.append( as_segment_change('\n '.join('' for p in txt_lines),op='added') )
+                    result_right.append( as_segment_change('\n'.join((p if len(p)>0 else ' ') for p in txt_lines),op='added') )
                 elif part.flag=='remove':
                     txt_lines = part.line.split('\n')
-                    result_left['parts'].append( as_segment_change('\n'.join((p if len(p)>0 else ' ') for p in txt_lines),op='removed') )
-                    result_right['parts'].append( as_segment_change('\n '.join('' for p in txt_lines),op='removed') )
-                # const_test_l_before = len(re.findall(r'\n',result_left))
-                # const_test_r_before = len(re.findall(r'\n',result_right))
-                # if const_test_l_before!=const_test_r_before:
-                #     # assert line break counts
-                # print('linebreaks: {nl} (left), {nr} (right), processing part: {p}'.format(nl=const_test_l_before,nr=const_test_r_before,p=part.line))
-        # if result_left['parts'][-1]=='\n':
-        #     result_left['parts'] = result_left['parts'][:-1]
-        # else:
-        #     raise Exception('last part should be \\n, as per my understanding, please check')
-        # if result_right['parts'][-1]=='\n':
-        #     result_right['parts'] = result_right['parts'][:-1]
-        # else:
-        #     raise Exception('last part should be \\n, as per my understanding, please check')
+                    result_left.append( as_segment_change('\n'.join((p if len(p)>0 else ' ') for p in txt_lines),op='removed') )
+                    result_right.append( as_segment_change('\n '.join('' for p in txt_lines),op='removed') )
+                result_left, result_right = fill_same_number_linebreaks(result_left,result_right)
+    result_left, result_right = fill_same_number_linebreaks(result_left,result_right)
     return result_left, result_right
 
 def finddiff_values_list_formatsidebyside( cmpdata_l, cmpdata_r ):
@@ -491,12 +462,12 @@ def finddiff_values_list_formatsidebyside( cmpdata_l, cmpdata_r ):
         cmpdata_l = []
     if is_empty(cmpdata_r):
         cmpdata_r = []
-    cmpdata_l_hashed = [(detect_diffsegment_type_noncompulsory(v),f'{v}') for v in cmpdata_l]
-    cmpdata_r_hashed = [(detect_diffsegment_type_noncompulsory(v),f'{v}') for v in cmpdata_r]
+    cmpdata_l_hashed = [as_hash(v) for v in cmpdata_l]
+    cmpdata_r_hashed = [as_hash(v) for v in cmpdata_r]
     # list_combined = diff_make_combined_list( cmpdata_l_hashed, cmpdata_r_hashed )
     sm = SequenceMatcher( None,cmpdata_l_hashed, cmpdata_r_hashed )
-    result_l = []
-    result_r = []
+    result_left = []
+    result_right = []
     for tag, i1, i2, j1, j2 in sm.get_opcodes():
         items_l = cmpdata_l[i1:i2]
         items_r = cmpdata_r[j1:j2]
@@ -504,16 +475,18 @@ def finddiff_values_list_formatsidebyside( cmpdata_l, cmpdata_r ):
         for item_l, item_r in list_combined:
             item = finddiff_values_general_formatcombined( item_l, item_r )
             if tag == 'equal':
-                result_l.append(as_segment_context(item))
-                result_r.append(as_segment_context(item))
+                result_left.append(as_segment_context(item))
+                result_right.append(as_segment_context(item))
             elif tag == 'replace':
-                result_l.append(as_segment_change(item_l,op='removed') if not is_segment_context(item_l) else item_l)
-                result_r.append(as_segment_change(item_r,op='added') if not is_segment_context(item_r) else item_r)
+                result_left.append(as_segment_change(item_l,op='removed') if not is_segment_context(item_l) else item_l)
+                result_right.append(as_segment_change(item_r,op='added') if not is_segment_context(item_r) else item_r)
             elif tag == 'insert':
-                result_r.append(as_segment_change(item_r,op='added') if not is_segment_context(item_r) else item_r)
+                result_right.append(as_segment_change(item_r,op='added') if not is_segment_context(item_r) else item_r)
             elif tag == 'delete':
-                result_l.append(as_segment_change(item_l,op='removed') if not is_segment_context(item_l) else item_l)
-    return result_l, result_r
+                result_left.append(as_segment_change(item_l,op='removed') if not is_segment_context(item_l) else item_l)
+            result_left, result_right = fill_same_number_linebreaks(result_left,result_right)
+    result_left, result_right = fill_same_number_linebreaks(result_left,result_right)
+    return result_left, result_right
 
 def finddiff_values_segment_formatsidebyside( cmpdata_l, cmpdata_r ):
     # clean inputs
@@ -544,26 +517,29 @@ def finddiff_values_segment_formatsidebyside( cmpdata_l, cmpdata_r ):
         return finddiff_values_list_formatsidebyside( [cmpdata_l,None], [None,cmpdata_r] )
     elif role_left=='context' and role_right=='context':
         # or, both roles are "context" -> then, effectively do not not run diff
-        return as_segment_context(cmpdata_l), as_segment_context(cmpdata_r)
+        result_left, result_right = as_segment_context(cmpdata_l), as_segment_context(cmpdata_r)
+        result_left, result_right = fill_same_number_linebreaks(result_left,result_right)
+        return result_left, result_right
     
     # work, find final generated chunks
-    result_l = {'role':role_left}
-    result_r = {'role':role_right}
+    result_left = {'role':role_left}
+    result_right = {'role':role_right}
     # cast to same structure
     if 'parts' in cmpdata_l or 'parts' in cmpdata_r:
         payload_l = cmpdata_l['parts'] if 'parts' in cmpdata_l else as_format(cmpdata_l['text'],detect_format(cmpdata_l['text']),'(list)') if 'text' in cmpdata_l else None
         payload_r = cmpdata_r['parts'] if 'parts' in cmpdata_r else as_format(cmpdata_r['text'],detect_format(cmpdata_r['text']),'(list)') if 'text' in cmpdata_r else None
         diff_l, diff_r = finddiff_values_general_formatsidebyside( payload_l, payload_r )
-        result_l['parts'] = diff_l
-        result_r['parts'] = diff_r
+        result_left['parts'] = diff_l
+        result_right['parts'] = diff_r
     else:
         payload_l = cmpdata_l['text'] if 'text' in cmpdata_l else None
         payload_r = cmpdata_r['text'] if 'text' in cmpdata_r else None
         diff_l, diff_r = finddiff_values_general_formatsidebyside( payload_l, payload_r )
-        result_l['text'] = diff_l
-        result_r['text'] = diff_r
+        result_left['text'] = diff_l
+        result_right['text'] = diff_r
 
-    return result_l,result_r
+    result_left, result_right = fill_same_number_linebreaks(result_left,result_right)
+    return result_left, result_right
 
 def finddiff_values_dict_formatsidebyside( cmpdata_l, cmpdata_r ):
     # clean inputs
@@ -574,17 +550,18 @@ def finddiff_values_dict_formatsidebyside( cmpdata_l, cmpdata_r ):
     props_left = [prop for prop in dict.keys(cmpdata_l)]
     props_right = [prop for prop in dict.keys(cmpdata_r)]
     props_combined = diff_make_combined_list( props_left, props_right )
-    result_l = {}
-    result_r = {}
+    result_left = {}
+    result_right = {}
     for prop in props_combined:
         value_left = cmpdata_l[prop] if prop in cmpdata_l else None
         value_right = cmpdata_r[prop] if prop in cmpdata_r else None
         value_resulting_l, value_resulting_r = finddiff_values_general_formatsidebyside( value_left, value_right )
         if prop in cmpdata_l:
-            result_l[prop] = value_resulting_l
+            result_left[prop] = value_resulting_l
         if prop in cmpdata_r:
-            result_r[prop] = value_resulting_r
-    return result_l,result_r
+            result_right[prop] = value_resulting_r
+    result_left, result_right = fill_same_number_linebreaks(result_left,result_right)
+    return result_left, result_right
 
 def finddiff_values_general_formatsidebyside( cmpdata_l, cmpdata_r ):
     if is_empty(cmpdata_l) and is_empty(cmpdata_r):
@@ -696,8 +673,8 @@ def finddiff_values_list_formatcombined( cmpdata_l, cmpdata_r ):
         cmpdata_l = []
     if is_empty(cmpdata_r):
         cmpdata_r = []
-    cmpdata_l_hashed = [(detect_diffsegment_type_noncompulsory(v),f'{v}') for v in cmpdata_l]
-    cmpdata_r_hashed = [(detect_diffsegment_type_noncompulsory(v),f'{v}') for v in cmpdata_r]
+    cmpdata_l_hashed = [as_hash(v) for v in cmpdata_l]
+    cmpdata_r_hashed = [as_hash(v) for v in cmpdata_r]
     # list_combined = diff_make_combined_list( cmpdata_l_hashed, cmpdata_r_hashed )
     sm = SequenceMatcher( None,cmpdata_l_hashed, cmpdata_r_hashed )
     result = []
@@ -851,8 +828,8 @@ def finddiff_values_list_formatsimple( cmpdata_l, cmpdata_r ):
         cmpdata_l = []
     if is_empty(cmpdata_r):
         cmpdata_r = []
-    cmpdata_l_hashed = [(detect_diffsegment_type_noncompulsory(v),f'{v}') for v in cmpdata_l]
-    cmpdata_r_hashed = [(detect_diffsegment_type_noncompulsory(v),f'{v}') for v in cmpdata_r]
+    cmpdata_l_hashed = [as_hash(v) for v in cmpdata_l]
+    cmpdata_r_hashed = [as_hash(v) for v in cmpdata_r]
     # list_combined = diff_make_combined_list( cmpdata_l_hashed, cmpdata_r_hashed )
     sm = SequenceMatcher( None,cmpdata_l_hashed, cmpdata_r_hashed )
     result = []
