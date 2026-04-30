@@ -8,6 +8,7 @@ import re
 
 
 def text_split_words(s):
+    """Splits continuous text into pieces, separated with "word boundaries" """
     class Splitter:
         def __init__(self,data):
             self.data = data
@@ -27,20 +28,52 @@ def text_split_words(s):
     return [a for a in Splitter(s)]
 
 def text_split_lines(s):
+    """Splits continuous text into pieces, separated with newline characters"""
     return f'{s}'.split("\n")
 
 
 
 
-# class ErrorInlineMarkupNotSupported(Exception):
-#     """ ... """
 class ErrorDiffClassesNotPossibleToDetect(Exception):
-    """ Each returned segment must clearly identify if it's a "change" segment or "context" segment; if it does not, and did_change() is invoke, we fail """
-def detect_diffsegment_str_type(input):
+    """Raised when segment type can't be detected
+    
+    "Segments" are specific type of output diff is producing.
+    It is basically a dict with "role" indicating segment role
+    
+    "Role" indicates its type - if it's an "change" block (with something added/removed), or "context" that is not reported
+    as actual result, but is still needed to show where the change block is located
+
+    This is only important when we call diff on diffs. So we need to filter inputs and identify "segment types" first. If something
+    is a "change" block - we process it. If something is "context" - we pass through. If else - not sure, that's where we catch this exception and see what we can do/should do
+    """
+def detect_diffsegment_str_type(input: str):
+    """A function to detect segment type, specifically if input is str
+    Basically, segment type can not be indicating in string. It should always be endicated earlier, at something that wraps strings. So, this function always fails.
+    
+    "Segments" are specific type of output diff is producing.
+    It is basically a dict with "role" indicating segment role
+    
+    "Role" indicates its type - if it's an "change" block (with something added/removed), or "context" that is not reported
+    as actual result, but is still needed to show where the change block is located
+
+    This is only important when we call diff on diffs. So we need to filter inputs and identify "segment types" first. If something
+    is a "change" block - we process it. If something is "context" - we pass through. If else - not sure, we'll raise and exception and handle it and see what we can do/should do
+    """
     # if '<<ADDED>>' in input or '<<REMOVED>>' in input:
     #     raise ErrorInlineMarkupNotSupported(f'Error: found <<ADDED>> or <<REMOVED>> marker in string; this is not supported anymore')
     raise ErrorDiffClassesNotPossibleToDetect(f'Each returned segment must clearly identify if it\'s a "change" segment or "context" segment: {input} of type {detect_format(input)}') # should be already detected at this point - we can't detect if it's input or a change block from string; it should have been wrapped with dict with { "role" : ...}
 def detect_diffsegment_type(input):
+    """A function to detect segment type
+    
+    "Segments" are specific type of output diff is producing.
+    It is basically a dict with "role" indicating segment role
+    
+    "Role" indicates its type - if it's an "change" block (with something added/removed), or "context" that is not reported
+    as actual result, but is still needed to show where the change block is located
+
+    This is only important when we call diff on diffs. So we need to filter inputs and identify "segment types" first. If something
+    is a "change" block - we process it. If something is "context" - we pass through. If else - not sure, we'll raise and exception and handle it and see what we can do/should do
+    """
     if is_empty(input):
         return 'blank'
     input_fmt = detect_format(input)
@@ -82,6 +115,18 @@ def detect_diffsegment_type(input):
     raise ErrorDiffClassesNotPossibleToDetect(f'Each returned segment must clearly identify if it\'s a "change" segment or "context" segment: {input} of type {detect_format(input)}')
 
 def normalize_input_relocate_diff_markers(input):
+    """A function to filter/clean/sanitize inputs, for processing in diffing
+    It checks what type of segments is found in inputs, and if it shows results
+    from underlying diffs.
+    
+    This is only important when calling diffs on diffs, then diff classes are escaped (relocated to another property)
+    
+    "Segments" are specific type of output diff is producing.
+    It is basically a dict with "role" indicating segment role
+    
+    "Role" indicates its type - if it's an "change" block (with something added/removed), or "context" that is not reported
+    as actual result, but is still needed to show where the change block is located
+    """
     input_fmt = detect_format(input)
     if isinstance(input,dict):
         role = input.get('role',None)
@@ -112,9 +157,25 @@ def normalize_input_relocate_diff_markers(input):
 
 
 def as_segment_context(input):
+    """Wraps input to dict with "role" indicating segment type (context here)
+    
+    "Segments" are specific type of output diff is producing.
+    It is basically a dict with "role" indicating segment role
+    
+    "Role" indicates its type - if it's an "change" block (with something added/removed), or "context" that is not reported
+    as actual result, but is still needed to show where the change block is located
+    """
     return {'role':'context','text':input} if not is_segment_context(input) else input
 
 def as_segment_change(input,op):
+    """Wraps input to dict with "role" indicating segment type (change block here)
+    
+    "Segments" are specific type of output diff is producing.
+    It is basically a dict with "role" indicating segment role
+    
+    "Role" indicates its type - if it's an "change" block (with something added/removed), or "context" that is not reported
+    as actual result, but is still needed to show where the change block is located
+    """
     assert op in ('added','removed',), f'Change segment must be of "added" or "removed" op, got "{op}" ({input})'
     if is_empty(input):
         input_fmt = detect_format(input)
@@ -122,6 +183,7 @@ def as_segment_change(input,op):
     return {'role':op,'text':input}
 
 def did_change(input):
+    """Responds to question: does anything here indicate added or removed piece, somewhere here or deeper inside"""
     return detect_diffsegment_type(input) == 'change'
 
 
@@ -129,6 +191,10 @@ def did_change(input):
 
 
 def is_empty(input):
+    """Responds to question if there is any content inside
+
+    Mostly same as simply "not not input", but does not trigger zero as empty/missing value.
+    Cause zero is content, while empty string, or empty dict, or "None", are not."""
     if input==0:
         return False
     elif is_diff_segment_dict(input):
@@ -162,6 +228,7 @@ def is_empty(input):
 
 
 def is_property_list(input):
+    """Helps to detect input data type, if it represents a property list - that is handled differently than just normal list"""
     try:
         if isinstance(input,list) and ([(True if ('name' in dict.keys(item) and 'value' in dict.keys(item)) else False) for item in input].count(True)==len(input)):
             return True
@@ -170,6 +237,16 @@ def is_property_list(input):
         return False
 
 def is_diff_segment_dict(input):
+    """Helps to detect if input represents "segment"
+
+    "Segments" are specific type of output diff is producing.
+    It is basically a dict with "role" indicating segment role
+    
+    "Role" indicates its type - if it's an "change" block (with something added/removed), or "context" that is not reported
+    as actual result, but is still needed to show where the change block is located
+
+    This is only important when we call diff on diffs. This way we can capture if inputs contain something significant ("change block"), or just "context"
+    """
     if isinstance(input,dict):
         has_payload_textfield = 'text' in input
         has_payload_partsfield = 'parts' in input and isinstance(input['parts'],list)
@@ -182,18 +259,48 @@ def is_diff_segment_dict(input):
     return False
 
 def is_segment_context(input):
+    """Helps to detect if input represents "segment" and this segment is of "context" type
+    
+    "Segments" are specific type of output diff is producing.
+    It is basically a dict with "role" indicating segment role
+    
+    "Role" indicates its type - if it's an "change" block (with something added/removed), or "context" that is not reported
+    as actual result, but is still needed to show where the change block is located
+
+    This is only important when we call diff on diffs. This way we can capture if inputs contain something significant ("change block"), or just "context"
+    """
     try:
         return detect_diffsegment_type(input)=='context'
     except:
         return False
 
 def detect_diffsegment_type_noncompulsory(input):
+    """Helps to detect segment type
+
+    Basically, same as detect_diffsegment_type. But detect_diffsegment_type raises an exception, if inputs
+    are not in fact segments and don't indicate segment type. Here, this is just a safe wrapper. If something
+    is "context" or "change block", this fn will return its type. If inputs are whatever different, this fn just returns None.
+    
+    "Segments" are specific type of output diff is producing.
+    It is basically a dict with "role" indicating segment role
+    
+    "Role" indicates its type - if it's an "change" block (with something added/removed), or "context" that is not reported
+    as actual result, but is still needed to show where the change block is located
+
+    This is only important when we call diff on diffs. This way we can capture if inputs contain something significant ("change block"), or just "context"
+    """
     try:
         return detect_diffsegment_type(input)
     except:
         return None
 
 def detect_format(input,avoid_none=False):
+    """Main function to detect input type
+    
+    All diffing funcitons here work differently based on input data format - if we comapre strings, or dicts, or lists...
+    So, this returns the format, out of several known values.
+    This is also used to detect the format of both inputs, left and right, and find the closest common one, and bring both inputs to same format
+    """
     if not avoid_none and is_empty(input):
         return '(none)'
     elif input is None:
@@ -216,27 +323,52 @@ def detect_format(input,avoid_none=False):
         return '(uncategorized)'
 
 def as_format_none(input,source_fmt=None):
+    """Convert source input to format "(none)"
+    
+    All diffing funcitons here work differently based on input data format - if we comapre strings, or dicts, or lists...
+    So, this is a part of umbrella of functions to detect and convert formats
+    """
     if is_empty(input):
         return None
     else:
         raise Exception(f'Can\'t convert to (none): {input}')
 
 def as_format_uncategorized(input,source_fmt=None):
+    """Convert source input to format "(uncategorized)"
+    
+    All diffing funcitons here work differently based on input data format - if we comapre strings, or dicts, or lists...
+    So, this is a part of umbrella of functions to detect and convert formats
+    """
     return input
 
 def as_format_str(input,source_fmt=None):
+    """Convert source input to format "(str)"
+    
+    All diffing funcitons here work differently based on input data format - if we comapre strings, or dicts, or lists...
+    So, this is a part of umbrella of functions to detect and convert formats
+    """
     if is_empty(input):
         return ''
     else:
         return f'{input}'
 
 def as_format_propertylist(input,source_fmt=None):
+    """Convert source input to format "(propertylist)"
+    
+    All diffing funcitons here work differently based on input data format - if we comapre strings, or dicts, or lists...
+    So, this is a part of umbrella of functions to detect and convert formats
+    """
     if source_fmt in ['(list)']:
         return [ { 'name': f'_{i}', 'value': val } for i,val in enumerate(input) ]
     else:
         return as_format_propertylist(as_format_list(input,source_fmt),source_fmt='(list)')
 
 def as_format_list(input,source_fmt=None):
+    """Convert source input to format "(list)"
+    
+    All diffing funcitons here work differently based on input data format - if we comapre strings, or dicts, or lists...
+    So, this is a part of umbrella of functions to detect and convert formats
+    """
     if source_fmt in ['(propertylist)','(list)']:
         return input
     else:
@@ -246,12 +378,28 @@ def as_format_list(input,source_fmt=None):
             return [input]
 
 def as_format_dict(input,source_fmt=None):
+    """Convert source input to format "(dict)"
+    
+    All diffing funcitons here work differently based on input data format - if we comapre strings, or dicts, or lists...
+    So, this is a part of umbrella of functions to detect and convert formats
+    """
     if is_empty(input):
         return {}
     else:
         raise Exception(f'Can\'t convert to dict: {input}')
 
 def as_format_segment(input,source_fmt=None):
+    """Convert source input to format "(segment)"
+    
+    All diffing funcitons here work differently based on input data format - if we comapre strings, or dicts, or lists...
+    So, this is a part of umbrella of functions to detect and convert formats
+    
+    "Segments" are specific type of output diff is producing.
+    It is basically a dict with "role" indicating segment role
+    
+    "Role" indicates its type - if it's an "change" block (with something added/removed), or "context" that is not reported
+    as actual result, but is still needed to show where the change block is located
+    """
     if source_fmt in ['(propertylist)','(list)']:
         return {'parts':input}
     else:
@@ -292,6 +440,11 @@ possible_transformations = {
     }
 
 def as_format(inp, format_source, format_dest):
+    """Convert source input to dest format
+    
+    All diffing funcitons here work differently based on input data format - if we comapre strings, or dicts, or lists...
+    So, this is a part of umbrella of functions to detect and convert formats
+    """
     if format_source==format_dest:
         return inp
     converter = possible_transformations.get(format_source,{}).get(format_dest,None)
@@ -305,6 +458,11 @@ class CommonFormatNotFound(Exception):
     """Raised when common of 2 formats is not found, and should be caught"""
     pass
 def find_common_format_denominator(sig1, sig2):
+    """Finds the closest common format of given 2
+    
+    All diffing funcitons here work differently based on input data format - if we comapre strings, or dicts, or lists...
+    So, this is a part of umbrella of functions to detect and convert formats
+    """
 
     def reachable_with_distance(start):
         distances = {start: 0}
@@ -339,6 +497,11 @@ def find_common_format_denominator(sig1, sig2):
     # return tuple(closest_common(spec1,spec2) for spec1,spec2 in zip(sig1,sig2))
 
 def find_common_format_denominator_with_fallback_str(*args):
+    """Finds the closest common format of given to, with fallback to "(str)"
+    
+    All diffing funcitons here work differently based on input data format - if we comapre strings, or dicts, or lists...
+    So, this is a part of umbrella of functions to detect and convert formats
+    """
     try:
         return find_common_format_denominator(*args)
     except CommonFormatNotFound:
@@ -347,6 +510,9 @@ def find_common_format_denominator_with_fallback_str(*args):
 
 
 def as_plain_text(inp_value,flags=[]):
+    """Takes any possible structure taken as input, and renders it as plain text.
+    Something simiar to element.textContent in html
+    """
     def is_property_list(input):
         try:
             if isinstance(input,list) and ([(True if ('name' in dict.keys(item) and 'value' in dict.keys(item)) else False) for item in input].count(True)==len(input)):
@@ -412,15 +578,18 @@ def as_plain_text(inp_value,flags=[]):
         return f'{inp_value}'
 
 def as_hash(input):
+    "Takes input, and generates a hashable tuple, that consists of 1. segment type, 2. text content, rendered all as plain text without roles or formatting"
     value = as_plain_text(input)
     role = detect_diffsegment_type_noncompulsory(input)
     return (role,value)
 
 
 def count_linebreaks(input):
+    """Counts how many lines there will be when this piece is rendered as plain text, without any roles or formatting"""
     return len(text_split_lines(as_plain_text(input)))
 
 def fill_same_number_linebreaks(left,right):
+    """Appends necessary number of line breaks to either left or right input, so that they maatch in number of lines they occupy"""
     len_left = count_linebreaks(left)
     len_right = count_linebreaks(right)
     len_common = len_left if len_left > len_right else len_right

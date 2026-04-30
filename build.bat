@@ -8,6 +8,11 @@ IF EXIST dist (
 )
 DEL /F /Q dist\*
 
+ECHO Re-building html template...
+python src\lib\mdmreadpy\lib\mdmreportpy\build_compiled_template.py
+if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && exit /b %errorlevel% )
+ECHO Done
+
 ECHO Calling pinliner...
 REM REM :: comment: please delete .pyc files before every call of the mdmtoolsap_bundle - this is implemented in my fork of the pinliner
 @REM python src-make\lib\pinliner\pinliner\pinliner.py src -o dist/mdmtoolsap_bundle.py --verbose

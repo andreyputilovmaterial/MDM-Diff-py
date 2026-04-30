@@ -34,24 +34,20 @@ from .common_functions import (
 
 
 
-CONFIG_STRUCTURAL_SHORTEN_CTX = 512
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-def diff_normalize(input,flags=None):
+def diff_normalize(input: list[str],flags = None) -> list[str]:
+    """Pre-process inputs for diff, applying flags that indicate case-insensitive cmp, or other features
+    
+    arguemtns:
+    - input sequence
+    - list of flags
+    
+    returns:
+    - normalized sequence
+    """
     options = flags or {}
     result = [r for r in input]
     if ('ignorewhitespace' in options) and (options['ignorewhitespace']):
@@ -72,6 +68,10 @@ def diff_normalize(input,flags=None):
 # temporary repeating similar definitions from diff.py so that I can combine rows and it looks similar
 @dataclass(frozen=True)
 class DiffItemAbstract:
+    """Legacy helper
+    Should be removed in future implementation. It was needed to work throug DiffItemXxx classes.
+    There is no good reason to use these classes. We can work with SequenceMatcher results directly.
+    I have an open issue, like a task, to review and delete this"""
     line: str
     flag: ClassVar[str] = '???'
     def __str__(self):
@@ -79,17 +79,33 @@ class DiffItemAbstract:
 
 @dataclass(frozen=True)
 class DiffItemKeep(DiffItemAbstract):
+    """Legacy helper
+    Should be removed in future implementation. It was needed to work throug DiffItemXxx classes.
+    There is no good reason to use these classes. We can work with SequenceMatcher results directly.
+    I have an open issue, like a task, to review and delete this"""
     flag: ClassVar[str] = 'keep'
 
 @dataclass(frozen=True)
 class DiffItemInsert(DiffItemAbstract):
+    """Legacy helper
+    Should be removed in future implementation. It was needed to work throug DiffItemXxx classes.
+    There is no good reason to use these classes. We can work with SequenceMatcher results directly.
+    I have an open issue, like a task, to review and delete this"""
     flag: ClassVar[str] = 'insert'
 
 @dataclass(frozen=True)
 class DiffItemRemove(DiffItemAbstract):
+    """Legacy helper
+    Should be removed in future implementation. It was needed to work throug DiffItemXxx classes.
+    There is no good reason to use these classes. We can work with SequenceMatcher results directly.
+    I have an open issue, like a task, to review and delete this"""
     flag: ClassVar[str] = 'remove'
 
 def as_diff_items_grouped(opcodes, a, b):
+    """Legacy helper
+    Should be removed in future implementation. It was needed to work throug DiffItemXxx classes.
+    There is no good reason to use these classes. We can work with SequenceMatcher results directly.
+    I have an open issue, like a task, to review and delete this"""
     # TODO: looks like it is not used
     result = []
     for tag, i1, i2, j1, j2 in opcodes:
@@ -113,6 +129,10 @@ def as_diff_items_grouped(opcodes, a, b):
     return result
 
 def as_diff_items_concatenated(opcodes, a, b):
+    """Legacy helper
+    Should be removed in future implementation. It was needed to work throug DiffItemXxx classes.
+    There is no good reason to use these classes. We can work with SequenceMatcher results directly.
+    I have an open issue, like a task, to review and delete this"""
     result = []
     for tag, i1, i2, j1, j2 in opcodes:
         line = None
@@ -165,6 +185,10 @@ def as_diff_items_concatenated(opcodes, a, b):
     return result
 
 def as_diff_items_individual(opcodes, a, b):
+    """Legacy helper
+    Should be removed in future implementation. It was needed to work throug DiffItemXxx classes.
+    There is no good reason to use these classes. We can work with SequenceMatcher results directly.
+    I have an open issue, like a task, to review and delete this"""
     result = []
     for tag, i1, i2, j1, j2 in opcodes:
         line = None
@@ -192,6 +216,10 @@ def as_diff_items_individual(opcodes, a, b):
     return result
 
 def as_diff_items(*args,**argv):
+    """Legacy helper
+    Should be removed in future implementation. It was needed to work throug DiffItemXxx classes.
+    There is no good reason to use these classes. We can work with SequenceMatcher results directly.
+    I have an open issue, like a task, to review and delete this"""
     return as_diff_items_individual(*args,**argv)
 
 
@@ -203,6 +231,7 @@ def as_diff_items(*args,**argv):
 
 
 def diff_make_combined_list(a,b):
+    """Merge two sequences using diff semantics"""
     sm = SequenceMatcher(None,a,b)
     result = []
     for tag, i1, i2, j1, j2 in sm.get_opcodes():
@@ -216,7 +245,7 @@ def diff_make_combined_list(a,b):
         elif tag == 'delete':
             result += a[i1:i2]
         else:
-            raise Exception(f'Finding combined compiled list of compared collections: Unrecognized piece from diff chunk {tag}')
+            raise Exception(f'Finding combined compiled list of compared collections: Unrecognized tag from SequenceMatcher {tag}')
     return result
 
 
@@ -229,7 +258,39 @@ def diff_make_combined_list(a,b):
 
 class MDMDiffWrappersGroupingMissingParentException(Exception):
     """Diff: diff item names with groupings: every group must include a parent element"""
-def finddiff_row_names_respecting_groups(rows_l,rows_r,delimiter,level=None,flags=None):
+def finddiff_row_names_respecting_groups(rows_l: list[str], rows_r: list[str], delimiter, level=None, flags : dict|None = None):
+    """This is something similar to SequenceMatcher
+    This fm compares two sequences and returns a combined list of elements, with items possibly indicating if they are at the same position, or were removed/inserted
+
+    arguments:
+    - two sequences of row names (must be strings)
+    - params that indicate hierarchical format and a delimiter (to be clarified later # TODO:)
+    - flags that affect behavior (a config object of type dict)
+
+    returns:
+    - its results (to be clearified later # TODO:)
+
+    This fn has couple config options
+    The most important is hierarchical format and delimiter params
+    
+    If hierarchical format is off and delimiter is None, it acts more or less like SequenceMatcher - just compares 2 lists
+    
+    If hierarchical format is on and there is a delimiter, we group items coming under the same parent, and compare groups first, and then compare elements within each group
+    For example
+    SharedLists
+    SharedLists.BrandList
+    SharedLists.BrandList.CocaCola
+    SharedLists.BrandList.Nike
+    SharedLists.BrandList.Tesla
+    Fields
+    Fields.Gnder
+    Fields.Gender.Male
+    Fields.Gender.Female
+    Pages
+    Pages.AgeGenPar
+    So, here, a dot is a delimiter, and we make a list of top-level groups first (SharedLists,Fields,Pages), then same within each group;
+    Empty string is a valid name for an item or group, so within "SharedLists" we get 2 elements - "" and "BrandList", within "SharedLists.BrandList" we get 4 elements - "", "CocaCola", "Nike", "Tesla"
+    An element with name of empty string is called a root element, and can also have label, properties, etc... Things to compare"""
     try:
         flags = flags or {}
         rows_inp_l = [ r for r in rows_l ]
@@ -246,7 +307,7 @@ def finddiff_row_names_respecting_groups(rows_l,rows_r,delimiter,level=None,flag
 
         rows_ungrouped_l = []
         groups_l_defs = {}
-        if 'hierarhical_ignore_missing_parent' in flags and flags['hierarhical_ignore_missing_parent']:
+        if 'hierarhical_ignore_missing_parent' in flags and flags['hierarhical_ignore_missing_parent']: # TODO: Do we really need it? I added it at some point, for diff on diffs, but am not using anymore
             groups_l_defs = {'':[]}
         for row in rows_inp_l:
             does_row_belong_to_group = True # ('.' in row)
@@ -358,6 +419,8 @@ def finddiff_row_names_respecting_groups(rows_l,rows_r,delimiter,level=None,flag
 
 
 def finddiff_values_propertylist_formatsidebyside( cmpdata_l, cmpdata_r ):
+    """Compare left and right, assuming inputs are of "propertylist" type, 
+    and return two results separately, to be displayed on left and right"""
     if is_empty(cmpdata_l):
         cmpdata_l = []
     if is_empty(cmpdata_r):
@@ -396,6 +459,8 @@ def finddiff_values_propertylist_formatsidebyside( cmpdata_l, cmpdata_r ):
 
 
 def finddiff_values_text_formatsidebyside( cmpdata_l, cmpdata_r ):
+    """Compare left and right, assuming inputs are of some simple flat type type (initally only str, later extended to numerics and other), 
+    and return two results separately, to be displayed on left and right"""
     if is_empty(cmpdata_l):
         cmpdata_l = ''
     if is_empty(cmpdata_r):
@@ -457,7 +522,10 @@ def finddiff_values_text_formatsidebyside( cmpdata_l, cmpdata_r ):
     result_left, result_right = fill_same_number_linebreaks(result_left,result_right)
     return result_left, result_right
 
-def finddiff_values_list_formatsidebyside( cmpdata_l, cmpdata_r ):
+def finddiff_values_list_matchingastext_formatsidebyside( cmpdata_l, cmpdata_r ):
+    """Compare left and right, assuming inputs are of "list" type, 
+    and return two results separately, to be displayed on left and right
+    "Newer" way to first compare left and right as text, and then get back to real elements in a list; as compared to "older" way, only comparing elements in a list, checking if there is a sequence of identical"""
     if is_empty(cmpdata_l):
         cmpdata_l = []
     if is_empty(cmpdata_r):
@@ -488,7 +556,52 @@ def finddiff_values_list_formatsidebyside( cmpdata_l, cmpdata_r ):
     result_left, result_right = fill_same_number_linebreaks(result_left,result_right)
     return result_left, result_right
 
+def finddiff_values_list_onlyelements_formatsidebyside( cmpdata_l, cmpdata_r ):
+    """Compare left and right, assuming inputs are of "list" type, 
+    and return two results separately, to be displayed on left and right
+    "Older" way, only comparing elements in a list, checking if there is a sequence of identical; as compared to "newer" way"""
+    if is_empty(cmpdata_l):
+        cmpdata_l = []
+    if is_empty(cmpdata_r):
+        cmpdata_r = []
+    cmpdata_l_hashed = [as_hash(v) for v in cmpdata_l]
+    cmpdata_r_hashed = [as_hash(v) for v in cmpdata_r]
+    # list_combined = diff_make_combined_list( cmpdata_l_hashed, cmpdata_r_hashed )
+    sm = SequenceMatcher( None,cmpdata_l_hashed, cmpdata_r_hashed )
+    result_left = []
+    result_right = []
+    for tag, i1, i2, j1, j2 in sm.get_opcodes():
+        items_l = cmpdata_l[i1:i2]
+        items_r = cmpdata_r[j1:j2]
+        list_combined = list(zip_longest(items_l, items_r))
+        for item_l, item_r in list_combined:
+            item = finddiff_values_general_formatcombined( item_l, item_r )
+            if tag == 'equal':
+                result_left.append(as_segment_context(item))
+                result_right.append(as_segment_context(item))
+            elif tag == 'replace':
+                result_left.append(as_segment_change(item_l,op='removed') if not is_segment_context(item_l) else item_l)
+                result_right.append(as_segment_change(item_r,op='added') if not is_segment_context(item_r) else item_r)
+            elif tag == 'insert':
+                result_right.append(as_segment_change(item_r,op='added') if not is_segment_context(item_r) else item_r)
+            elif tag == 'delete':
+                result_left.append(as_segment_change(item_l,op='removed') if not is_segment_context(item_l) else item_l)
+            result_left, result_right = fill_same_number_linebreaks(result_left,result_right)
+    result_left, result_right = fill_same_number_linebreaks(result_left,result_right)
+    return result_left, result_right
+
+def finddiff_values_list_formatsidebyside( cmpdata_l, cmpdata_r ):
+    """Compare left and right, assuming inputs are of "list" type, 
+    and return two results separately, to be displayed on left and right
+    We have 2 implementations - "older" (comparing just sequences of list elements), or "newer" (trying to find diff as text, and then project it to list elements)
+    So, here I am just calling the "newer" implementation"""
+    return finddiff_values_list_matchingastext_formatsidebyside( cmpdata_l, cmpdata_r )
+
 def finddiff_values_segment_formatsidebyside( cmpdata_l, cmpdata_r ):
+    """Compare left and right, assuming inputs are of "segment" type, 
+    and return two results separately, to be displayed on left and right
+    "Segment" is a special type of dict, assuming we have payload, stored in "parts" or "text", and possibly "role" field
+    """
     # clean inputs
     if is_empty(cmpdata_l):
         cmpdata_l = {}
@@ -542,6 +655,9 @@ def finddiff_values_segment_formatsidebyside( cmpdata_l, cmpdata_r ):
     return result_left, result_right
 
 def finddiff_values_dict_formatsidebyside( cmpdata_l, cmpdata_r ):
+    """Compare left and right, assuming inputs are of "dict" type, 
+    and return two results separately, to be displayed on left and right
+    So, we produce the combined list of dict keys, and find diffs for each, between left and right"""
     # clean inputs
     if is_empty(cmpdata_l):
         cmpdata_l = {}
@@ -564,6 +680,9 @@ def finddiff_values_dict_formatsidebyside( cmpdata_l, cmpdata_r ):
     return result_left, result_right
 
 def finddiff_values_general_formatsidebyside( cmpdata_l, cmpdata_r ):
+    """Compare left and right 
+    and return two results separately, to be displayed on left and right
+    Comparison does not happen here - we only identify input types and call proper comparison based on input types"""
     if is_empty(cmpdata_l) and is_empty(cmpdata_r):
         cmpdata_l_format = detect_format(cmpdata_l)
         cmpdata_r_format = detect_format(cmpdata_r)
@@ -603,6 +722,8 @@ def finddiff_values_general_formatsidebyside( cmpdata_l, cmpdata_r ):
 
 
 def finddiff_values_propertylist_formatcombined( cmpdata_l, cmpdata_r ):
+    """Compare left and right, assuming inputs are of "propertylist" type, 
+    and return result in combined form, with read and green pieces, indicating if something was removed or inserted/added"""
     if is_empty(cmpdata_l):
         cmpdata_l = []
     if is_empty(cmpdata_r):
@@ -620,6 +741,8 @@ def finddiff_values_propertylist_formatcombined( cmpdata_l, cmpdata_r ):
     return result
 
 def finddiff_values_text_formatcombined( cmpdata_l, cmpdata_r ):
+    """Compare left and right, assuming inputs are of some simple flat type type (initally only str, later extended to numerics and other), 
+    and return result in combined form, with read and green pieces, indicating if something was removed or inserted/added"""
     if is_empty(cmpdata_l):
         cmpdata_l = ''
     if is_empty(cmpdata_r):
@@ -669,6 +792,8 @@ def finddiff_values_text_formatcombined( cmpdata_l, cmpdata_r ):
     return result
 
 def finddiff_values_list_formatcombined( cmpdata_l, cmpdata_r ):
+    """Compare left and right, assuming inputs are of "list" type, 
+    and return result in combined form, with read and green pieces, indicating if something was removed or inserted/added"""
     if is_empty(cmpdata_l):
         cmpdata_l = []
     if is_empty(cmpdata_r):
@@ -684,19 +809,14 @@ def finddiff_values_list_formatcombined( cmpdata_l, cmpdata_r ):
         list_combined = list(zip_longest(items_l, items_r))
         for item_l, item_r in list_combined:
             item = finddiff_values_general_formatcombined( item_l, item_r )
-            # if tag == 'equal':
-            #     result.append(item)
-            # elif tag == 'replace':
-            #     result.append(as_segment_change(item_l,op='removed'))
-            #     result.append(as_segment_change(item_r,op='added'))
-            # elif tag == 'insert':
-            #     result.append(as_segment_change(item_r,op='added'))
-            # elif tag == 'delete':
-            #     result.append(as_segment_change(item_l,op='removed'))
             result.append(item)
     return result
 
 def finddiff_values_segment_formatcombined( cmpdata_l, cmpdata_r ):
+    """Compare left and right, assuming inputs are of "segment" type, 
+    and return result in combined form, with read and green pieces, indicating if something was removed or inserted/added
+    "Segment" is a special type of dict, assuming we have payload, stored in "parts" or "text", and possibly "role" field
+    """
     # clean inputs
     if is_empty(cmpdata_l):
         cmpdata_l = {}
@@ -739,6 +859,9 @@ def finddiff_values_segment_formatcombined( cmpdata_l, cmpdata_r ):
     return result
 
 def finddiff_values_dict_formatcombined( cmpdata_l, cmpdata_r ):
+    """Compare left and right, assuming inputs are of "dict" type, 
+    and return result in combined form, with read and green pieces, indicating if something was removed or inserted/added
+    So, we produce the combined list of dict keys, and find diffs for each, between left and right"""
     # clean inputs
     if is_empty(cmpdata_l):
         cmpdata_l = {}
@@ -756,6 +879,9 @@ def finddiff_values_dict_formatcombined( cmpdata_l, cmpdata_r ):
     return result
 
 def finddiff_values_general_formatcombined( cmpdata_l, cmpdata_r ):
+    """Compare left and right 
+    and return result in combined form, with read and green pieces, indicating if something was removed or inserted/added
+    Comparison does not happen here - we only identify input types and call proper comparison based on input types"""
     if is_empty(cmpdata_l) and is_empty(cmpdata_r):
         cmpdata_l_format = detect_format(cmpdata_l)
         cmpdata_r_format = detect_format(cmpdata_r)
@@ -791,6 +917,8 @@ def finddiff_values_general_formatcombined( cmpdata_l, cmpdata_r ):
 
 
 def finddiff_values_propertylist_formatsimple( cmpdata_l, cmpdata_r ):
+    """Compare left and right, assuming inputs are of "propertylist" type, 
+    and return result as same type, not not wrapping with segment blocks indicating <added> or <removed> pieces; if result is text and is identical - it is just same text; if not identical, we print LEFT: this, RIGHT: this; if properties or dict, we combine"""
     if is_empty(cmpdata_l):
         cmpdata_l = []
     if is_empty(cmpdata_r):
@@ -808,6 +936,8 @@ def finddiff_values_propertylist_formatsimple( cmpdata_l, cmpdata_r ):
     return result
 
 def finddiff_values_text_formatsimple( cmpdata_l, cmpdata_r ):
+    """Compare left and right, assuming inputs are of some simple flat type type (initally only str, later extended to numerics and other), 
+    and return result as same type, not not wrapping with segment blocks indicating <added> or <removed> pieces; if result is text and is identical - it is just same text; if not identical, we print LEFT: this, RIGHT: this; if properties or dict, we combine"""
     if is_empty(cmpdata_l):
         cmpdata_l = ''
     if is_empty(cmpdata_r):
@@ -824,6 +954,8 @@ def finddiff_values_text_formatsimple( cmpdata_l, cmpdata_r ):
     return result
 
 def finddiff_values_list_formatsimple( cmpdata_l, cmpdata_r ):
+    """Compare left and right, assuming inputs are of "list" type, 
+    and return result as same type, not not wrapping with segment blocks indicating <added> or <removed> pieces; if result is text and is identical - it is just same text; if not identical, we print LEFT: this, RIGHT: this; if properties or dict, we combine"""
     if is_empty(cmpdata_l):
         cmpdata_l = []
     if is_empty(cmpdata_r):
@@ -843,9 +975,17 @@ def finddiff_values_list_formatsimple( cmpdata_l, cmpdata_r ):
     return result
 
 def finddiff_values_segment_formatsimple( cmpdata_l, cmpdata_r ):
+    """Compare left and right, assuming inputs are of "segment" type, 
+    and return result as same type, not not wrapping with segment blocks indicating <added> or <removed> pieces; if result is text and is identical - it is just same text; if not identical, we print LEFT: this, RIGHT: this; if properties or dict, we combine
+    "Segment" is a special type of dict, assuming we have payload, stored in "parts" or "text", and possibly "role" field
+    Here, in "format simple", it makes no difference if input is "segment" or any other dict, so I just call same function on dict
+    """
     return finddiff_values_dict_formatsimple( cmpdata_l, cmpdata_r )
 
 def finddiff_values_dict_formatsimple( cmpdata_l, cmpdata_r ):
+    """Compare left and right, assuming inputs are of "dict" type, 
+    and return result as same type, not not wrapping with segment blocks indicating <added> or <removed> pieces; if result is text and is identical - it is just same text; if not identical, we print LEFT: this, RIGHT: this; if properties or dict, we combine
+    So, we produce the combined list of dict keys, and find diffs for each, between left and right"""
     # clean inputs
     if is_empty(cmpdata_l):
         cmpdata_l = {}
@@ -864,6 +1004,9 @@ def finddiff_values_dict_formatsimple( cmpdata_l, cmpdata_r ):
 
 
 def finddiff_values_general_formatsimple( cmpdata_l, cmpdata_r ):
+    """Compare left and right 
+    and return result as same type, not not wrapping with segment blocks indicating <added> or <removed> pieces; if result is text and is identical - it is just same text; if not identical, we print LEFT: this, RIGHT: this; if properties or dict, we combine
+    Comparison does not happen here - we only identify input types and call proper comparison based on input types"""
     if is_empty(cmpdata_l) and is_empty(cmpdata_r):
         cmpdata_l_format = detect_format(cmpdata_l)
         cmpdata_r_format = detect_format(cmpdata_r)
