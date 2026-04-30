@@ -161,7 +161,7 @@ def is_segment_context(input):
     except:
         return False
 
-def detect_diffsegment_type_noncompulsory(inout):
+def detect_diffsegment_type_noncompulsory(input):
     try:
         return detect_diffsegment_type(input)
     except:
@@ -187,47 +187,47 @@ def detect_format(input,avoid_none=False):
     else:
         return '(uncategorized)'
 
-def as_format_none(inp,source_fmt=None):
-    if is_empty(inp):
+def as_format_none(input,source_fmt=None):
+    if is_empty(input):
         return None
     else:
-        raise Exception(f'Can\'t convert to (none): {inp}')
+        raise Exception(f'Can\'t convert to (none): {input}')
 
-def as_format_uncategorized(inp,source_fmt=None):
-    return inp
+def as_format_uncategorized(input,source_fmt=None):
+    return input
 
-def as_format_str(inp,source_fmt=None):
-    if is_empty(inp):
+def as_format_str(input,source_fmt=None):
+    if is_empty(input):
         return ''
     else:
-        return f'{inp}'
+        return f'{input}'
 
-def as_format_propertylist(inp,source_fmt=None):
+def as_format_propertylist(input,source_fmt=None):
     if source_fmt in ['(list)']:
-        return [ { 'name': f'_{i}', 'value': val } for i,val in enumerate(inp) ]
+        return [ { 'name': f'_{i}', 'value': val } for i,val in enumerate(input) ]
     else:
-        return as_format_propertylist(as_format_list(inp,source_fmt),source_fmt='(list)')
+        return as_format_propertylist(as_format_list(input,source_fmt),source_fmt='(list)')
 
-def as_format_list(inp,source_fmt=None):
+def as_format_list(input,source_fmt=None):
     if source_fmt in ['(propertylist)','(list)']:
-        return inp
+        return input
     else:
-        if is_empty(inp):
+        if is_empty(input):
             return []
         else:
-            return [inp]
+            return [input]
 
-def as_format_dict(inp,source_fmt=None):
+def as_format_dict(input,source_fmt=None):
     if is_empty(input):
         return {}
     else:
         raise Exception(f'Can\'t convert to dict: {input}')
 
-def as_format_segment(inp,source_fmt=None):
+def as_format_segment(input,source_fmt=None):
     if source_fmt in ['(propertylist)','(list)']:
-        return {'parts':inp}
+        return {'parts':input}
     else:
-        return {'text':inp}
+        return {'text':input}
 
 possible_transformations = {
         '(sysmissing)': {},
