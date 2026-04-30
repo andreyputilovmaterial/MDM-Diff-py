@@ -170,6 +170,8 @@ def detect_diffsegment_type_noncompulsory(input):
 def detect_format(input,avoid_none=False):
     if not avoid_none and is_empty(input):
         return '(none)'
+    elif input is None:
+        return '(none)'
     elif isinstance(input,list) and len(input)==0:
         return '(none)'
     elif is_property_list(input):
@@ -180,7 +182,7 @@ def detect_format(input,avoid_none=False):
         return '(segment)'
     elif isinstance(input,dict):
         return '(dict)'
-    elif isinstance(input,str):
+    elif isinstance(input,str) or isinstance(input,(int,float,bool,)):
         return '(str)'
     elif is_empty(input):
         return '(none)'

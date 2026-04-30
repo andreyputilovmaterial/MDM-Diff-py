@@ -67,7 +67,7 @@ def text_split_words(s):
     return [a for a in Splitter(s)]
 
 def text_split_lines(s):
-    return s.split("\n")
+    return f'{s}'.split("\n")
 
 def diff_normalize(input,flags=None):
     options = flags or {}
@@ -423,10 +423,10 @@ def finddiff_values_text_formatsidebyside( cmpdata_l, cmpdata_r ):
     if cmpdata_l==cmpdata_r:
         result_left = as_segment_context(cmpdata_l)
         result_right = as_segment_context(cmpdata_r)
-    elif( (len(cmpdata_l)>0) and (len(cmpdata_r)==0) ):
+    elif( not is_empty(cmpdata_l) and is_empty(cmpdata_r) ):
         result_left = as_segment_change(cmpdata_l,op='removed')
         result_right = ''
-    elif( (len(cmpdata_l)==0) and (len(cmpdata_r)>0) ):
+    elif( is_empty(cmpdata_l) and not is_empty(cmpdata_r) ):
         result_left = ''
         result_right = as_segment_change(cmpdata_r,op='added')
     else:
@@ -650,9 +650,9 @@ def finddiff_values_text_formatcombined( cmpdata_l, cmpdata_r ):
     result = {'parts':[]}
     if cmpdata_l==cmpdata_r:
         result = as_segment_context(cmpdata_l)
-    elif( (len(cmpdata_l)>0) and (len(cmpdata_r)==0) ):
+    elif(not is_empty(cmpdata_l) and is_empty(cmpdata_r) ):
         result = as_segment_change(cmpdata_l,op='removed')
-    elif( (len(cmpdata_l)==0) and (len(cmpdata_r)>0) ):
+    elif( is_empty(cmpdata_l) and not is_empty(cmpdata_r) ):
         result = as_segment_change(cmpdata_r,op='added')
     else:
         cmpdata_l_into_lines = [ ('' if linenumber==0 else '\n') + (line if len(line)>0 else ' ') for linenumber,line in enumerate(text_split_lines(cmpdata_l)) ]
@@ -838,9 +838,9 @@ def finddiff_values_text_formatsimple( cmpdata_l, cmpdata_r ):
     result = {'parts':[]}
     if cmpdata_l==cmpdata_r:
         result = cmpdata_l
-    elif( (len(cmpdata_l)>0) and (len(cmpdata_r)==0) ):
+    elif( not is_empty(cmpdata_l) and is_empty(cmpdata_r) ):
         result = cmpdata_l
-    elif( (len(cmpdata_l)==0) and (len(cmpdata_r)>0) ):
+    elif( is_empty(cmpdata_l) and not is_empty(cmpdata_r) ):
         result = cmpdata_r
     else:
         result = f'Left: {cmpdata_l}, Right: {cmpdata_r}'

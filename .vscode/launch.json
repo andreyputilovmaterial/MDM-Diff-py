@@ -155,6 +155,15 @@
             "justMyCode": true
         },
         {
+            "name": "Python: Diff Test (Excel) - Nike",
+            "type": "python",
+            "request": "launch",
+            "program": "src/launcher.py",
+            "console": "integratedTerminal",
+            "args": ["--program","diff","--cmp-scheme-left","tests\\current\\test_data\\R2401043STK WGT PCT Banner Main Market_FOP 1113.xlsx.json","--cmp-scheme-right","tests\\current\\test_data\\R2401043STK WGT PCT Banner Main Market_FOP 1115.xlsx.json"],
+            "justMyCode": true
+        },
+        {
             "name": "Python: Excel Diff Report Test",
             "type": "python",
             "request": "launch",
