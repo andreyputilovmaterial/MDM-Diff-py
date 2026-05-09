@@ -37,6 +37,7 @@ def text_split_lines(s):
 
 
 
+
 class ErrorDiffClassesNotPossibleToDetect(Exception):
     """Raised when segment type can't be detected
     
@@ -49,7 +50,7 @@ class ErrorDiffClassesNotPossibleToDetect(Exception):
     This is only important when we call diff on diffs. So we need to filter inputs and identify "segment types" first. If something
     is a "change" block - we process it. If something is "context" - we pass through. If else - not sure, that's where we catch this exception and see what we can do/should do
     """
-def detect_diffsegment_str_type(input: str):
+def detect_diffsegment_str_role(input: str):
     """A function to detect segment type, specifically if input is str
     Basically, segment type can not be indicating in string. It should always be endicated earlier, at something that wraps strings. So, this function always fails.
     
@@ -65,7 +66,7 @@ def detect_diffsegment_str_type(input: str):
     # if '<<ADDED>>' in input or '<<REMOVED>>' in input:
     #     raise ErrorInlineMarkupNotSupported(f'Error: found <<ADDED>> or <<REMOVED>> marker in string; this is not supported anymore')
     raise ErrorDiffClassesNotPossibleToDetect(f'Each returned segment must clearly identify if it\'s a "change" segment or "context" segment: {input} of type {detect_format(input)}') # should be already detected at this point - we can't detect if it's input or a change block from string; it should have been wrapped with dict with { "role" : ...}
-def detect_diffsegment_type(input):
+def detect_diffsegment_role(input):
     """A function to detect segment type
     
     "Segments" are specific type of output diff is producing.
@@ -78,15 +79,15 @@ def detect_diffsegment_type(input):
     is a "change" block - we process it. If something is "context" - we pass through. If else - not sure, we'll raise and exception and handle it and see what we can do/should do
     """
     if is_empty(input):
-        return 'blank'
+        return None
     input_fmt = detect_format(input)
     if is_diff_segment_dict(input):
         role = input.get('role',None)
-        if role in ('added','removed'):
+        if role in ('added','removed','source_added','source_removed','source_change',):
             return 'change'
         elif role in ('context',):
             return 'context'
-        return detect_diffsegment_type(get_segment_payload(input))
+        return detect_diffsegment_role(get_segment_payload(input))
     elif isinstance(input,dict):
         raise ErrorDiffClassesNotPossibleToDetect(f'Each returned segment must clearly identify if it\'s a "change" segment or "context" segment: {input} of type {detect_format(input)}')
     elif input_fmt == '(none)':
@@ -96,23 +97,91 @@ def detect_diffsegment_type(input):
         change_found = False
         for row in input:
             piece = row['value']
-            piece_type = detect_diffsegment_type(piece)
+            piece_type = detect_diffsegment_role(piece)
             change_found = change_found or piece_type == 'change'
             context_found = context_found or piece_type == 'context'
-            assert (piece_type in ('change','context','blank',)) or (piece_type is None and is_empty(piece)), 'Failed: each piece should be ChangeBlock or ContextBlock, or be empty'
+            assert (piece_type in ('change','context',None,)) or (piece_type is None and is_empty(piece)), 'Failed: each piece should be ChangeBlock or ContextBlock, or be empty'
         return 'change' if change_found else 'context'
     elif input_fmt == '(list)':
         context_found = False
         change_found = False
         for piece in input:
-            piece_type = detect_diffsegment_type(piece)
+            piece_type = detect_diffsegment_role(piece)
             change_found = change_found or piece_type == 'change'
             context_found = context_found or piece_type == 'context'
-            assert (piece_type in ('change','context','blank',)) or (piece_type is None and is_empty(piece)), 'Failed: each piece should be ChangeBlock or ContextBlock, or be empty'
+            assert (piece_type in ('change','context',None,)) or (piece_type is None and is_empty(piece)), 'Failed: each piece should be ChangeBlock or ContextBlock, or be empty'
         return 'change' if change_found else 'context'
     elif input_fmt == '(str)':
-        return detect_diffsegment_str_type(input)
+        return detect_diffsegment_str_role(input)
     raise ErrorDiffClassesNotPossibleToDetect(f'Each returned segment must clearly identify if it\'s a "change" segment or "context" segment: {input} of type {detect_format(input)}')
+
+def detect_segment_role(input):
+    if is_empty(input):
+        return None
+    input_fmt = detect_format(input)
+    if is_diff_segment_dict(input):
+        role = input.get('role',None)
+        if role in ('added','removed','source_added','source_removed','source_change',):
+            return 'change'
+        return detect_segment_role(get_segment_payload(input)) or role
+    elif isinstance(input,dict):
+        result = []
+        for key, value in input.items():
+            role = detect_segment_role(value)
+            if not is_empty(role):
+                result.append()
+        result = set(result)
+        if len(result)==1:
+            return next(iter(result))
+        elif 'change' in result:
+            return 'change'
+        elif len(result)>1:
+            # raise Exception(f'Can\'t detect role: a dict with multiple roles')
+            return 'mixed'
+        else:
+            return None
+    elif input_fmt == '(none)':
+        return None
+    elif input_fmt == '(propertylist)':
+        result = []
+        for row in input:
+            piece = row['value']
+            role = detect_segment_role(piece)
+            result.append(role)
+        result = set(result)
+        if len(result)==1:
+            return next(iter(result))
+        elif 'change' in result:
+            return 'change'
+        elif len(result)>1:
+            # raise Exception(f'Can\'t detect role: a list with multiple roles')
+            return 'mixed'
+        else:
+            return None
+    elif input_fmt == '(list)':
+        result = []
+        for piece in input:
+            role = detect_segment_role(piece)
+            result.append(role)
+        result = set(result)
+        if len(result)==1:
+            return next(iter(result))
+        elif 'change' in result:
+            return 'change'
+        elif len(result)>1:
+            # raise Exception(f'Can\'t detect role: a list with multiple roles')
+            return 'mixed'
+        else:
+            return None
+    elif input_fmt == '(str)':
+        return None
+    return None
+
+
+
+
+
+
 
 def normalize_input_relocate_diff_markers(input):
     """A function to filter/clean/sanitize inputs, for processing in diffing
@@ -131,7 +200,7 @@ def normalize_input_relocate_diff_markers(input):
     if is_diff_segment_dict(input):
         role = input.get('role',None)
         result = {**input}
-        if role in ('added','removed'):
+        if role in ('added','removed','source_added','source_removed','source_change',):
             # roles_prev = input.get('roles_prev',[])
             # roles_prev.append(role)
             # result['role'] = None
@@ -188,7 +257,7 @@ def as_segment_change(input,op):
 
 def did_change(input):
     """Responds to question: does anything here indicate added or removed piece, somewhere here or deeper inside"""
-    return detect_diffsegment_type(input) == 'change'
+    return detect_diffsegment_role(input) == 'change'
 
 
 
@@ -268,7 +337,7 @@ def is_segment_context(input):
     This is only important when we call diff on diffs. This way we can capture if inputs contain something significant ("change block"), or just "context"
     """
     try:
-        return detect_diffsegment_type(input)=='context'
+        return detect_diffsegment_role(input)=='context'
     except:
         return False
 
@@ -283,25 +352,6 @@ def get_segment_payload(input: dict):
     else:
         assert False, f'get_segment_payload: format validation failed'
 
-def detect_diffsegment_type_noncompulsory(input):
-    """Helps to detect segment type
-
-    Basically, same as detect_diffsegment_type. But detect_diffsegment_type raises an exception, if inputs
-    are not in fact segments and don't indicate segment type. Here, this is just a safe wrapper. If something
-    is "context" or "change block", this fn will return its type. If inputs are whatever different, this fn just returns None.
-    
-    "Segments" are specific type of output diff is producing.
-    It is basically a dict with "role" indicating segment role
-    
-    "Role" indicates its type - if it's an "change" block (with something added/removed), or "context" that is not reported
-    as actual result, but is still needed to show where the change block is located
-
-    This is only important when we call diff on diffs. This way we can capture if inputs contain something significant ("change block"), or just "context"
-    """
-    try:
-        return detect_diffsegment_type(input)
-    except:
-        return None
 
 def detect_format(input,avoid_none=False):
     """Main function to detect input type
@@ -578,10 +628,86 @@ def as_plain_text(inp_value,flags=[]):
     else:
         return f'{inp_value}'
 
+def as_sequence_with_roles(inp_value,parent_level_role=None,flags=[]):
+    """Takes any possible structure taken as input, and renders it as sequence of 2-tupes[role,payload].
+    Something simiar to as_plain_text but with also attached role information
+    """
+    def is_property_list(input):
+        try:
+            if isinstance(input,list) and ([(True if ('name' in dict.keys(item) and 'value' in dict.keys(item)) else False) for item in input].count(True)==len(input)):
+                return True
+            return False
+        except:
+            return False
+    def is_diff_segment_dict(input):
+        if isinstance(input,dict):
+            has_payload_textfield = 'text' in input
+            has_payload_partsfield = 'parts' in input and isinstance(input['parts'],list)
+            has_payload = has_payload_textfield or has_payload_partsfield
+            has_conflicting_payloads = has_payload_textfield and has_payload_partsfield
+            all_keys = input.keys()
+            nonstd_keys = set(all_keys) - {'text','parts','role'}
+            if has_payload and not has_conflicting_payloads and (len(nonstd_keys)==0):
+                return True
+        return False
+    def is_empty(input):
+        if input==0:
+            return False
+        elif is_diff_segment_dict(input):
+            return is_empty(get_segment_payload(input))
+        elif isinstance(input,dict):
+            return not input
+        elif is_property_list(input):
+            if not input:
+                return True
+            result = True
+            for piece in input:
+                result = result and is_empty(piece['value'])
+            return result
+        elif isinstance(input,list):
+            if not input:
+                return True
+            result = True
+            for piece in input:
+                result = result and is_empty(piece)
+            return result
+        else:
+            # attention
+            # empty list, empty dict evaluates to empty
+            return not input
+    if is_empty(inp_value):
+        return []
+    elif is_property_list(inp_value):
+        result = []
+        result += [(parent_level_role,'['),(parent_level_role,' '),]
+        for i,record in enumerate():
+            if i>0:
+                result += [(parent_level_role,','),(parent_level_role,' '),]
+            txt = f'{record["name"]} = "'
+            result += [(parent_level_role,char) for char in txt ]
+            for letter in as_sequence_with_roles(record['value'],parent_level_role,flags):
+                if letter[1]=='"':
+                    result += [letter,letter] # escaping quotes
+                else:
+                    result += [letter]
+            txt = f'"'
+            result += [(parent_level_role,char) for char in txt ]
+        result += [(parent_level_role,' '),(parent_level_role,']'),]
+        return result
+    elif is_diff_segment_dict(inp_value):
+        return as_sequence_with_roles(get_segment_payload(inp_value),detect_segment_role(inp_value) or parent_level_role,flags)
+    elif isinstance(inp_value,list):
+        result = []
+        for part in inp_value:
+            result += as_sequence_with_roles(part,detect_segment_role(inp_value) or parent_level_role,flags)
+        return result
+    else:
+        return [(parent_level_role,char) for char in f'{inp_value}' ]
+
 def as_hash(input):
     "Takes input, and generates a hashable tuple, that consists of 1. segment type, 2. text content, rendered all as plain text without roles or formatting"
     value = as_plain_text(input)
-    role = detect_diffsegment_type_noncompulsory(input)
+    role = detect_segment_role(input)
     return (role,value)
 
 

@@ -22,12 +22,12 @@ from .common_functions import (
     is_property_list,
     is_diff_segment_dict,
     is_segment_context,
-    detect_diffsegment_type_noncompulsory,
     get_segment_payload,
     as_segment_context,
     as_segment_change,
     as_hash,
     as_plain_text,
+    as_sequence_with_roles,
     text_split_words,
     text_split_lines,
     fill_same_number_linebreaks,
@@ -538,20 +538,42 @@ def finddiff_values_list_matchingastext_formatsidebyside( cmpdata_l, cmpdata_r, 
         cmpdata_r = []
     cmpdata_l_hashed = [as_hash(v) for v in cmpdata_l]
     cmpdata_r_hashed = [as_hash(v) for v in cmpdata_r]
-    cmpdata_l_fulltext = [
-        (role,letter,) \
-        for role,piece_of_data \
-        in cmpdata_l_hashed \
-        for letter \
-        in as_plain_text(piece_of_data)
-    ]
-    cmpdata_r_fulltext = [
-        (role,letter,) \
-        for role,piece_of_data \
-        in cmpdata_r_hashed \
-        for letter \
-        in as_plain_text(piece_of_data)
-    ]
+    # cmpdata_l_fulltext = [ # <- this is not 100% accurate way of identifying roles - we only take first level role, we need to go deeper
+    #     (role,letter,) \
+    #     for role,piece_of_data \
+    #     in cmpdata_l_hashed \
+    #     for letter \
+    #     in as_plain_text(piece_of_data)
+    # ]
+    # cmpdata_r_fulltext = [ # <- this is not 100% accurate way of identifying roles - we only take first level role, we need to go deeper
+    #     (role,letter,) \
+    #     for role,piece_of_data \
+    #     in cmpdata_r_hashed \
+    #     for letter \
+    #     in as_plain_text(piece_of_data)
+    # ]
+    cmpdata_l_fulltext = as_sequence_with_roles(cmpdata_l)
+    cmpdata_r_fulltext = as_sequence_with_roles(cmpdata_r)
+    assert \
+        all(
+            isinstance(item,tuple)
+            and len(item)==2
+            and isinstance(item[1],str)
+            and len(item[1])==1
+            for item in cmpdata_l_fulltext # TODO: suppress for speed
+        ) \
+        and len(cmpdata_l_fulltext) == len(as_plain_text(cmpdata_l)), \
+        f'Error: as_sequence_with_roles: called from finddiff_values_list_matchingastext_formatsidebyside: something is wrong with hashing: {f"{cmpdata_l}"[:40]}'
+    assert \
+        all(
+            isinstance(item,tuple)
+            and len(item)==2
+            and isinstance(item[1],str)
+            and len(item[1])==1
+            for item in cmpdata_r_fulltext # TODO: suppress for speed
+        ) \
+        and len(cmpdata_r_fulltext) == len(as_plain_text(cmpdata_r)), \
+        f'Error: as_sequence_with_roles: called from finddiff_values_list_matchingastext_formatsidebyside: something is wrong with hashing: {f"{cmpdata_r}"[:40]}'
     sm = TextWithRolesSequenceMatcher( None,cmpdata_l_fulltext, cmpdata_r_fulltext )
     result_left = []
     result_right = []
@@ -782,15 +804,15 @@ def finddiff_values_segment_formatsidebyside( cmpdata_l, cmpdata_r, config ):
             return finddiff_values_general_formatsidebyside({'role':role_right,'text':None},cmpdata_r, config)
         if is_empty(cmpdata_r) and not is_empty(role_left):
             return finddiff_values_general_formatsidebyside(cmpdata_l,{'role':role_left,'text':None}, config)
-        did_step_inside = False
-        if is_empty(role_left):
-            cmpdata_l = get_segment_payload(cmpdata_l)
-            did_step_inside = True
-        if is_empty(role_right):
-            cmpdata_r = get_segment_payload(cmpdata_r)
-            did_step_inside = True
-        if did_step_inside:
-            return finddiff_values_general_formatsidebyside(cmpdata_l,cmpdata_r, config)
+        # did_step_inside = False # <- causing infinite recursion
+        # if is_empty(role_left):
+        #     cmpdata_l = get_segment_payload(cmpdata_l)
+        #     did_step_inside = True
+        # if is_empty(role_right):
+        #     cmpdata_r = get_segment_payload(cmpdata_r)
+        #     did_step_inside = True
+        # if did_step_inside:
+        #     return finddiff_values_general_formatsidebyside(cmpdata_l,cmpdata_r, config)
         result_left, result_right = (
             cmpdata_l if is_segment_context(cmpdata_l) else as_segment_change(cmpdata_l,op='removed'),
             cmpdata_r if is_segment_context(cmpdata_r) else as_segment_change(cmpdata_r,op='added'),
@@ -1020,15 +1042,15 @@ def finddiff_values_segment_formatcombined( cmpdata_l, cmpdata_r, config ):
             return finddiff_values_general_formatcombined({'role':role_right,'text':None},cmpdata_r, config)
         if is_empty(cmpdata_r) and not is_empty(role_left):
             return finddiff_values_general_formatcombined(cmpdata_l,{'role':role_left,'text':None}, config)
-        did_step_inside = False
-        if is_empty(role_left):
-            cmpdata_l = get_segment_payload(cmpdata_l)
-            did_step_inside = True
-        if is_empty(role_right):
-            cmpdata_r = get_segment_payload(cmpdata_r)
-            did_step_inside = True
-        if did_step_inside:
-            return finddiff_values_general_formatcombined(cmpdata_l,cmpdata_r, config)
+        # did_step_inside = False # <- causing infinite recursion
+        # if is_empty(role_left):
+        #     cmpdata_l = get_segment_payload(cmpdata_l)
+        #     did_step_inside = True
+        # if is_empty(role_right):
+        #     cmpdata_r = get_segment_payload(cmpdata_r)
+        #     did_step_inside = True
+        # if did_step_inside:
+        #     return finddiff_values_general_formatcombined(cmpdata_l,cmpdata_r, config)
         return [
             cmpdata_l if is_segment_context(cmpdata_l) else as_segment_change(cmpdata_l,op='removed'),
             cmpdata_r if is_segment_context(cmpdata_r) else as_segment_change(cmpdata_r,op='added'),
