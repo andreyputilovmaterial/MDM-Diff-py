@@ -8,18 +8,24 @@ IF EXIST dist (
 )
 DEL /F /Q dist\*
 
+ECHO -
+ECHO -
 ECHO Re-building html template...
 python src\lib\mdmreadpy\lib\mdmreportpy\build_compiled_template.py
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && exit /b %errorlevel% )
 ECHO Done
 
-ECHO Calling pinliner...
+ECHO -
+ECHO -
+ECHO Produce distributable .py bundle - calling pinliner...
 REM REM :: comment: please delete .pyc files before every call of the mdmtoolsap_bundle - this is implemented in my fork of the pinliner
 @REM python src-make\lib\pinliner\pinliner\pinliner.py src -o dist/mdmtoolsap_bundle.py --verbose
 python src-make\lib\pinliner\pinliner\pinliner.py src -o dist/mdmtoolsap_bundle.py
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && exit /b %errorlevel% )
 ECHO Done
 
+ECHO -
+ECHO -
 ECHO Patching mdmtoolsap_bundle.py...
 ECHO # ... >> dist/mdmtoolsap_bundle.py
 ECHO # print('within mdmtoolsap_bundle') >> dist/mdmtoolsap_bundle.py
@@ -28,40 +34,70 @@ REM REM :: no need for this, the root package is loaded automatically
 ECHO from src import launcher >> dist/mdmtoolsap_bundle.py
 ECHO launcher.main() >> dist/mdmtoolsap_bundle.py
 ECHO # print('out of mdmtoolsap_bundle') >> dist/mdmtoolsap_bundle.py
+ECHO Done
 
+ECHO -
+ECHO -
+ECHO Copy BAT run scripts
 PUSHD dist
-COPY ..\run_calling_bundle_mdd.bat .\run_diff_mdd.bat
-COPY ..\run_calling_bundle_aligned_diffs_mdd.bat .\run_diff_aligned_workflows_mdds.bat
-COPY ..\run_calling_bundle_mdd_report.bat .\run_mdd_report.bat
-COPY ..\run_calling_bundle_mdd_report_in_excel.bat .\run_mdd_report_in_excel.bat
-COPY ..\run_calling_bundle_textfile.bat .\run_diff_textfile.bat
-COPY ..\run_calling_bundle_msmarkitdown.bat .\run_diff_msmarkitdown.bat
-COPY ..\run_calling_bundle_excel.bat .\run_diff_excel.bat
-COPY ..\run_calling_bundle_excel_wholedirectory.bat .\run_diff_excel_wholedirectory.bat
-COPY ..\run_calling_bundle_spss.bat .\run_diff_spss.bat
-@REM REN mdmtoolsap_bundle.py mdmtoolsap.py
-@REM powershell -Command "(gc 'run_diff_mdd.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap.py' | Out-File -encoding 'Default' 'run_diff_mdd.bat'"
-@REM powershell -Command "(gc 'run_diff_mdd_routing.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap.py' | Out-File -encoding 'Default' 'run_diff_mdd_routing.bat'"
-@REM @REM powershell -Command "(gc 'run_diff_mdd_with_translations.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap.py' | Out-File -encoding 'Default' 'run_diff_mdd_with_translations.bat'"
-@REM powershell -Command "(gc 'run_mdd_report.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap.py' | Out-File -encoding 'Default' 'run_mdd_report.bat'"
-powershell -Command "(gc 'run_diff_mdd.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap_bundle.py' | Out-File -encoding 'Default' 'run_diff_mdd.bat'"
-powershell -Command "(gc 'run_diff_aligned_workflows_mdds.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap_bundle.py' | Out-File -encoding 'Default' 'run_diff_aligned_workflows_mdds.bat'"
-powershell -Command "(gc 'run_mdd_report.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap_bundle.py' | Out-File -encoding 'Default' 'run_mdd_report.bat'"
-powershell -Command "(gc 'run_mdd_report_in_excel.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap_bundle.py' | Out-File -encoding 'Default' 'run_mdd_report_in_excel.bat'"
-powershell -Command "(gc 'run_diff_textfile.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap_bundle.py' | Out-File -encoding 'Default' 'run_diff_textfile.bat'"
-powershell -Command "(gc 'run_diff_msmarkitdown.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap_bundle.py' | Out-File -encoding 'Default' 'run_diff_msmarkitdown.bat'"
-powershell -Command "(gc 'run_diff_excel.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap_bundle.py' | Out-File -encoding 'Default' 'run_diff_excel.bat'"
-powershell -Command "(gc 'run_diff_excel_wholedirectory.bat' -encoding 'Default') -replace '(run_calling_bundle_excel)', 'run_diff_excel' | Out-File -encoding 'Default' 'run_diff_excel_wholedirectory.bat'"
-powershell -Command "(gc 'run_diff_excel_wholedirectory.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap_bundle.py' | Out-File -encoding 'Default' 'run_diff_excel_wholedirectory.bat'"
-powershell -Command "(gc 'run_diff_spss.bat' -encoding 'Default') -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap_bundle.py' | Out-File -encoding 'Default' 'run_diff_spss.bat'"
-REM COPY .\run_diff_mdd.bat .\run_diff_mdd_routing.bat
-REM powershell -Command "(gc 'run_diff_mdd_routing.bat' -encoding 'Default') -replace '--config-features\s+\w[\w,]*\w', '--config-features label' | Out-File -encoding 'Default' 'run_diff_mdd_routing.bat'"
-REM powershell -Command "(gc 'run_diff_mdd_routing.bat' -encoding 'Default') -replace '--config-section\s+\w[\w,]*\w', '--config-section routing' | Out-File -encoding 'Default' 'run_diff_mdd_routing.bat'"
-REM powershell -Command "(gc 'run_diff_mdd_routing.bat' -encoding 'Default') -replace '--program diff', '--program diff --output-filename-suffix .routing' | Out-File -encoding 'Default' 'run_diff_mdd_routing.bat'"
-REM powershell -Command "(gc 'run_diff_mdd_routing.bat' -encoding 'Default') -replace '^(?:\s*?ECHO\s*?-\s*?`r?`n)?\s*?ECHO\b\s*?(?:2|4)\s*?\.\s*?generate\s+html\s*?`r?`n\s*?python\b\s*?[^`r?`n]*?\.py\s+--program\s+report[^`r?`n]*?\s*?`r?`n(?:\s*?if\b\s*?%ERRORLEVEL%[^`r?`n]*?\s*?`r?`n', '' | Out-File -encoding 'Default' 'run_diff_mdd_routing.bat'"
-@REM COPY .\run_diff_mdd.bat .\run_diff_mdd_with_translations.bat
-@REM powershell -Command "(gc 'run_diff_mdd_with_translations.bat' -encoding 'Default') -replace '--config-features\s+\w[\w,]*\w', '--config-features label,attributes,properties,translations' | Out-File -encoding 'Default' 'run_diff_mdd_with_translations.bat'"
+powershell -NoProfile -Command ^
+"$runScripts = @{ ^
+    'run_calling_bundle_mdd.bat' = 'run_diff_mdd.bat'; ^
+    'run_calling_bundle_aligned_diffs_mdd.bat' = 'run_diff_aligned_workflows_mdds.bat'; ^
+    'run_calling_bundle_mdd_report.bat' = 'run_mdd_report.bat'; ^
+    'run_calling_bundle_mdd_report_in_excel.bat' = 'run_mdd_report_in_excel.bat'; ^
+    'run_calling_bundle_textfile.bat' = 'run_diff_textfile.bat'; ^
+    'run_calling_bundle_msmarkitdown.bat' = 'run_diff_msmarkitdown.bat'; ^
+    'run_calling_bundle_excel.bat' = 'run_diff_excel.bat'; ^
+    'run_calling_bundle_excel_wholedirectory.bat' = 'run_diff_excel_wholedirectory.bat'; ^
+    'run_calling_bundle_spss.bat' = 'run_diff_spss.bat'; ^
+}; ^
+$src = '..'; ^
+$dest = '.'; ^
+ForEach ($pair in $runScripts.GetEnumerator()) { ^
+    Copy-Item (Join-Path $src $pair.Key) (Join-Path $dest $pair.Value) ^
+}; "
+@REM COPY ..\run_calling_bundle_mdd.bat .\run_diff_mdd.bat
+@REM COPY ..\run_calling_bundle_aligned_diffs_mdd.bat .\run_diff_aligned_workflows_mdds.bat
+@REM COPY ..\run_calling_bundle_mdd_report.bat .\run_mdd_report.bat
+@REM COPY ..\run_calling_bundle_mdd_report_in_excel.bat .\run_mdd_report_in_excel.bat
+@REM COPY ..\run_calling_bundle_textfile.bat .\run_diff_textfile.bat
+@REM COPY ..\run_calling_bundle_msmarkitdown.bat .\run_diff_msmarkitdown.bat
+@REM COPY ..\run_calling_bundle_excel.bat .\run_diff_excel.bat
+@REM COPY ..\run_calling_bundle_excel_wholedirectory.bat .\run_diff_excel_wholedirectory.bat
+@REM COPY ..\run_calling_bundle_spss.bat .\run_diff_spss.bat
+ECHO Done
+
+
+
+ECHO -
+ECHO -
+ECHO Make text replacements in BAT scripts
+powershell -NoProfile -Command ^
+"$runScripts = @{ ^
+    'run_calling_bundle_mdd.bat' = 'run_diff_mdd.bat'; ^
+    'run_calling_bundle_aligned_diffs_mdd.bat' = 'run_diff_aligned_workflows_mdds.bat'; ^
+    'run_calling_bundle_mdd_report.bat' = 'run_mdd_report.bat'; ^
+    'run_calling_bundle_mdd_report_in_excel.bat' = 'run_mdd_report_in_excel.bat'; ^
+    'run_calling_bundle_textfile.bat' = 'run_diff_textfile.bat'; ^
+    'run_calling_bundle_msmarkitdown.bat' = 'run_diff_msmarkitdown.bat'; ^
+    'run_calling_bundle_excel.bat' = 'run_diff_excel.bat'; ^
+    'run_calling_bundle_excel_wholedirectory.bat' = 'run_diff_excel_wholedirectory.bat'; ^
+    'run_calling_bundle_spss.bat' = 'run_diff_spss.bat'; ^
+}; ^
+$src = '..'; ^
+$dest = '.'; ^
+ForEach ($pair in $runScripts.GetEnumerator()) { ^
+    $file = (Join-Path $dest $pair.Value); ^
+    $c = (Get-Content $file -Encoding 'Default'); ^
+    $c = $c -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap_bundle.py'; ^
+    ForEach ($pair2 in $runScripts.GetEnumerator()) { ^
+        $c = $c -replace ('\b'+$pair2.Key+'\b'),  $pair2.Value; ^
+    }; ^
+    Set-Content $file $c; ^
+}; "
 POPD
+ECHO Done
 
 @REM ECHO Clear up ..\test_pinliner_results\...
 @REM PUSHD ..\test_pinliner_results
@@ -87,5 +123,15 @@ POPD
 
 @REM ECHO Out
 
-ECHO End
+ECHO -
+ECHO -
+ECHO Bring a copy to ./test/ folder
+COPY .\dist\mdmtoolsap_bundle.py .\tests\current\ 2>nul
+IF errorlevel 1 (
+    ECHO Not updated
+)
+
+ECHO -
+ECHO -
+ECHO All done, the end
 
