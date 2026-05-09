@@ -617,8 +617,12 @@ def finddiff_values_list_matchingastext_formatsidebyside( cmpdata_l, cmpdata_r, 
                             assert sub_piece_end == piece_start + local_start + len(as_plain_text(sub_piece)), 'sub-piece end: assertion failed' # TODO: remove this line, to exclude unnecessary calculations
                             assert not is_empty(sub_piece), f'Error: finddiff_list: splice_pieces: sub_piece is empty!, {sub_piece}'
                             items_l.append(sub_piece)
-                            cursor_left = piece_start if sub_piece_end < piece_end else piece_end # sub_piece_end
-                            index_left += 0
+                            if sub_piece_end < piece_end:
+                                cursor_left = piece_start
+                                index_left += 0
+                            else:
+                                cursor_left = piece_end
+                                index_left += 1
                             if sub_piece_end==i2:
                                 break
 
@@ -671,8 +675,12 @@ def finddiff_values_list_matchingastext_formatsidebyside( cmpdata_l, cmpdata_r, 
                             assert sub_piece_end == piece_start + local_start + len(as_plain_text(sub_piece)), 'sub-piece end: assertion failed' # TODO: remove this line, to exclude unnecessary calculations
                             assert not is_empty(sub_piece), f'Error: finddiff_list: splice_pieces: sub_piece is empty!, {sub_piece}'
                             items_r.append(sub_piece)
-                            cursor_right =  piece_start if sub_piece_end < piece_end else piece_end # sub_piece_end
-                            index_right += 0
+                            if sub_piece_end < piece_end:
+                                cursor_right =  piece_start
+                                index_right += 0
+                            else:
+                                cursor_right =  piece_end
+                                index_right += 1
                             if sub_piece_end==j2:
                                 break
                     
@@ -783,7 +791,13 @@ def finddiff_values_segment_formatsidebyside( cmpdata_l, cmpdata_r, config ):
             did_step_inside = True
         if did_step_inside:
             return finddiff_values_general_formatsidebyside(cmpdata_l,cmpdata_r, config)
-        raise Exception('I don\'t know how to handle it. Segment roles are not identical, not empty, but are effectively identical... Maybe there is an empty piece... Something empty...')
+        result_left, result_right = (
+            cmpdata_l if is_segment_context(cmpdata_l) else as_segment_change(cmpdata_l,op='removed'),
+            cmpdata_r if is_segment_context(cmpdata_r) else as_segment_change(cmpdata_r,op='added'),
+        )
+        result_left, result_right = fill_same_number_linebreaks(result_left,result_right)
+        return result_left, result_right
+        # raise Exception('I don\'t know how to handle it. Segment roles are not identical, not empty, but are effectively identical... Maybe there is an empty piece... Something empty...')
     elif are_roles_identical and are_roles_both_context:
         # or, both roles are "context" -> then, effectively do not not run diff
         result_left, result_right = as_segment_context(cmpdata_l), as_segment_context(cmpdata_r)
@@ -1015,7 +1029,11 @@ def finddiff_values_segment_formatcombined( cmpdata_l, cmpdata_r, config ):
             did_step_inside = True
         if did_step_inside:
             return finddiff_values_general_formatcombined(cmpdata_l,cmpdata_r, config)
-        raise Exception('I don\'t know how to handle it. Segment roles are not identical, not empty, but are effectively identical... Maybe there is an empty piece... Something empty...')
+        return [
+            cmpdata_l if is_segment_context(cmpdata_l) else as_segment_change(cmpdata_l,op='removed'),
+            cmpdata_r if is_segment_context(cmpdata_r) else as_segment_change(cmpdata_r,op='added'),
+        ]
+        # raise Exception('I don\'t know how to handle it. Segment roles are not identical, not empty, but are effectively identical... Maybe there is an empty piece... Something empty...')
     elif are_roles_identical and are_roles_both_context:
         # or, both roles are "context" -> then, effectively do not not run diff
         return as_segment_context(

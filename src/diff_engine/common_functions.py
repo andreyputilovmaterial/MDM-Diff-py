@@ -587,6 +587,7 @@ def as_hash(input):
 
 def count_linebreaks(input):
     """Counts how many lines there will be when this piece is rendered as plain text, without any roles or formatting"""
+    # return 0
     return len(text_split_lines(as_plain_text(input)))
 
 def fill_same_number_linebreaks(left,right):
