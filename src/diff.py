@@ -52,10 +52,22 @@ CONFIG_NUM_ROWS_CONSIDERED_DIFFICULT = 3000
 
 def find_diff(data_left,data_right,config):
 
-    def detect_difficulty(metric,data_left,data_right,config):
+    def assess_difficulty(metric,data_left,data_right,config):
         if metric == 'global_col_count':
             try:
                 if len(data_left['report_scheme']['columns'])>CONFIG_NUM_COLUMNS_CONSIDERED_DIFFICULT or len(data_right['report_scheme']['columns'])>CONFIG_NUM_COLUMNS_CONSIDERED_DIFFICULT:
+                    return True
+            except:
+                pass
+        elif metric == 'col_count':
+            try:
+                if  ( (len(data_left)>CONFIG_NUM_COLUMNS_CONSIDERED_DIFFICULT) or (len(data_right)>CONFIG_NUM_COLUMNS_CONSIDERED_DIFFICULT) ):
+                    return True
+            except:
+                pass
+        elif metric == 'row_count':
+            try:
+                if ( (len(data_left)>CONFIG_NUM_ROWS_CONSIDERED_DIFFICULT) or (len(data_right)>CONFIG_NUM_ROWS_CONSIDERED_DIFFICULT) ):
                     return True
             except:
                 pass
@@ -153,37 +165,39 @@ def find_diff(data_left,data_right,config):
         'format': 'sidebyside'
     }
     config = {**config_default,**config}
-    config['verbose_prep_logging'] = False
+    if 'verbose_logging' not in config:
+        config['verbose_logging'] = None
 
-    if config['verbose_prep_logging']:
+    if config['verbose_logging'] and config['verbose_logging']>0:
        print('find combined list of flags...')
     flags_list_combined = compile_flags_combined(data_left,data_right,config)
 
-    config['verbose_prep_logging'] = config['verbose_prep_logging'] or detect_difficulty('global_col_count',data_left,data_right,config)
+    if config['verbose_logging'] is None: # "None" is considered "auto", to get this flagged and verbose level increased to 1 if this condition is met
+        config['verbose_logging'] = 1 if assess_difficulty('global_col_count',data_left,data_right,config) else config['verbose_logging']
 
-    if config['verbose_prep_logging']:
+    if config['verbose_logging'] and config['verbose_logging']>0:
        print('find combined list of columns...')
     columns_list_combined_global = compile_cols_combined(data_left,data_right,config)
 
-    if config['verbose_prep_logging']:
+    if config['verbose_logging'] and config['verbose_logging']>0:
        print('find column headers...')
     column_headers_combined = compile_col_headers(data_left,data_right,config)
 
-    if config['verbose_prep_logging']:
+    if config['verbose_logging'] and config['verbose_logging']>0:
        print('find combined list of sections...')
     section_list_combined = diff_functions.diff_make_combined_list(
         [ item['name'] for item in data_left['sections']  ],
         [ item['name'] for item in data_right['sections'] ]
     )
 
-    if config['verbose_prep_logging']:
+    if config['verbose_logging'] and config['verbose_logging']>0:
        print('final config...')
     config = prep_config(config,flags_list_combined)
 
 
 
 
-    if config['verbose_prep_logging']:
+    if config['verbose_logging'] and config['verbose_logging']>0:
        print('set output template...')
     result = {
         'report_type': 'diff',
@@ -205,7 +219,7 @@ def find_diff(data_left,data_right,config):
 
 
 
-    if config['verbose_prep_logging']:
+    if config['verbose_logging'] and config['verbose_logging']>0:
        print('go!')
     for section_name in section_list_combined:
         try:
@@ -239,7 +253,7 @@ def find_diff(data_left,data_right,config):
             rows_l = [ name for name in file_l_sectiondata.keys() ]
             rows_r = [ name for name in file_r_sectiondata.keys() ]
             
-            section_other_props = diff_functions.finddiff_values_general_formatsimple( {**file_l_section,'content':None}, {**file_r_section,'content':None} )
+            section_other_props = diff_functions.finddiff_values_general_formatsimple( {**file_l_section,'content':None}, {**file_r_section,'content':None}, config )
             # if 'columns' in file_l_section or 'columns' in file_r_section:
             #     section_other_props['columns'] = [ column for column in diff_functions.diff_make_combined_list(file_l_section['columns'] if 'columns' in file_l_section else [],file_r_section['columns'] if 'columns' in file_r_section else []) ]
 
@@ -249,9 +263,9 @@ def find_diff(data_left,data_right,config):
             columns_list_combined = [
                 'flagdiff', 'name'
             ]
-            if not config['verbose_prep_logging'] and ( (len(data_columns_left)>CONFIG_NUM_COLUMNS_CONSIDERED_DIFFICULT) or (len(data_columns_right)>CONFIG_NUM_COLUMNS_CONSIDERED_DIFFICULT) ):
-                config['verbose_prep_logging'] = True
-            if config['verbose_prep_logging']:
+            if config['verbose_logging'] is None: # "None" is considered "auto", to get this flagged and verbose level increased to 1 if this condition is met
+                config['verbose_logging'] = 1 if assess_difficulty('col_count',data_columns_left,data_columns_right,config) else config['verbose_logging']
+            if config['verbose_logging'] and config['verbose_logging']>0:
                 print('compiling combined column list...')
             columns_list_check = [ col for col in diff_functions.diff_make_combined_list(data_columns_left,data_columns_right) if not re.match(r'^\s*?name\s*?$',col,flags=re.I) ]
             if config['format']=='sidebyside':
@@ -289,9 +303,9 @@ def find_diff(data_left,data_right,config):
             rows_changed = 0
             row_count = 0
             
-            if not config['verbose_prep_logging'] and ( (len(rows_l)>CONFIG_NUM_ROWS_CONSIDERED_DIFFICULT) or (len(rows_r)>CONFIG_NUM_ROWS_CONSIDERED_DIFFICULT) ):
-                config['verbose_prep_logging'] = True
-            if config['verbose_prep_logging']:
+            if config['verbose_logging'] is None: # "None" is considered "auto", to get this flagged and verbose level increased to 1 if this condition is met
+                config['verbose_logging'] = 1 if assess_difficulty('row_count',rows_l,rows_r,config) else config['verbose_logging']
+            if config['verbose_logging'] and config['verbose_logging']>0:
                 print('finding list of items that were added or removed...')
             if ('config_use_hierarchical_name_structure' in config and config['config_use_hierarchical_name_structure']):
                 # add root element
@@ -317,9 +331,9 @@ def find_diff(data_left,data_right,config):
             performance_counter = iter(PerformanceMonitor(config={
                 'total_records': len(report_rows_diff),
                 'report_frequency_records_count': 150,
-                'report_frequency_timeinterval': 6
+                'report_frequency_timeinterval': 6,
             }))
-            if config['verbose_prep_logging']:
+            if config['verbose_logging'] and config['verbose_logging']>0:
                 print('calculating diffs within each row...')
             for row_diff_item in report_rows_diff:
                 try:
@@ -329,6 +343,8 @@ def find_diff(data_left,data_right,config):
                     row = {}
                     row['name'] = row_name
 
+                    if config['verbose_logging'] and config['verbose_logging']>1:
+                        print(f'processing {row_name}')
 
                     row_changed = False
                     is_included_in_left = norm(row_name) in rows_lookup_left
@@ -380,7 +396,7 @@ def find_diff(data_left,data_right,config):
 
                             if config['format'] in ['sidebyside','sidebyside_distant']:
 
-                                result_this_col_left, result_this_col_right = diff_functions.finddiff_values_general_formatsidebyside( file_l_coldata, file_r_coldata )
+                                result_this_col_left, result_this_col_right = diff_functions.finddiff_values_general_formatsidebyside( file_l_coldata, file_r_coldata, config )
                                 
                                 col_changed = col_changed or did_change(result_this_col_left) or did_change(result_this_col_right)
                                 row[f'{col}_left'] = result_this_col_left
@@ -388,7 +404,7 @@ def find_diff(data_left,data_right,config):
 
                             elif config['format'] == 'combined':
 
-                                result_this_col_combined = diff_functions.finddiff_values_general_formatcombined( file_l_coldata, file_r_coldata )
+                                result_this_col_combined = diff_functions.finddiff_values_general_formatcombined( file_l_coldata, file_r_coldata, config )
                                 
                                 col_changed = col_changed or did_change(result_this_col_combined)
                                 row[f'{col}'] = result_this_col_combined
@@ -552,25 +568,32 @@ def entry_point(*argcs,**kwargs):
         required=False
     )
     parser.add_argument(
+        '--verbose-logging',
+        help='Controls how detailed should it be printing progress details to console - set to level 0 (means, off), 1, 2, etc, or "auto" (that is the default, that turns to 0 or 1 based on detected complexity)',
+        choices=('auto','0','1','2','3','4','5','6','7','8','9',),
+        default='auto',
+        required=False
+    )
+    parser.add_argument(
         '--output-filename',
         help='Set preferred output file name, with path',
         type=str,
         required=False
     )
     parser.add_argument(
-        '--output-filename-prefix',
+        '--output-filename-prefix', # TODO: probably needs to be cleaned, in ongoing efforts to housekeep - I think this is not really used
         help='Set additional prefix added to output file name (not working if --output-filename is set)',
         type=str,
         required=False
     )
     parser.add_argument(
-        '--output-filename-suffix',
+        '--output-filename-suffix', # TODO: probably needs to be cleaned, in ongoing efforts to housekeep - I think this is not really used
         help='Set additional suffix added to output file name (not working if --output-filename is set)',
         type=str,
         required=False
     )
     parser.add_argument(
-        '--norun-special-onlyprintoutputfilename',
+        '--norun-special-onlyprintoutputfilename', # TODO: remove frmo here, add a separate file, called via --program something
         help='A special flag, the script does not run, does not read input files, does not cal;culate diff, does not write anything to files, does not print messages - it only print resulting output file name to console',
         action='store_true',
         required=False
@@ -606,8 +629,19 @@ def entry_point(*argcs,**kwargs):
     diff_config = {
         'format': diff_format,
         'inp_filename_left': inp_filename_left,
-        'inp_filename_right': inp_filename_right
+        'inp_filename_right': inp_filename_right,
+        'PerformanceMonitor': PerformanceMonitor,
     }
+    if args.verbose_logging:
+        if args.verbose_logging=='auto':
+            diff_config['verbose_logging'] = None
+        elif re.match(r'^\s*\d+\s*$',f'{args.verbose_logging}'):
+            try:
+                diff_config['verbose_logging'] = int(args.verbose_logging)
+            except Exception as e:
+                raise Exception(f'Unrecognized option: --verbose-logging = "{args.verbose_logging}": {e}') from e
+        else:
+            raise Exception(f'Unrecognized option: --verbose-logging = "{args.verbose_logging}"')
     if args.config_skip_rows_nochange:
         diff_config['config_skip_rows_nochange'] = True
     if args.config_do_not_show_content_rows_moved_from:

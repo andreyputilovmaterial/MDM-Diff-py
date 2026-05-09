@@ -2,6 +2,7 @@
 
 from collections import deque # for find_common_format
 import re
+from typing import ClassVar, Callable, Any
 
 
 
@@ -29,7 +30,9 @@ def text_split_words(s):
 
 def text_split_lines(s):
     """Splits continuous text into pieces, separated with newline characters"""
-    return f'{s}'.split("\n")
+    def sanitize_text_normalizelinebreaks(inp_value):
+        return re.sub(r'\r','\n',re.sub(r'\r?\n','\n',inp_value))
+    return sanitize_text_normalizelinebreaks(f'{s}').split("\n")
 
 
 
@@ -77,18 +80,15 @@ def detect_diffsegment_type(input):
     if is_empty(input):
         return 'blank'
     input_fmt = detect_format(input)
-    if isinstance(input,dict):
+    if is_diff_segment_dict(input):
         role = input.get('role',None)
         if role in ('added','removed'):
             return 'change'
         elif role in ('context',):
             return 'context'
-        elif 'parts' in input and isinstance(input['parts'],list):
-            return detect_diffsegment_type(input['parts'])
-        elif 'text' in input:
-            return detect_diffsegment_type(input['text'])
-        else:
-            raise ErrorDiffClassesNotPossibleToDetect(f'Each returned segment must clearly identify if it\'s a "change" segment or "context" segment: {input} of type {detect_format(input)}')
+        return detect_diffsegment_type(get_segment_payload(input))
+    elif isinstance(input,dict):
+        raise ErrorDiffClassesNotPossibleToDetect(f'Each returned segment must clearly identify if it\'s a "change" segment or "context" segment: {input} of type {detect_format(input)}')
     elif input_fmt == '(none)':
         return None
     elif input_fmt == '(propertylist)':
@@ -128,7 +128,7 @@ def normalize_input_relocate_diff_markers(input):
     as actual result, but is still needed to show where the change block is located
     """
     input_fmt = detect_format(input)
-    if isinstance(input,dict):
+    if is_diff_segment_dict(input):
         role = input.get('role',None)
         result = {**input}
         if role in ('added','removed'):
@@ -137,13 +137,17 @@ def normalize_input_relocate_diff_markers(input):
             # result['role'] = None
             # result['roles_prev'] = roles_prev
             result['role'] = f'source_{result["role"]}'
-        # if 'parts' in input and detect_format(input['parts']) in ['(list)','(propertylist)']:
         if 'parts' in input:
-            result['parts'] =  normalize_input_relocate_diff_markers(result['parts'])
+            result['parts'] =  normalize_input_relocate_diff_markers(get_segment_payload(result))
         if 'text' in input:
-            result['text'] =  normalize_input_relocate_diff_markers(result['text'])
+            result['text'] =  normalize_input_relocate_diff_markers(get_segment_payload(result))
         if 'text' not in result and 'parts' not in result:
             raise Exception(f'Can\' filter prev inputs and clean from prev diff classes: {input} of type {input_fmt}')
+        return result
+    if isinstance(input,dict):
+        result = {}
+        for key, value in input.items():
+            result[key] = normalize_input_relocate_diff_markers(value)
         return result
     elif input_fmt == '(none)':
         return input
@@ -198,13 +202,7 @@ def is_empty(input):
     if input==0:
         return False
     elif is_diff_segment_dict(input):
-        if not input:
-            return True
-        if 'text' in input and not is_empty(input['text']):
-            return False
-        if 'parts' in input and not is_empty(input['parts']):
-            return False
-        return True
+        return is_empty(get_segment_payload(input))
     elif isinstance(input,dict):
         return not input
     elif is_property_list(input):
@@ -273,6 +271,17 @@ def is_segment_context(input):
         return detect_diffsegment_type(input)=='context'
     except:
         return False
+
+def get_segment_payload(input: dict):
+    assert isinstance(input,dict), f'get_segment_payload: input must be a dict'
+    has_payload_textfield = 'text' in input
+    has_payload_partsfield = 'parts' in input and isinstance(input['parts'],list)
+    if has_payload_textfield and not has_payload_partsfield:
+        return input['text']
+    elif not has_payload_textfield and has_payload_partsfield:
+        return input['parts']
+    else:
+        assert False, f'get_segment_payload: format validation failed'
 
 def detect_diffsegment_type_noncompulsory(input):
     """Helps to detect segment type
@@ -535,13 +544,7 @@ def as_plain_text(inp_value,flags=[]):
         if input==0:
             return False
         elif is_diff_segment_dict(input):
-            if not input:
-                return True
-            if 'text' in input and not is_empty(input['text']):
-                return False
-            if 'parts' in input and not is_empty(input['parts']):
-                return False
-            return True
+            return is_empty(get_segment_payload(input))
         elif isinstance(input,dict):
             return not input
         elif is_property_list(input):
@@ -568,10 +571,8 @@ def as_plain_text(inp_value,flags=[]):
         def esc(s):
             return f'{s}'.replace('"','""')
         return '[ '+', '.join([f'{record["name"]} = "{esc(record["value"])}"' for record in inp_value])+' ]'
-    elif is_diff_segment_dict(inp_value) and 'text' in inp_value:
-        return as_plain_text(inp_value['text'])
-    elif is_diff_segment_dict(inp_value) and 'parts' in inp_value:
-        return as_plain_text(inp_value['parts'])
+    elif is_diff_segment_dict(inp_value):
+        return as_plain_text(get_segment_payload(inp_value))
     elif isinstance(inp_value,list):
         return ''.join([as_plain_text(s) for s in inp_value])
     else:
@@ -590,6 +591,7 @@ def count_linebreaks(input):
 
 def fill_same_number_linebreaks(left,right):
     """Appends necessary number of line breaks to either left or right input, so that they maatch in number of lines they occupy"""
+    # TODO: eliminate the use of this, this is expensive and slow
     len_left = count_linebreaks(left)
     len_right = count_linebreaks(right)
     len_common = len_left if len_left > len_right else len_right
@@ -601,3 +603,117 @@ def fill_same_number_linebreaks(left,right):
 
 
 
+class ErrorCantSplitAtomicPiece(Exception):
+    """To be called when we can't split a piece"""
+def split_piece(
+    input: Any,
+    start: int,
+    end: int,
+    to_hash: Callable[[Any],str]
+) -> Any:
+    """A helper fn for slice_pieces"""
+    format = detect_format(input)
+    text = to_hash(input)
+    if (start == 0) and (end==len(text)):
+        return input
+    elif (start==0) and (end==0):
+        return as_format(None,'(none)',format)
+    elif format=='(none)':
+        raise Exception(f'Can\'t split (none): this should not be possible, this code should not be reachable, please check: "{input}"[{start}:{end}] ({format})')
+    elif format=='(str)':
+        return f'{input[start:end]}'
+    elif format in ('(list)',):
+        pieces = input
+        result = []
+        cursor = 0
+        for piece in pieces:
+            text = to_hash(piece)
+            piece_start = cursor
+            piece_end = cursor + len(text)
+
+            # check overlap
+            if piece_end > start and piece_start < end:
+                try:
+                    local_start = max(start, piece_start) - piece_start
+                    local_end = min(end, piece_end) - piece_start
+
+                    if local_start == local_end:
+                        # is empty - skip
+                        pass
+                    elif local_start == 0 and local_end == piece_end:
+                        # is a full piece - just append, not split
+                        result.append(piece)
+                    else:
+                        # sub_text = text[local_start:local_end]
+                        sub_piece = split_piece(piece,local_start,local_end,to_hash)
+                        if not is_empty(sub_piece):
+                            result.append(sub_piece)
+                    
+                except ErrorCantSplitAtomicPiece as e:
+                    raise e # what else can I do, other than re-raise # TODO:
+            
+            cursor = piece_end
+            if cursor>end:
+                break
+
+        return result
+    elif format in ('(propertylist)',):
+        # sorry, ugly code
+        # test_a = to_hash() # this is literally not possible
+        raise ErrorCantSplitAtomicPiece(f'Can\'t split (propertylist): too complicated: "{input}"[{start}:{end}] ({format})')
+    elif format in ('(segment)',):
+        if 'parts' in input and 'text' not in input:
+            return {'role':input.get('role',None),'parts':split_piece(get_segment_payload(input),start,end,to_hash)}
+        elif 'text' in input and 'parts' not in input:
+            return {'role':input.get('role',None),'text':split_piece(get_segment_payload(input),start,end,to_hash)}
+        else:
+            assert False, 'Hmm, splitting a piece (segment) but where is the payload, if it\'s not "text" or "parts"?'
+    elif format in ('(dict)',):
+        raise ErrorCantSplitAtomicPiece(f'Can\'t split (dict): too complicated: "{input}"[{start}:{end}] ({format})')
+    else:
+        raise ErrorCantSplitAtomicPiece(f'Can\'t split "{input}"[{start}:{end}] ({format}) - this format is not handled or not implemented')
+
+
+
+
+
+# def slice_pieces(
+#     pieces: list[tuple[str,Any]],
+#     start: int,
+#     end: int,
+#     to_hash: Callable[[Any],str]
+# ) -> list[tuple[str,Any]]:
+#     """A helper fn for finddiff_values_list_matchingastext_formatsidebyside"""
+#     result = []
+#     cursor = 0
+#     for piece in pieces:
+#         text = to_hash(piece)
+#         piece_start = cursor
+#         piece_end = cursor + len(text)
+
+#         # check overlap
+#         if piece_end > start and piece_start < end:
+#             try:
+#                 local_start = max(start, piece_start) - piece_start
+#                 local_end = min(end, piece_end) - piece_start
+
+#                 if local_start == local_end:
+#                     # is empty - skip
+#                     pass
+#                 elif local_start == 0 and local_end == piece_end:
+#                     # is a full piece - just append, not split
+#                     result.append(piece)
+#                 else:
+#                     # sub_text = text[local_start:local_end]
+#                     sub_piece = split_piece(piece,local_start,local_end,to_hash)
+#                     if not is_empty(sub_piece):
+#                         result.append(sub_piece)
+                
+#             except ErrorCantSplitAtomicPiece as e:
+#                 raise e # what else can I do, other than re-raise # TODO:
+        
+#         cursor = piece_end
+#         if cursor>end:
+#             break
+
+#     return result
