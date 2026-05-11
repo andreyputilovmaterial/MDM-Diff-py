@@ -28,10 +28,14 @@ def text_split_words(s):
             return iter(parts)
     return [a for a in Splitter(s)]
 
+def sanitize_text_normalizelinebreaks(inp_value):
+    assert isinstance(inp_value,str), f'sanitize_text_normalizelinebreaks: input must be str, got {inp_value}'
+    result =  re.sub(r'\r','\n',re.sub(r'\r\n',' \n',inp_value))
+    assert len(result) == len(inp_value), 'sanitize_text_normalizelinebreaks: str length must be preserved!'
+    return result
+
 def text_split_lines(s):
     """Splits continuous text into pieces, separated with newline characters"""
-    def sanitize_text_normalizelinebreaks(inp_value):
-        return re.sub(r'\r','\n',re.sub(r'\r?\n','\n',inp_value))
     return sanitize_text_normalizelinebreaks(f'{s}').split("\n")
 
 
@@ -803,44 +807,3 @@ def split_piece(
 
 
 
-
-# def slice_pieces(
-#     pieces: list[tuple[str,Any]],
-#     start: int,
-#     end: int,
-#     to_hash: Callable[[Any],str]
-# ) -> list[tuple[str,Any]]:
-#     """A helper fn for finddiff_values_list_matchingastext_formatsidebyside"""
-#     result = []
-#     cursor = 0
-#     for piece in pieces:
-#         text = to_hash(piece)
-#         piece_start = cursor
-#         piece_end = cursor + len(text)
-
-#         # check overlap
-#         if piece_end > start and piece_start < end:
-#             try:
-#                 local_start = max(start, piece_start) - piece_start
-#                 local_end = min(end, piece_end) - piece_start
-
-#                 if local_start == local_end:
-#                     # is empty - skip
-#                     pass
-#                 elif local_start == 0 and local_end == piece_end:
-#                     # is a full piece - just append, not split
-#                     result.append(piece)
-#                 else:
-#                     # sub_text = text[local_start:local_end]
-#                     sub_piece = split_piece(piece,local_start,local_end,to_hash)
-#                     if not is_empty(sub_piece):
-#                         result.append(sub_piece)
-                
-#             except ErrorCantSplitAtomicPiece as e:
-#                 raise e # what else can I do, other than re-raise # TODO:
-        
-#         cursor = piece_end
-#         if cursor>end:
-#             break
-
-#     return result
