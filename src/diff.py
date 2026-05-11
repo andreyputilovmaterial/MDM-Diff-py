@@ -19,6 +19,7 @@ if __name__ == '__main__':
     from helper_utility.perfmonitor import PerformanceMonitor
     from helper_make_diffflag_field_text import make_diffflag_text
     from helper_make_diff_output_filename import make_output_fname
+    from helper_assess_difficulty import assess_difficulty
 elif '.' in __name__:
     # package
     from .diff_engine import diff_functions
@@ -29,6 +30,7 @@ elif '.' in __name__:
     from .helper_utility.perfmonitor import PerformanceMonitor
     from .helper_make_diffflag_field_text import make_diffflag_text
     from .helper_make_diff_output_filename import make_output_fname
+    from .helper_assess_difficulty import assess_difficulty
 else:
     # included with no parent package
     from diff_engine import diff_functions
@@ -39,41 +41,15 @@ else:
     from helper_utility.perfmonitor import PerformanceMonitor
     from helper_make_diffflag_field_text import make_diffflag_text
     from helper_make_diff_output_filename import make_output_fname
+    from helper_assess_difficulty import assess_difficulty
 
 
-
-
-CONFIG_NUM_COLUMNS_CONSIDERED_DIFFICULT = 1000
-CONFIG_NUM_ROWS_CONSIDERED_DIFFICULT = 3000
 
 
 
 
 def find_diff(data_left,data_right,config):
 
-    def assess_difficulty(metric,data_left,data_right,config):
-        if metric == 'global_col_count':
-            try:
-                if len(data_left['report_scheme']['columns'])>CONFIG_NUM_COLUMNS_CONSIDERED_DIFFICULT or len(data_right['report_scheme']['columns'])>CONFIG_NUM_COLUMNS_CONSIDERED_DIFFICULT:
-                    return True
-            except:
-                pass
-        elif metric == 'col_count':
-            try:
-                if  ( (len(data_left)>CONFIG_NUM_COLUMNS_CONSIDERED_DIFFICULT) or (len(data_right)>CONFIG_NUM_COLUMNS_CONSIDERED_DIFFICULT) ):
-                    return True
-            except:
-                pass
-        elif metric == 'row_count':
-            try:
-                if ( (len(data_left)>CONFIG_NUM_ROWS_CONSIDERED_DIFFICULT) or (len(data_right)>CONFIG_NUM_ROWS_CONSIDERED_DIFFICULT) ):
-                    return True
-            except:
-                pass
-        else:
-            raise NotImplementedError(f'detect difficulty: unknown metric: {metric}')
-        return False
-    
     def prep_config(config,flags_list_combined):
         if 'config_use_hierarchical_name_structure' not in config or config['config_use_hierarchical_name_structure'] is None:
             if 'diff_source_left:data-type:diff' in flags_list_combined or 'diff_source_right:data-type:diff' in flags_list_combined:
