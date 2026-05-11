@@ -9,37 +9,36 @@ import sys # for error reporting, to print to stderr
 
 
 
-from difflib import SequenceMatcher
 if __name__ == '__main__':
     # run as a program
-    # import diff_functions
     from diff_engine import diff_functions
     from diff_engine.common_functions import (
         normalize_input_relocate_diff_markers,
         did_change,
     )
     from helper_utility.perfmonitor import PerformanceMonitor
-    from helper_make_diffflag_row_text import make_diffflag_text
+    from helper_make_diffflag_field_text import make_diffflag_text
+    from helper_make_diff_output_filename import make_output_fname
 elif '.' in __name__:
     # package
-    # from . import diff_functions
     from .diff_engine import diff_functions
     from .diff_engine.common_functions import (
         normalize_input_relocate_diff_markers,
         did_change,
     )
     from .helper_utility.perfmonitor import PerformanceMonitor
-    from .helper_make_diffflag_row_text import make_diffflag_text
+    from .helper_make_diffflag_field_text import make_diffflag_text
+    from .helper_make_diff_output_filename import make_output_fname
 else:
     # included with no parent package
-    # import diff_functions
     from diff_engine import diff_functions
     from diff_engine.common_functions import (
         normalize_input_relocate_diff_markers,
         did_change,
     )
     from helper_utility.perfmonitor import PerformanceMonitor
-    from helper_make_diffflag_row_text import make_diffflag_text
+    from helper_make_diffflag_field_text import make_diffflag_text
+    from helper_make_diff_output_filename import make_output_fname
 
 
 
@@ -471,37 +470,6 @@ def find_diff(data_left,data_right,config):
     return result
 
 
-def make_diff_fname_part(file_name_left,file_name_right):
-    def trim_list(lst):
-        start = 0
-        end = len(lst)
-        while start < end and (lst[start] is None or lst[start] == ''):
-            start += 1
-        while end > start and (lst[end-1] is None or lst[end-1] == ''):
-            end -= 1
-        return lst[start:end]
-    file_name_left = f'{file_name_left}'
-    file_name_right = f'{file_name_right}'
-    f_ar_left = diff_functions.text_split_words(file_name_left)
-    f_ar_right = diff_functions.text_split_words(file_name_right)
-    sm = SequenceMatcher(None,[s.lower() for s in f_ar_left],[s.lower() for s in f_ar_right])
-    result = []
-    for tag, i1, i2, j1, j2 in sm.get_opcodes():
-        part = ''
-        if tag=='equal':
-            part = "".join(f_ar_left[i1:i2])
-        elif tag == 'replace':
-            part = f'{"".join(f_ar_left[i1:i2])}-{"".join(f_ar_right[j1:j2])}'
-        elif tag == 'insert':
-            part = "".join(f_ar_right[j1:j2])
-        elif tag == 'delete':
-            part = "".join(f_ar_left[i1:i2])
-        else:
-            raise Exception(f'Finding combined compiled output file name: Unrecognized piece from diff chunk {tag}')
-        result.append(part)
-    return '-'.join(trim_list(result))
-
-
 
 
 
@@ -693,11 +661,18 @@ def entry_point(*argcs,**kwargs):
             report_filename_suffixpart = args.output_filename_suffix
             if not validate_fname_part(report_filename_suffixpart):
                 raise FileNotFoundError('diff script: output filename suffix: not valid name (please check the --output-filename-suffix option you are passing)')
-        report_filename_filepart = '{fname_prefix}{diff_file_name_part_holder}{fname_suffix}.json'.format(diff_file_name_part_holder=make_diff_fname_part(report_part_filename_left,report_part_filename_right),fname_prefix=report_filename_prefixpart,fname_suffix=report_filename_suffixpart)
+        report_filename_filenamepart = make_output_fname(
+            prefix = report_filename_prefixpart,
+            filename_left = report_part_filename_left,
+            filename_right = report_part_filename_right,
+            suffix = report_filename_suffixpart,
+            format = 'json',
+        )
         report_filename_pathpart = Path(inp_filename_right).parents[0] # right!
-        result_final_fname = report_filename_pathpart / report_filename_filepart
+        result_final_fname = report_filename_pathpart / report_filename_filenamepart
     
     if args.norun_special_onlyprintoutputfilename:
+        print(f'\033[31mUse of --norun-special-onlyprintoutputfilename flag is deprecated: Please use --program diff_print_expected_filename instead!\033[0m',file=sys.stderr)
         print(result_final_fname)
         exit(0)
 

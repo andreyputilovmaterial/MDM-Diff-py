@@ -12,6 +12,7 @@ if __name__ == '__main__':
     # run as a program
     from diff_older import diff_obsolete
     import diff
+    import diff_print_expected_filename
     from lib.mdmreadpy import read_mdd
     from lib.otherformatsreadpy_txt import read as read_txt
     from lib.otherformatsreadpy_general_msmarkitdown import read as read_msmarkitdown
@@ -23,6 +24,7 @@ elif '.' in __name__:
     # package
     from .diff_older import diff_obsolete
     from . import diff
+    from . import diff_print_expected_filename
     from .lib.mdmreadpy import read_mdd
     from .lib.otherformatsreadpy_txt import read as read_txt
     from .lib.otherformatsreadpy_general_msmarkitdown import read as read_msmarkitdown
@@ -34,6 +36,7 @@ else:
     # included with no parent package
     from diff_older import diff_obsolete
     import diff
+    import diff_print_expected_filename
     from lib.mdmreadpy import read_mdd
     from lib.otherformatsreadpy_txt import read as read_txt
     from lib.otherformatsreadpy_general_msmarkitdown import read as read_msmarkitdown
@@ -56,6 +59,9 @@ def call_diff_obsolete_program(*argcs,**kwargs):
 
 def call_diff_program(*argcs,**kwargs):
     return diff.entry_point(*argcs,**kwargs)
+
+def call_diff_filename_program(*argcs,**kwargs):
+    return diff_print_expected_filename.entry_point(*argcs,**kwargs)
 
 def call_read_mdd_program(*argcs,**kwargs):
     return read_mdd.entry_point(*argcs,**kwargs)
@@ -90,6 +96,7 @@ hello, world!
 
 run_programs = {
     'diff': call_diff_program,
+    'diff_print_expected_filename': call_diff_filename_program,
     'diff_obsolete': call_diff_obsolete_program,
     'read_mdd': call_read_mdd_program,
     'read_txt': call_read_txt_program,
