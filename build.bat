@@ -10,6 +10,16 @@ DEL /F /Q dist\*
 
 ECHO -
 ECHO -
+ECHO Update program version
+ECHO # updated > src\_VERSION.py
+python -c"from datetime import datetime; print(f'# {datetime.now()}')" >> src\_VERSION.py
+ECHO _VERSION = ''' >> src\_VERSION.py
+git describe >> src\_VERSION.py
+ECHO ''' >> src\_VERSION.py
+ECHO Done
+
+ECHO -
+ECHO -
 ECHO Re-building html template...
 python src\lib\mdmreadpy\lib\mdmreportpy\build_compiled_template.py
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && exit /b %errorlevel% )

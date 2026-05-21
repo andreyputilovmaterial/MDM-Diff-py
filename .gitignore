@@ -2,6 +2,9 @@
 *.mdd
 *.ddf
 
+# exclude auto-generated _VERSION
+src/_VERSION.py
+
 # Outputs / generated artifacts
 dist/
 build/
