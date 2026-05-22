@@ -11,7 +11,7 @@ DEL /F /Q dist\*
 ECHO -
 ECHO -
 ECHO Update program version
-ECHO # updated > src\_VERSION.py
+ECHO # THIS IS AUTO-GENERATED > src\_VERSION.py
 python -c"from datetime import datetime; print(f'# {datetime.now()}')" >> src\_VERSION.py
 ECHO _VERSION = ''' >> src\_VERSION.py
 git describe >> src\_VERSION.py
