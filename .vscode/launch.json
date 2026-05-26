@@ -110,6 +110,15 @@
             "justMyCode": true
         },
         {
+            "name": "Python: MDD HTML Report for diff on diff: test plugin off",
+            "type": "python",
+            "request": "launch",
+            "program": "src/launcher.py",
+            "console": "integratedTerminal",
+            "args": ["--program","report","--inpfile","tests\\current\\test_data\\report.diff.report.diff.p2600752_-auto_---20260406-v5---20260410-v14--.mdd.json","--disable-plugin","enchancement_plugin__wrap_tables_for_memory_saving__on_table_after"],
+            "justMyCode": true
+        },
+        {
             "name": "Python: LRW Excel Read Test: sections above bases",
             "type": "python",
             "request": "launch",
