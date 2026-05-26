@@ -10,7 +10,7 @@ import traceback, sys
 
 if __name__ == '__main__':
     # run as a program
-    import _VERSION
+    from GENERATED._VERSION import _VERSION as diff_script_version
     from diff_older import diff_obsolete
     import diff
     import diff_print_expected_filename
@@ -23,7 +23,7 @@ if __name__ == '__main__':
     from lib.mdmexcelreportpy import report_create as report_excel_create
 elif '.' in __name__:
     # package
-    from . import _VERSION
+    from .GENERATED._VERSION import _VERSION as diff_script_version
     from .diff_older import diff_obsolete
     from . import diff
     from . import diff_print_expected_filename
@@ -36,7 +36,7 @@ elif '.' in __name__:
     from .lib.mdmexcelreportpy import report_create as report_excel_create
 else:
     # included with no parent package
-    import _VERSION
+    from GENERATED._VERSION import _VERSION as diff_script_version
     from diff_older import diff_obsolete
     import diff
     import diff_print_expected_filename
@@ -95,7 +95,7 @@ hello, world!
     return True
 
 def call_printversion_program(*argcs,**kwargs):
-    msg = _VERSION._VERSION
+    msg = diff_script_version
     msg = msg.strip()
     print(msg)
     return True

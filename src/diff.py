@@ -11,6 +11,7 @@ import sys # for error reporting, to print to stderr
 
 if __name__ == '__main__':
     # run as a program
+    from GENERATED._VERSION import _VERSION as diff_script_version
     from diff_engine import diff_functions
     from diff_engine.common_functions import (
         normalize_input_relocate_diff_markers,
@@ -22,6 +23,7 @@ if __name__ == '__main__':
     from helper_assess_difficulty import assess_difficulty
 elif '.' in __name__:
     # package
+    from .GENERATED._VERSION import _VERSION as diff_script_version
     from .diff_engine import diff_functions
     from .diff_engine.common_functions import (
         normalize_input_relocate_diff_markers,
@@ -33,6 +35,7 @@ elif '.' in __name__:
     from .helper_assess_difficulty import assess_difficulty
 else:
     # included with no parent package
+    from GENERATED._VERSION import _VERSION as diff_script_version
     from diff_engine import diff_functions
     from diff_engine.common_functions import (
         normalize_input_relocate_diff_markers,
@@ -176,13 +179,14 @@ def find_diff(data_left,data_right,config):
        print('set output template...')
     result = {
         'report_type': 'diff',
-        'source_left': f'{config["inp_filename_left"]}',
-        'source_right': f'{config["inp_filename_right"]}',
+        'source_left': f'{config.get("inp_filename_left")}',
+        'source_right': f'{config.get("inp_filename_right")}',
         'report_datetime_utc': datetime_start.astimezone(tz=timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
         'report_datetime_local': datetime_start.strftime('%Y-%m-%dT%H:%M:%SZ'),
         'source_file_metadata': [
             { 'name': 'source_left',  'value': f'{config["inp_filename_left"]}'  },
             { 'name': 'source_right', 'value': f'{config["inp_filename_right"]}' },
+            { 'name': 'generated with mdmtoolsap-diff script version', 'value': f'{config.get("script_version")}' },
         ],
         'report_scheme': {
             'columns': columns_list_combined_global,
@@ -571,6 +575,8 @@ def entry_point(*argcs,**kwargs):
             raise Exception(f'diff: unsupported config option: diff format: "{diff_format}"; you can only use [ {", ".join(fmts_allowed)} ]')
 
     diff_config = {
+        'script_started': time_start,
+        'script_version': diff_script_version.strip(),
         'format': diff_format,
         'inp_filename_left': inp_filename_left,
         'inp_filename_right': inp_filename_right,
