@@ -62,20 +62,20 @@ REM :: file names with file schemes in json
 SET "MDD_A_JSON=%MDD_A%.json"
 SET "MDD_B_JSON=%MDD_B%.json"
 
-FOR /F "delims=" %%i IN ('python dist/mdmtoolsap_bundle.py --program diff_print_expected_filename --cmp-scheme-left "%MDD_A_JSON%" --cmp-scheme-right "%MDD_B_JSON%" ') DO SET "OUTPUT_FINAL_DIFF_JSON=%%i"
+FOR /F "delims=" %%i IN ('python "../dist/mdmtoolsap_bundle.py" --program diff_print_expected_filename --cmp-scheme-left "%MDD_A_JSON%" --cmp-scheme-right "%MDD_B_JSON%" ') DO SET "OUTPUT_FINAL_DIFF_JSON=%%i"
 
 
 ECHO -
 ECHO 1. read MDD A
 ECHO read from: %MDD_A%
 ECHO write to: .json
-python dist/mdmtoolsap_bundle.py --program read_mdd --mdd "%MDD_A%" %MDD_READ_CONFIG_SETTINGS%
+python "../dist/mdmtoolsap_bundle.py" --program read_mdd --mdd "%MDD_A%" %MDD_READ_CONFIG_SETTINGS%
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 IF %CONFIG_PRODUCE_HTML_EACH_MDD% (
     ECHO -
     ECHO 2. generate html
-    python dist/mdmtoolsap_bundle.py --program report --inpfile "%MDD_A_JSON%"
+    python "../dist/mdmtoolsap_bundle.py" --program report --inpfile "%MDD_A_JSON%"
     if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 )
 
@@ -83,24 +83,24 @@ ECHO -
 ECHO 3. read MDD B
 ECHO read from: %MDD_B%
 ECHO write to: .json
-python dist/mdmtoolsap_bundle.py --program read_mdd --mdd "%MDD_B%" %MDD_READ_CONFIG_SETTINGS%
+python "../dist/mdmtoolsap_bundle.py" --program read_mdd --mdd "%MDD_B%" %MDD_READ_CONFIG_SETTINGS%
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 IF %CONFIG_PRODUCE_HTML_EACH_MDD% (
     ECHO -
     ECHO 4. generate html
-    python dist/mdmtoolsap_bundle.py --program report --inpfile "%MDD_B_JSON%"
+    python "../dist/mdmtoolsap_bundle.py" --program report --inpfile "%MDD_B_JSON%"
     if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 )
 
 ECHO -
 ECHO 5. diff
-python dist/mdmtoolsap_bundle.py --program diff --cmp-scheme-left "%MDD_A_JSON%" --cmp-scheme-right "%MDD_B_JSON%" --output-filename "!OUTPUT_FINAL_DIFF_JSON!" --config-casesensitive-item-list-comparison ignorecase
+python "../dist/mdmtoolsap_bundle.py" --program diff --cmp-scheme-left "%MDD_A_JSON%" --cmp-scheme-right "%MDD_B_JSON%" --output-filename "!OUTPUT_FINAL_DIFF_JSON!" --config-casesensitive-item-list-comparison ignorecase
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 ECHO -
 ECHO 6. final html with diff!
-python dist/mdmtoolsap_bundle.py --program report --inpfile "%OUTPUT_FINAL_DIFF_JSON%"
+python "../dist/mdmtoolsap_bundle.py" --program report --inpfile "%OUTPUT_FINAL_DIFF_JSON%"
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 ECHO -

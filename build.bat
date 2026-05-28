@@ -13,7 +13,7 @@ ECHO -
 ECHO Update program version
 ECHO '''For auto-generated files''' > src\GENERATED\__init__.py
 ECHO # THIS IS AUTO-GENERATED > src\GENERATED\_VERSION.py
-python -c"from datetime import datetime; print(f'# {datetime.now()}')" >> src\GENERATED\_VERSION.py
+python -c "from datetime import datetime; print(f'# {datetime.now()}')" >> src\GENERATED\_VERSION.py
 ECHO _VERSION = ''' >> src\GENERATED\_VERSION.py
 git describe --tags --dirty >> src\GENERATED\_VERSION.py
 ECHO ''' >> src\GENERATED\_VERSION.py
@@ -76,20 +76,11 @@ powershell -NoProfile -Command ^
     'run_calling_bundle_excel_wholedirectory.bat' = 'run_diff_excel_wholedirectory.bat'; ^
     'run_calling_bundle_spss.bat' = 'run_diff_spss.bat'; ^
 }; ^
-$src = '..'; ^
+$src = '..\src_bat_scripts'; ^
 $dest = '.'; ^
 ForEach ($pair in $runScripts.GetEnumerator()) { ^
     Copy-Item (Join-Path $src $pair.Key) (Join-Path $dest $pair.Value) ^
 }; "
-@REM COPY ..\run_calling_bundle_mdd.bat .\run_diff_mdd.bat
-@REM COPY ..\run_calling_bundle_aligned_diffs_mdd.bat .\run_diff_aligned_workflows_mdds.bat
-@REM COPY ..\run_calling_bundle_mdd_report.bat .\run_mdd_report.bat
-@REM COPY ..\run_calling_bundle_mdd_report_in_excel.bat .\run_mdd_report_in_excel.bat
-@REM COPY ..\run_calling_bundle_textfile.bat .\run_diff_textfile.bat
-@REM COPY ..\run_calling_bundle_msmarkitdown.bat .\run_diff_msmarkitdown.bat
-@REM COPY ..\run_calling_bundle_excel.bat .\run_diff_excel.bat
-@REM COPY ..\run_calling_bundle_excel_wholedirectory.bat .\run_diff_excel_wholedirectory.bat
-@REM COPY ..\run_calling_bundle_spss.bat .\run_diff_spss.bat
 ECHO Done
 
 
@@ -114,7 +105,7 @@ $dest = '.'; ^
 ForEach ($pair in $runScripts.GetEnumerator()) { ^
     $file = (Join-Path $dest $pair.Value); ^
     $c = (Get-Content $file -Encoding 'Default'); ^
-    $c = $c -replace '(dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap_bundle.py'; ^
+    $c = $c -replace '((?:..[\\/])?dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap_bundle.py'; ^
     ForEach ($pair2 in $runScripts.GetEnumerator()) { ^
         $c = $c -replace ('\b'+$pair2.Key+'\b'),  $pair2.Value; ^
     }; ^
@@ -123,19 +114,6 @@ ForEach ($pair in $runScripts.GetEnumerator()) { ^
 POPD
 ECHO Done
 
-@REM ECHO Clear up ..\test_pinliner_results\...
-@REM PUSHD ..\test_pinliner_results
-@REM DEL /F /Q *
-@REM FOR /D %%G IN (*) DO RMDIR /S /Q %%G
-@REM POPD
-
-@REM ECHO Bring the mdmtoolsap_bundle to ..\test_pinliner_results\...
-@REM COPY dist\mdmtoolsap_bundle.py ..\test_pinliner_results\
-
-@REM PUSHD ..\test_pinliner_results
-@REM Echo within ..\test_pinliner_results\
-@REM REM python
-@REM python mdmtoolsap_bundle.py --program test
 @REM DEL *.pyc
 @REM IF EXIST __pycache__ (
 @REM DEL /F /Q __pycache__\*
@@ -143,7 +121,6 @@ ECHO Done
 @REM IF EXIST __pycache__ (
 @REM RMDIR /Q /S __pycache__
 @REM )
-@REM POPD
 
 @REM ECHO Out
 
@@ -152,6 +129,7 @@ ECHO -
 ECHO Bring a copy to ./tests-real-sensitive-data/ folder
 COPY .\dist\mdmtoolsap_bundle.py .\tests-real-sensitive-data\current\ 2>nul
 IF errorlevel 1 (
+    REM :: That's ok to continue, just need to print a message that "not copied"
     ECHO Not updated
 )
 

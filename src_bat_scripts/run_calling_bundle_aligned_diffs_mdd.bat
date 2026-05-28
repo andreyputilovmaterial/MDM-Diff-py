@@ -68,20 +68,20 @@ REM :: file names with file schemes in json
 SET "MDD_WORKFLOW1_BEFORE_JSON=%MDD_WORKFLOW1_BEFORE%.json"
 SET "MDD_WORKFLOW1_AFTER_JSON=%MDD_WORKFLOW1_AFTER%.json"
 
-FOR /F "delims=" %%i IN ('python dist/mdmtoolsap_bundle.py --program diff_print_expected_filename --cmp-scheme-left "%MDD_WORKFLOW1_BEFORE_JSON%" --cmp-scheme-right "%MDD_WORKFLOW1_AFTER_JSON%" ') DO SET "DIFF_WORKFLOW1_JSON=%%i"
+FOR /F "delims=" %%i IN ('python "../dist/mdmtoolsap_bundle.py" --program diff_print_expected_filename --cmp-scheme-left "%MDD_WORKFLOW1_BEFORE_JSON%" --cmp-scheme-right "%MDD_WORKFLOW1_AFTER_JSON%" ') DO SET "DIFF_WORKFLOW1_JSON=%%i"
 
 
 ECHO -
 ECHO 1. read MDD WORKFLOW1 BEFORE
 ECHO read from: %MDD_WORKFLOW1_BEFORE%
 ECHO write to: .json
-python dist/mdmtoolsap_bundle.py --program read_mdd --mdd "%MDD_WORKFLOW1_BEFORE%" %MDD_READ_CONFIG_SETTINGS%
+python "../dist/mdmtoolsap_bundle.py" --program read_mdd --mdd "%MDD_WORKFLOW1_BEFORE%" %MDD_READ_CONFIG_SETTINGS%
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 IF %CONFIG_PRODUCE_HTML_EACH_MDD% (
     ECHO -
     ECHO 2. generate html
-    python dist/mdmtoolsap_bundle.py --program report --inpfile "%MDD_WORKFLOW1_BEFORE_JSON%"
+    python "../dist/mdmtoolsap_bundle.py" --program report --inpfile "%MDD_WORKFLOW1_BEFORE_JSON%"
     if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 )
 
@@ -89,25 +89,25 @@ ECHO -
 ECHO 3. read MDD WORKFLOW1 AFTER
 ECHO read from: %MDD_WORKFLOW1_AFTER%
 ECHO write to: .json
-python dist/mdmtoolsap_bundle.py --program read_mdd --mdd "%MDD_WORKFLOW1_AFTER%" %MDD_READ_CONFIG_SETTINGS%
+python "../dist/mdmtoolsap_bundle.py" --program read_mdd --mdd "%MDD_WORKFLOW1_AFTER%" %MDD_READ_CONFIG_SETTINGS%
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 IF %CONFIG_PRODUCE_HTML_EACH_MDD% (
     ECHO -
     ECHO 4. generate html
-    python dist/mdmtoolsap_bundle.py --program report --inpfile "%MDD_WORKFLOW1_AFTER_JSON%"
+    python "../dist/mdmtoolsap_bundle.py" --program report --inpfile "%MDD_WORKFLOW1_AFTER_JSON%"
     if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 )
 
 ECHO -
 ECHO 5. diff
-python dist/mdmtoolsap_bundle.py --program diff --cmp-scheme-left "%MDD_WORKFLOW1_BEFORE_JSON%" --cmp-scheme-right "%MDD_WORKFLOW1_AFTER_JSON%" --output-filename "!DIFF_WORKFLOW1_JSON!" --cmp-format combined
+python "../dist/mdmtoolsap_bundle.py" --program diff --cmp-scheme-left "%MDD_WORKFLOW1_BEFORE_JSON%" --cmp-scheme-right "%MDD_WORKFLOW1_AFTER_JSON%" --output-filename "!DIFF_WORKFLOW1_JSON!" --cmp-format combined
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 IF %CONFIG_PRODUCE_HTML_EACH_MDD% (
     ECHO -
     ECHO 6. html with diff!
-    python dist/mdmtoolsap_bundle.py --program report --inpfile "%DIFF_WORKFLOW1_JSON%"
+    python "../dist/mdmtoolsap_bundle.py" --program report --inpfile "%DIFF_WORKFLOW1_JSON%"
     if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 )
 
@@ -118,20 +118,20 @@ REM :: file names with file schemes in json
 SET "MDD_WORKFLOW2_BEFORE_JSON=%MDD_WORKFLOW2_BEFORE%.json"
 SET "MDD_WORKFLOW2_AFTER_JSON=%MDD_WORKFLOW2_AFTER%.json"
 
-FOR /F "delims=" %%i IN ('python dist/mdmtoolsap_bundle.py --program diff_print_expected_filename --cmp-scheme-left "%MDD_WORKFLOW2_BEFORE_JSON%" --cmp-scheme-right "%MDD_WORKFLOW2_AFTER_JSON%" ') DO SET "DIFF_WORKFLOW2_JSON=%%i"
+FOR /F "delims=" %%i IN ('python "../dist/mdmtoolsap_bundle.py" --program diff_print_expected_filename --cmp-scheme-left "%MDD_WORKFLOW2_BEFORE_JSON%" --cmp-scheme-right "%MDD_WORKFLOW2_AFTER_JSON%" ') DO SET "DIFF_WORKFLOW2_JSON=%%i"
 
 
 ECHO -
 ECHO 7. read MDD WORKFLOW2 BEFORE
 ECHO read from: %MDD_WORKFLOW2_BEFORE%
 ECHO write to: .json
-python dist/mdmtoolsap_bundle.py --program read_mdd --mdd "%MDD_WORKFLOW2_BEFORE%" %MDD_READ_CONFIG_SETTINGS%
+python "../dist/mdmtoolsap_bundle.py" --program read_mdd --mdd "%MDD_WORKFLOW2_BEFORE%" %MDD_READ_CONFIG_SETTINGS%
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 IF %CONFIG_PRODUCE_HTML_EACH_MDD% (
     ECHO -
     ECHO 8. generate html
-    python dist/mdmtoolsap_bundle.py --program report --inpfile "%MDD_WORKFLOW2_BEFORE_JSON%"
+    python "../dist/mdmtoolsap_bundle.py" --program report --inpfile "%MDD_WORKFLOW2_BEFORE_JSON%"
     if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 )
 
@@ -139,25 +139,25 @@ ECHO -
 ECHO 9. read MDD WORKFLOW2 AFTER
 ECHO read from: %MDD_WORKFLOW2_AFTER%
 ECHO write to: .json
-python dist/mdmtoolsap_bundle.py --program read_mdd --mdd "%MDD_WORKFLOW2_AFTER%" %MDD_READ_CONFIG_SETTINGS%
+python "../dist/mdmtoolsap_bundle.py" --program read_mdd --mdd "%MDD_WORKFLOW2_AFTER%" %MDD_READ_CONFIG_SETTINGS%
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 IF %CONFIG_PRODUCE_HTML_EACH_MDD% (
     ECHO -
     ECHO 10. generate html
-    python dist/mdmtoolsap_bundle.py --program report --inpfile "%MDD_WORKFLOW2_AFTER_JSON%"
+    python "../dist/mdmtoolsap_bundle.py" --program report --inpfile "%MDD_WORKFLOW2_AFTER_JSON%"
     if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 )
 
 ECHO -
 ECHO 11. diff
-python dist/mdmtoolsap_bundle.py --program diff --cmp-scheme-left "%MDD_WORKFLOW2_BEFORE_JSON%" --cmp-scheme-right "%MDD_WORKFLOW2_AFTER_JSON%" --output-filename "!DIFF_WORKFLOW2_JSON!" --cmp-format combined
+python "../dist/mdmtoolsap_bundle.py" --program diff --cmp-scheme-left "%MDD_WORKFLOW2_BEFORE_JSON%" --cmp-scheme-right "%MDD_WORKFLOW2_AFTER_JSON%" --output-filename "!DIFF_WORKFLOW2_JSON!" --cmp-format combined
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 IF %CONFIG_PRODUCE_HTML_EACH_MDD% (
     ECHO -
     ECHO 12. html with diff!
-    python dist/mdmtoolsap_bundle.py --program report --inpfile "%DIFF_WORKFLOW2_JSON%"
+    python "../dist/mdmtoolsap_bundle.py" --program report --inpfile "%DIFF_WORKFLOW2_JSON%"
     if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 )
 
@@ -167,15 +167,15 @@ IF %CONFIG_PRODUCE_HTML_EACH_MDD% (
 ECHO -
 ECHO 13. FINAL DIFF
 
-FOR /F "delims=" %%i IN ('python dist/mdmtoolsap_bundle.py --program diff_print_expected_filename --cmp-scheme-left "%DIFF_WORKFLOW1_JSON%" --cmp-scheme-right "%DIFF_WORKFLOW2_JSON%" ') DO SET "DIFF_FINAL_JSON=%%i"
+FOR /F "delims=" %%i IN ('python "../dist/mdmtoolsap_bundle.py" --program diff_print_expected_filename --cmp-scheme-left "%DIFF_WORKFLOW1_JSON%" --cmp-scheme-right "%DIFF_WORKFLOW2_JSON%" ') DO SET "DIFF_FINAL_JSON=%%i"
 
-python dist/mdmtoolsap_bundle.py --program diff --cmp-scheme-left "%DIFF_WORKFLOW1_JSON%" --cmp-scheme-right "%DIFF_WORKFLOW2_JSON%" --output-filename "!DIFF_FINAL_JSON!"
+python "../dist/mdmtoolsap_bundle.py" --program diff --cmp-scheme-left "%DIFF_WORKFLOW1_JSON%" --cmp-scheme-right "%DIFF_WORKFLOW2_JSON%" --output-filename "!DIFF_FINAL_JSON!"
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 
 ECHO -
 ECHO 14. final html with diff!
-python dist/mdmtoolsap_bundle.py --program report --inpfile "%DIFF_FINAL_JSON%"
+python "../dist/mdmtoolsap_bundle.py" --program report --inpfile "%DIFF_FINAL_JSON%"
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 
