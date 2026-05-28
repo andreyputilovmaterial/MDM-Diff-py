@@ -160,7 +160,7 @@ def main():
         print('',file=sys.stderr)
         print(f'{STDOUT_COLOR_RED}Error:{STDOUT_COLOR_RESET}',file=sys.stderr)
         print('',file=sys.stderr)
-        print('{STDOUT_COLOR_RED}{e}{STDOUT_COLOR_RESET}',file=sys.stderr)
+        print(f'{STDOUT_COLOR_RED}{e}{STDOUT_COLOR_RESET}',file=sys.stderr)
         print('',file=sys.stderr)
         exit(1)
 
