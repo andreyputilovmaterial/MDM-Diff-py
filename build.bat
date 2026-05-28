@@ -15,23 +15,36 @@ ECHO '''For auto-generated files''' > src\GENERATED\__init__.py
 ECHO # THIS IS AUTO-GENERATED > src\GENERATED\_VERSION.py
 python -c"from datetime import datetime; print(f'# {datetime.now()}')" >> src\GENERATED\_VERSION.py
 ECHO _VERSION = ''' >> src\GENERATED\_VERSION.py
-git describe >> src\GENERATED\_VERSION.py
+git describe --tags --dirty >> src\GENERATED\_VERSION.py
 ECHO ''' >> src\GENERATED\_VERSION.py
 ECHO Done
 
 ECHO -
 ECHO -
-ECHO Re-building html template...
-python src\lib\mdmreadpy\lib\mdmreportpy\build_compiled_template.py
+ECHO Re-building mdd_read program...
+PUSHD src\lib\mdmreadpy
+CALL build.bat
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && exit /b %errorlevel% )
+POPD
+ECHO Done
+
+ECHO -
+ECHO -
+ECHO Re-building html template...
+PUSHD src\lib\mdmreadpy\src\lib\mdmreportpy
+CALL build.bat
+if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && exit /b %errorlevel% )
+python build_compiled_template.py
+if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && exit /b %errorlevel% )
+POPD
 ECHO Done
 
 ECHO -
 ECHO -
 ECHO Produce distributable .py bundle - calling pinliner...
 REM REM :: comment: please delete .pyc files before every call of the mdmtoolsap_bundle - this is implemented in my fork of the pinliner
-@REM python src-make\lib\pinliner\pinliner\pinliner.py src -o dist/mdmtoolsap_bundle.py --verbose
-python src-make\lib\pinliner\pinliner\pinliner.py src -o dist/mdmtoolsap_bundle.py
+@REM python src_dev_build\lib\pinliner\pinliner\pinliner.py src -o dist/mdmtoolsap_bundle.py --verbose
+python src_dev_build\lib\pinliner\pinliner\pinliner.py src -o dist/mdmtoolsap_bundle.py
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && exit /b %errorlevel% )
 ECHO Done
 
@@ -136,8 +149,8 @@ ECHO Done
 
 ECHO -
 ECHO -
-ECHO Bring a copy to ./test/ folder
-COPY .\dist\mdmtoolsap_bundle.py .\tests\current\ 2>nul
+ECHO Bring a copy to ./tests-real-sensitive-data/ folder
+COPY .\dist\mdmtoolsap_bundle.py .\tests-real-sensitive-data\current\ 2>nul
 IF errorlevel 1 (
     ECHO Not updated
 )

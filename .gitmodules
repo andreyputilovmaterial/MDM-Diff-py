@@ -7,8 +7,8 @@
 [submodule "lib/diff-lib"]
 	path = src/diff_older/lib/difflib
 	url = https://github.com/andreyputilovmaterial/diff-lib.git
-[submodule "src-make/pinliner"]
-	path = src-make/lib/pinliner
+[submodule "src_dev_build/pinliner"]
+	path = src_dev_build/lib/pinliner
 	url = https://github.com/The-city-not-present/pinliner.git
 [submodule "src/lib/otherformatsreadpy_metadata/lib/MDM-Syntax-Parser-py"]
 	path = src/lib/otherformatsreadpy_metadata/lib/mdmparser

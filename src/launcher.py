@@ -14,12 +14,12 @@ if __name__ == '__main__':
     from diff_older import diff_obsolete
     import diff
     import diff_print_expected_filename
-    from lib.mdmreadpy import read_mdd
+    from lib.mdmreadpy.src import read_mdd
     from lib.otherformatsreadpy_txt import read as read_txt
     from lib.otherformatsreadpy_general_msmarkitdown import read as read_msmarkitdown
     from lib.otherformatsreadpy_excel import read_excel_entry as read_excel
     from lib.otherformatsreadpy_spss import read as read_spss
-    from lib.mdmreadpy.lib.mdmreportpy.src import report_create as report_html_create
+    from lib.mdmreadpy.src.lib.mdmreportpy.src import report_create as report_html_create
     from lib.mdmexcelreportpy import report_create as report_excel_create
 elif '.' in __name__:
     # package
@@ -27,12 +27,12 @@ elif '.' in __name__:
     from .diff_older import diff_obsolete
     from . import diff
     from . import diff_print_expected_filename
-    from .lib.mdmreadpy import read_mdd
+    from .lib.mdmreadpy.src import read_mdd
     from .lib.otherformatsreadpy_txt import read as read_txt
     from .lib.otherformatsreadpy_general_msmarkitdown import read as read_msmarkitdown
     from .lib.otherformatsreadpy_excel import read_excel_entry as read_excel
     from .lib.otherformatsreadpy_spss import read as read_spss
-    from .lib.mdmreadpy.lib.mdmreportpy.src import report_create as report_html_create
+    from .lib.mdmreadpy.src.lib.mdmreportpy.src import report_create as report_html_create
     from .lib.mdmexcelreportpy import report_create as report_excel_create
 else:
     # included with no parent package
@@ -40,20 +40,21 @@ else:
     from diff_older import diff_obsolete
     import diff
     import diff_print_expected_filename
-    from lib.mdmreadpy import read_mdd
+    from lib.mdmreadpy.src import read_mdd
     from lib.otherformatsreadpy_txt import read as read_txt
     from lib.otherformatsreadpy_general_msmarkitdown import read as read_msmarkitdown
     from lib.otherformatsreadpy_excel import read_excel_entry as read_excel
     from lib.otherformatsreadpy_spss import read as read_spss
-    from lib.mdmreadpy.lib.mdmreportpy.src import report_create as report_html_create
+    from lib.mdmreadpy.src.lib.mdmreportpy.src import report_create as report_html_create
     from lib.mdmexcelreportpy import report_create as report_excel_create
 
 
 
 
-
-# import json, re
-from datetime import datetime, timezone
+# STDOUT_COLOR_RED = "\033[91m"
+STDOUT_COLOR_RED = "\033[31m"
+STDOUT_COLOR_RESET = "\033[0m"
+STDOUT_COLOR_GREEN = "\033[32m"
 
 
 
@@ -89,7 +90,7 @@ def call_report_excel_program(*argcs,**kwargs):
 
 def call_test_program(*argcs,**kwargs):
     msg = '''
-hello, world!
+hello, world! From diff
     '''
     print(msg)
     return True
@@ -157,9 +158,9 @@ def main():
         print('',file=sys.stderr)
         print('',file=sys.stderr)
         print('',file=sys.stderr)
-        print('Error:',file=sys.stderr)
+        print(f'{STDOUT_COLOR_RED}Error:{STDOUT_COLOR_RESET}',file=sys.stderr)
         print('',file=sys.stderr)
-        print('{e}'.format(e=e),file=sys.stderr)
+        print('{STDOUT_COLOR_RED}{e}{STDOUT_COLOR_RESET}',file=sys.stderr)
         print('',file=sys.stderr)
         exit(1)
 

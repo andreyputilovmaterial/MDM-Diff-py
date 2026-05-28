@@ -14,7 +14,7 @@ report.*
 examples/
 
 # Test directories (case-insensitive, any level)
-[Tt]est*/
+tests-real-sensitive-data/
 
 # --- Python artifacts ---
 __pycache__/

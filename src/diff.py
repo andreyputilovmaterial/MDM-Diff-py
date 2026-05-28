@@ -11,7 +11,7 @@ import sys # for error reporting, to print to stderr
 
 if __name__ == '__main__':
     # run as a program
-    from GENERATED._VERSION import _VERSION as diff_script_version
+    from GENERATED._VERSION import _VERSION as script_version
     from diff_engine import diff_functions
     from diff_engine.common_functions import (
         normalize_input_relocate_diff_markers,
@@ -23,7 +23,7 @@ if __name__ == '__main__':
     from helper_assess_difficulty import assess_difficulty
 elif '.' in __name__:
     # package
-    from .GENERATED._VERSION import _VERSION as diff_script_version
+    from .GENERATED._VERSION import _VERSION as script_version
     from .diff_engine import diff_functions
     from .diff_engine.common_functions import (
         normalize_input_relocate_diff_markers,
@@ -35,7 +35,7 @@ elif '.' in __name__:
     from .helper_assess_difficulty import assess_difficulty
 else:
     # included with no parent package
-    from GENERATED._VERSION import _VERSION as diff_script_version
+    from GENERATED._VERSION import _VERSION as script_version
     from diff_engine import diff_functions
     from diff_engine.common_functions import (
         normalize_input_relocate_diff_markers,
@@ -46,6 +46,12 @@ else:
     from helper_make_diff_output_filename import make_output_fname
     from helper_assess_difficulty import assess_difficulty
 
+
+
+# STDOUT_COLOR_RED = "\033[91m"
+STDOUT_COLOR_RED = "\033[31m"
+STDOUT_COLOR_RESET = "\033[0m"
+STDOUT_COLOR_GREEN = "\033[32m"
 
 
 
@@ -396,7 +402,7 @@ def find_diff(data_left,data_right,config):
                                 # row_changed = True
                             
                         except Exception as e:
-                            print(f'ERROR: Something happened when processing column {col}',file=sys.stderr)
+                            print(f'{STDOUT_COLOR_RED}ERROR: Something happened when processing column {col}{STDOUT_COLOR_RESET}',file=sys.stderr)
                             raise e
 
                     row_changed = row_changed or col_any_changed
@@ -413,7 +419,7 @@ def find_diff(data_left,data_right,config):
                         row_count = row_count + 1
                         result_this_section.append(row)
                 except Exception as e:
-                    print(f'ERROR: something happened when processing row {row_name}',file=sys.stderr)
+                    print(f'{STDOUT_COLOR_RED}ERROR: something happened when processing row {row_name}{STDOUT_COLOR_RESET}',file=sys.stderr)
                     raise e
             section_title = section_name
             if section_name in [ item['name'] for item in data_left['sections']]:
@@ -445,7 +451,7 @@ def find_diff(data_left,data_right,config):
                     ]
             result['sections'].append(section_add)
         except Exception as e:
-            print(f'ERROR: something happened when processing section {section_name}',file=sys.stderr)
+            print(f'{STDOUT_COLOR_RED}ERROR: something happened when processing section {section_name}{STDOUT_COLOR_RESET}',file=sys.stderr)
             raise e
     return result
 
@@ -575,8 +581,9 @@ def entry_point(*argcs,**kwargs):
             raise Exception(f'diff: unsupported config option: diff format: "{diff_format}"; you can only use [ {", ".join(fmts_allowed)} ]')
 
     diff_config = {
+        'script_name': script_name,
         'script_started': time_start,
-        'script_version': diff_script_version.strip(),
+        'script_version': script_version.strip(),
         'format': diff_format,
         'inp_filename_left': inp_filename_left,
         'inp_filename_right': inp_filename_right,
@@ -654,7 +661,7 @@ def entry_point(*argcs,**kwargs):
         result_final_fname = report_filename_pathpart / report_filename_filenamepart
     
     if args.norun_special_onlyprintoutputfilename:
-        print(f'\033[31mUse of --norun-special-onlyprintoutputfilename flag is deprecated: Please use --program diff_print_expected_filename instead!\033[0m',file=sys.stderr)
+        print(f'{STDOUT_COLOR_RED}Use of --norun-special-onlyprintoutputfilename flag is deprecated: Please use --program diff_print_expected_filename instead!{STDOUT_COLOR_RESET}',file=sys.stderr)
         print(result_final_fname)
         exit(0)
 
@@ -682,18 +689,18 @@ def entry_point(*argcs,**kwargs):
                 # can happen if the tool is started two times in parallel and it is writing to the same json simultaneously
                 raise Exception(f'Diff: Can\'t read right file as JSON: {e}') from e
     
-    print('{script_name}: script started at {dt}'.format(dt=time_start,script_name=script_name))
+    print(f'{script_name}: script started at {time_start}')
 
     result = find_diff(data_left,data_right,diff_config)
     
     result_json = json.dumps(result, indent=4)
 
-    print('{script_name}: saving as "{fname}"'.format(fname=result_final_fname,script_name=script_name))
+    print(f'{script_name}: {STDOUT_COLOR_GREEN}saving as "{result_final_fname}"{STDOUT_COLOR_RESET}')
     with open(result_final_fname, "w") as outfile:
         outfile.write(result_json)
 
     time_finish = datetime.now()
-    print('{script_name}: finished at {dt} (elapsed {duration})'.format(dt=time_finish,duration=time_finish-time_start,script_name=script_name))
+    print(f'{script_name}: finished at {time_finish} (elapsed {time_finish-time_start})')
 
 
 
