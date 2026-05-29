@@ -192,7 +192,7 @@ def find_diff(data_left,data_right,config):
         'source_file_metadata': [
             { 'name': 'source_left',  'value': f'{config["inp_filename_left"]}'  },
             { 'name': 'source_right', 'value': f'{config["inp_filename_right"]}' },
-            { 'name': 'generated with mdmtoolsap-diff script version', 'value': f'{config.get("script_version")}' },
+            { 'name': 'generated with mdmtoolsap-diff script version', 'value': f'{config.get("script_version")}', 'role':'sronly' },
         ],
         'report_scheme': {
             'columns': columns_list_combined_global,
