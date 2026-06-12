@@ -15,6 +15,7 @@ if __name__ == '__main__':
     import diff
     import diff_print_expected_filename
     from lib.mdmreadpy.src import read_mdd
+    from lib.mddtoschema.src import build_schema as mdd_to_schema
     from lib.otherformatsreadpy_txt import read as read_txt
     from lib.otherformatsreadpy_general_msmarkitdown import read as read_msmarkitdown
     from lib.otherformatsreadpy_excel import read_excel_entry as read_excel
@@ -28,6 +29,7 @@ elif '.' in __name__:
     from . import diff
     from . import diff_print_expected_filename
     from .lib.mdmreadpy.src import read_mdd
+    from .lib.mddtoschema.src import build_schema as mdd_to_schema
     from .lib.otherformatsreadpy_txt import read as read_txt
     from .lib.otherformatsreadpy_general_msmarkitdown import read as read_msmarkitdown
     from .lib.otherformatsreadpy_excel import read_excel_entry as read_excel
@@ -41,6 +43,7 @@ else:
     import diff
     import diff_print_expected_filename
     from lib.mdmreadpy.src import read_mdd
+    from lib.mddtoschema.src import build_schema as mdd_to_schema
     from lib.otherformatsreadpy_txt import read as read_txt
     from lib.otherformatsreadpy_general_msmarkitdown import read as read_msmarkitdown
     from lib.otherformatsreadpy_excel import read_excel_entry as read_excel
@@ -69,6 +72,9 @@ def call_diff_filename_program(*argcs,**kwargs):
 
 def call_read_mdd_program(*argcs,**kwargs):
     return read_mdd.entry_point(*argcs,**kwargs)
+
+def call_build_schema_program(*argcs,**kwargs):
+    return mdd_to_schema.entry_point(*argcs,**kwargs)
 
 def call_read_excel_program(*argcs,**kwargs):
     return read_excel.entry_point({'arglist_strict':False})
@@ -109,6 +115,7 @@ run_programs = {
     'diff_print_expected_filename': call_diff_filename_program,
     'diff_obsolete': call_diff_obsolete_program,
     'read_mdd': call_read_mdd_program,
+    'mdd_to_schema': call_build_schema_program,
     'read_txt': call_read_txt_program,
     'read_excel': call_read_excel_program,
     'read_spss': call_read_spss_program,

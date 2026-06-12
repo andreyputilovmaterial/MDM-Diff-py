@@ -1,6 +1,3 @@
-[submodule "lib/MDM-HTMLReport-py"]
-	path = lib/MDM-HTMLReport-py
-	url = https://github.com/andreyputilovmaterial/MDM-HTMLReport-py.git
 [submodule "lib/MDD-read-py"]
 	path = src/lib/mdmreadpy
 	url = https://github.com/andreyputilovmaterial/MDD-read-py.git
@@ -19,3 +16,6 @@
 [submodule "src/lib/mdmexcelreportpy"]
 	path = src/lib/mdmexcelreportpy
 	url = https://github.com/andreyputilovmaterial/MDM-ExcelReport-py.git
+[submodule "src/lib/mddtoschema"]
+	path = src/lib/mddtoschema
+	url = https://github.com/andreyputilovmaterial/MDM-ToSchema-py.git
