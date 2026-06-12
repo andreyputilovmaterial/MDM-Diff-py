@@ -15,7 +15,7 @@ if __name__ == '__main__':
     import diff
     import diff_print_expected_filename
     from lib.mdmreadpy.src import read_mdd
-    from lib.mddtoschema.src import build_schema as mdd_to_schema
+    from lib.mddtoschema.src import read_mdd as mdd_to_schema
     from lib.otherformatsreadpy_txt import read as read_txt
     from lib.otherformatsreadpy_general_msmarkitdown import read as read_msmarkitdown
     from lib.otherformatsreadpy_excel import read_excel_entry as read_excel
@@ -29,7 +29,7 @@ elif '.' in __name__:
     from . import diff
     from . import diff_print_expected_filename
     from .lib.mdmreadpy.src import read_mdd
-    from .lib.mddtoschema.src import build_schema as mdd_to_schema
+    from .lib.mddtoschema.src import read_mdd as mdd_to_schema
     from .lib.otherformatsreadpy_txt import read as read_txt
     from .lib.otherformatsreadpy_general_msmarkitdown import read as read_msmarkitdown
     from .lib.otherformatsreadpy_excel import read_excel_entry as read_excel
@@ -43,7 +43,7 @@ else:
     import diff
     import diff_print_expected_filename
     from lib.mdmreadpy.src import read_mdd
-    from lib.mddtoschema.src import build_schema as mdd_to_schema
+    from lib.mddtoschema.src import read_mdd as mdd_to_schema
     from lib.otherformatsreadpy_txt import read as read_txt
     from lib.otherformatsreadpy_general_msmarkitdown import read as read_msmarkitdown
     from lib.otherformatsreadpy_excel import read_excel_entry as read_excel
