@@ -135,5 +135,16 @@ IF errorlevel 1 (
 
 ECHO -
 ECHO -
+ECHO Bring LICENSE, README.md and requirements.txt to dist...
+IF NOT EXIST requirements.txt (
+    ECHO # Runtime dependencies, one per line. > requirements.txt
+)
+COPY /Y LICENSE dist\LICENSE
+COPY /Y README.md dist\README.md
+COPY /Y requirements.txt dist\requirements.txt
+ECHO Done
+
+ECHO -
+ECHO -
 ECHO All done, the end
 
