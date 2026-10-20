@@ -62,7 +62,7 @@ STDOUT_COLOR_GREEN = "\033[32m"
 
 
 def call_diff_obsolete_program(*argcs,**kwargs):
-    return diff_obsolete.entry_point({'arglist_strict':False})
+    return diff_obsolete.entry_point(*argcs,**kwargs)
 
 def call_diff_program(*argcs,**kwargs):
     return diff.entry_point(*argcs,**kwargs)
@@ -77,22 +77,22 @@ def call_build_schema_program(*argcs,**kwargs):
     return mdd_to_schema.entry_point(*argcs,**kwargs)
 
 def call_read_excel_program(*argcs,**kwargs):
-    return read_excel.entry_point({'arglist_strict':False})
+    return read_excel.entry_point(*argcs,**kwargs)
 
 def call_read_spss_program(*argcs,**kwargs):
-    return read_spss.entry_point({'arglist_strict':False})
+    return read_spss.entry_point(*argcs,**kwargs)
 
 def call_read_txt_program(*argcs,**kwargs):
-    return read_txt.entry_point({'arglist_strict':False})
+    return read_txt.entry_point(*argcs,**kwargs)
 
 def call_read_msmarkitdown_program(*argcs,**kwargs):
-    return read_msmarkitdown.entry_point({'arglist_strict':False})
+    return read_msmarkitdown.entry_point(*argcs,**kwargs)
 
 def call_report_html_program(*argcs,**kwargs):
     return report_html_create.entry_point(*argcs,**kwargs)
 
 def call_report_excel_program(*argcs,**kwargs):
-    return report_excel_create.entry_point({'arglist_strict':False})
+    return report_excel_create.entry_point(*argcs,**kwargs)
 
 def call_test_program(*argcs,**kwargs):
     msg = '''

@@ -2,6 +2,7 @@ from pathlib import Path
 import re
 import argparse
 import json
+import traceback, sys
 from datetime import datetime, timezone
 
 import pandas as pd
@@ -25,6 +26,12 @@ try:
     import pyreadstat
 except Exception as e:
     import_error = e
+
+
+# STDOUT_COLOR_RED = "\033[91m"
+STDOUT_COLOR_RED = "\033[31m"
+STDOUT_COLOR_RESET = "\033[0m"
+STDOUT_COLOR_GREEN = "\033[32m"
 
 
 CONFIG_ATTRS_NOTPRINTININTRO = [
@@ -225,109 +232,127 @@ def read(file_data,config={}):
     return result
 
 
-def entry_point(config={}):
-    def arg_str2bool(value):
-        if isinstance(value,bool):
-            return value
-        elif isinstance(value,int) or isinstance(value,float):
-            return not not value
-        elif re.match(r'^\s*?$',value,flags=re.I|re.DOTALL):
-            return False
-        elif re.match(r'^\s*?(?:true|1|yes)\s*?$',value,flags=re.I|re.DOTALL):
-            return True
-        elif re.match(r'^\s*?(?:false|0|no)\s*?$',value,flags=re.I|re.DOTALL):
-            return False
-        else:
-            try:
-                value = int(value)
+def entry_point(*argcs,**kwargs):
+    try:
+        def arg_str2bool(value):
+            if isinstance(value,bool):
+                return value
+            elif isinstance(value,int) or isinstance(value,float):
                 return not not value
-            except:
-                pass
-            try:
-                value = float(value)
-                return not not value
-            except:
-                pass
-                return not not value
-    time_start = datetime.now()
-    parser = argparse.ArgumentParser(
-        description="Create a JSON suitable for mdmtoolsap tool, reading a file as spss",
-        prog='mdmtoolsap --program read_spss'
-    )
-    parser.add_argument(
-        '--inpfile',
-        help='Input file',
-        type=str,
-        required=True
-    )
-    parser.add_argument(
-        '--config-read-variables',
-        help='Config option: include info about the variables',
-        type=arg_str2bool,
-        default=True,
-        required=False
-    )
-    parser.add_argument(
-        '--config-read-value-labels',
-        help='Config option: include info about the variables',
-        type=arg_str2bool,
-        default=True,
-        required=False
-    )
-    parser.add_argument(
-        '--config-read-data',
-        help='Config option: include data (can be slow, or very slow, even on smallest projects)',
-        type=arg_str2bool,
-        default=False,
-        required=False
-    )
-    parser.add_argument(
-        '--id-key',
-        help='SPSS variable used as an ID',
-        type=str,
-        required=False
-    )
-    parser.add_argument(
-        '--config-display-label-style',
-        help='Holds what to show: variable name, label, or a combination. Possible values are "name", "label", "combination"',
-        type=str,
-        required=False
-    )
-    args = None
-    args_rest = None
-    if( ('arglist_strict' in config) and (not config['arglist_strict']) ):
-        args, args_rest = parser.parse_known_args()
-    else:
-        args = parser.parse_args()
-    
-    inp_file = Path(args.inpfile)
-    inp_file = '{inp_file}'.format(inp_file=inp_file.resolve())
-    if not(Path(inp_file).is_file()):
-        raise FileNotFoundError('file not found: {fname}'.format(fname=inp_file))
-    
-    config_spss_reader = {
-        'read_variables': args.config_read_variables,
-        'read_value_labels': args.config_read_value_labels,
-        'read_data': args.config_read_data,
-    }
-    if args.id_key:
-        config_spss_reader['id_key'] = args.id_key
-    if args.config_display_label_style:
-        config['display_label_style'] = args.config_display_label_style
-        if not config['display_label_style'] in ['name','label','combination']:
-            raise Exception('--config-display-label-style param can only be of one of the following: "name", "label", "combination", but received "{s}"'.format(s=config['display_label_style']))
+            elif re.match(r'^\s*?$',value,flags=re.I|re.DOTALL):
+                return False
+            elif re.match(r'^\s*?(?:true|1|yes)\s*?$',value,flags=re.I|re.DOTALL):
+                return True
+            elif re.match(r'^\s*?(?:false|0|no)\s*?$',value,flags=re.I|re.DOTALL):
+                return False
+            else:
+                try:
+                    value = int(value)
+                    return not not value
+                except:
+                    pass
+                try:
+                    value = float(value)
+                    return not not value
+                except:
+                    pass
+                    return not not value
+        time_start = datetime.now()
+        parser = argparse.ArgumentParser(
+            description="Create a JSON suitable for mdmtoolsap tool, reading a file as spss",
+            prog='mdmtoolsap --program read_spss'
+        )
+        parser.add_argument(
+            '--inpfile',
+            help='Input file',
+            type=str,
+            required=True
+        )
+        parser.add_argument(
+            '--config-read-variables',
+            help='Config option: include info about the variables',
+            type=arg_str2bool,
+            default=True,
+            required=False
+        )
+        parser.add_argument(
+            '--config-read-value-labels',
+            help='Config option: include info about the variables',
+            type=arg_str2bool,
+            default=True,
+            required=False
+        )
+        parser.add_argument(
+            '--config-read-data',
+            help='Config option: include data (can be slow, or very slow, even on smallest projects)',
+            type=arg_str2bool,
+            default=False,
+            required=False
+        )
+        parser.add_argument(
+            '--id-key',
+            help='SPSS variable used as an ID',
+            type=str,
+            required=False
+        )
+        parser.add_argument(
+            '--config-display-label-style',
+            help='Holds what to show: variable name, label, or a combination. Possible values are "name", "label", "combination"',
+            type=str,
+            required=False
+        )
+        # args = None
+        # args_rest = None
+        # if( ('arglist_strict' in config) and (not config['arglist_strict']) ):
+        #     args, args_rest = parser.parse_known_args()
+        # else:
+        args = parser.parse_args(*argcs,**kwargs)
 
-    print('reading file: opening {fname}, script started at {dt}'.format(dt=time_start,fname=inp_file))
+        inp_file = Path(args.inpfile)
+        inp_file = '{inp_file}'.format(inp_file=inp_file.resolve())
+        if not(Path(inp_file).is_file()):
+            raise FileNotFoundError('file not found: {fname}'.format(fname=inp_file))
 
-    data = read({'filename':inp_file},config=config_spss_reader)
+        config_spss_reader = {
+            'read_variables': args.config_read_variables,
+            'read_value_labels': args.config_read_value_labels,
+            'read_data': args.config_read_data,
+        }
+        if args.id_key:
+            config_spss_reader['id_key'] = args.id_key
+        if args.config_display_label_style:
+            if not args.config_display_label_style in ['name','label','combination']:
+                raise Exception('--config-display-label-style param can only be of one of the following: "name", "label", "combination", but received "{s}"'.format(s=args.config_display_label_style))
 
-    result_json_fname = ( Path(inp_file).parents[0] / '{basename}{ext}'.format(basename=Path(inp_file).name,ext='.json') if Path(inp_file).is_file() else re.sub(r'^\s*?(.*?)\s*?$',lambda m: '{base}{added}'.format(base=m[1],added='.json'),'{path}'.format(path=inp_file)) )
-    print('reading file: saving as "{fname}"'.format(fname=result_json_fname))
-    outfile = open(result_json_fname, 'w')
-    outfile.write(json.dumps(data, indent=4))
+        print('reading file: opening {fname}, script started at {dt}'.format(dt=time_start,fname=inp_file))
 
-    time_finish = datetime.now()
-    print('reading file: finished at {dt} (elapsed {duration})'.format(dt=time_finish,duration=time_finish-time_start))
+        data = read({'filename':inp_file},config=config_spss_reader)
 
+        result_json_fname = ( Path(inp_file).parents[0] / '{basename}{ext}'.format(basename=Path(inp_file).name,ext='.json') if Path(inp_file).is_file() else re.sub(r'^\s*?(.*?)\s*?$',lambda m: '{base}{added}'.format(base=m[1],added='.json'),'{path}'.format(path=inp_file)) )
+        print(f'reading file: {STDOUT_COLOR_GREEN}saving as "{result_json_fname}"{STDOUT_COLOR_RESET}')
+        outfile = open(result_json_fname, 'w')
+        outfile.write(json.dumps(data, indent=4))
+
+        time_finish = datetime.now()
+        print('reading file: finished at {dt} (elapsed {duration})'.format(dt=time_finish,duration=time_finish-time_start))
+    except Exception as e:
+        # the program is designed to be user-friendly
+        # that's why we reformat error messages a little bit
+        # stack trace is still printed (I even made it longer to 20 steps!)
+        # but the error message itself is separated and printed as the last message again
+
+        # for example, I don't write "print('File Not Found!');exit(1);", I just write "raise FileNotFoundErro()"
+        print('',file=sys.stderr)
+        print('Stack trace:',file=sys.stderr)
+        print('',file=sys.stderr)
+        traceback.print_exception(e,limit=20)
+        print('',file=sys.stderr)
+        print('',file=sys.stderr)
+        print('',file=sys.stderr)
+        print(f'{STDOUT_COLOR_RED}Error:{STDOUT_COLOR_RESET}',file=sys.stderr)
+        print('',file=sys.stderr)
+        print(f'{STDOUT_COLOR_RED}{e}{STDOUT_COLOR_RESET}',file=sys.stderr)
+        print('',file=sys.stderr)
+        exit(1)
 if __name__ == '__main__':
-    entry_point({'arglist_strict':True})
+    entry_point()
