@@ -19,17 +19,19 @@ import block instead of a single import style:
 
 ```python
 if __name__ == '__main__':
-    # run as a program, e.g. `python src/diff.py`
-    from diff_engine import diff_functions
+    # run as a program, e.g. `python src/entry_point.py`
+    from sibling_module import some_function
 elif '.' in __name__:
     # imported as a package member
-    from .diff_engine import diff_functions
+    from .sibling_module import some_function
 else:
     # included in the pinliner bundle with no parent package
-    from diff_engine import diff_functions
+    from sibling_module import some_function
 ```
 
-Examples: `src/launcher.py`, `src/diff.py`. Any script that is meant to be launched
+The module and function names above are illustrative — replace them with the real
+sibling module of your entry point. In this repo the scripts that follow this pattern
+are `src/launcher.py` and `src/read_mdd.py`. Any script that is meant to be launched
 directly should use this pattern; every other module (the ones that are only ever
 imported) uses plain relative imports.
 
@@ -49,15 +51,34 @@ string, or anything that is not a python module, etc.) cannot be used as-is in t
 This is a slightly circular workflow: the build script *generates* code that the real
 source modules import. Not entirely clean, but it solves the pinliner bundling problem.
 
-Existing examples in this repo:
+Existing example in this repo:
 
-- `build.bat` / `Makefile` run `git describe --tags --dirty` (a non-Python "static
-  asset") and write the result into `src/GENERATED/_VERSION.py` as the `_VERSION`
-  variable.
-- `build_compiled_template.py` reads the HTML/CSS/JS files under
-  `src/lib/mdmreadpy/src/lib/mdmreportpy/src/templates/` and writes their contents as
-  string literals into `src/lib/mdmreadpy/src/lib/mdmreportpy/src/GENERATED/TEMPLATE.py`,
-  which `report_create.py` imports when running inside the pinliner bundle.
+- `build.bat` runs `git describe --tags --dirty` (a non-Python "static asset") and
+  writes the result into `src/GENERATED/_VERSION.py` as the `_VERSION` variable, which
+  `src/launcher.py` and `src/read_mdd.py` import.
+
+### Embedding larger static assets (illustrative)
+
+The same technique scales to larger static assets such as HTML/CSS/JS templates. The
+concrete files below are for illustration only — a report generator would implement it
+like this:
+
+- **Development time:** a `*_html_template.py` module loads the files under a
+  `src/templates/` directory with `importlib.resources` and minifies them in memory.
+- **Build time:** a `build_compiled_template.py` script imports the source package, then
+  writes the assembled strings as literals into `src/GENERATED/TEMPLATE.py`.
+- **Runtime inside the pinliner bundle:** the module that needs the templates first
+  tries to import the source `*_html_template` module; when that fails (a bundle has no
+  filesystem resource files) it falls back to
+  `from GENERATED import TEMPLATE as html_template`.
+
+(The vendored `mdmreportpy` submodule under `src/lib/mdmreportpy/` is a concrete
+instance of this pattern in this repo.)
+
+Note: `importlib.resources` references such as `resources.files("src.templates")` and
+build-time imports such as `from src import ...` hardcode the package name (`src` in
+this repo). That is part of the technique, but it means the subtree is not relocatable
+under a different package name without updating those references.
 
 ## When inspecting source code
 
