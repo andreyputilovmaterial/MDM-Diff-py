@@ -21,7 +21,7 @@ if __name__ == '__main__':
     from lib.otherformatsreadpy_excel import read_excel_entry as read_excel
     from lib.otherformatsreadpy_spss import read as read_spss
     from lib.mdmreadpy.src.lib.mdmreportpy.src import report_create as report_html_create
-    from lib.mdmexcelreportpy import report_create as report_excel_create
+    from lib.mdmexcelreportpy.src import report_create as report_excel_create
 elif '.' in __name__:
     # package
     from .GENERATED._VERSION import _VERSION as diff_script_version
@@ -35,7 +35,7 @@ elif '.' in __name__:
     from .lib.otherformatsreadpy_excel import read_excel_entry as read_excel
     from .lib.otherformatsreadpy_spss import read as read_spss
     from .lib.mdmreadpy.src.lib.mdmreportpy.src import report_create as report_html_create
-    from .lib.mdmexcelreportpy import report_create as report_excel_create
+    from .lib.mdmexcelreportpy.src import report_create as report_excel_create
 else:
     # included with no parent package
     from GENERATED._VERSION import _VERSION as diff_script_version
@@ -49,7 +49,7 @@ else:
     from lib.otherformatsreadpy_excel import read_excel_entry as read_excel
     from lib.otherformatsreadpy_spss import read as read_spss
     from lib.mdmreadpy.src.lib.mdmreportpy.src import report_create as report_html_create
-    from lib.mdmexcelreportpy import report_create as report_excel_create
+    from lib.mdmexcelreportpy.src import report_create as report_excel_create
 
 
 
