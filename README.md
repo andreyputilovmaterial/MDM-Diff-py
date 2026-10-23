@@ -50,3 +50,9 @@ There is a script, build.bat
 You need pinliner to run this, but the version found on internet was not working well for me. I made certain fixes, please use my personal pinliner version (inluded in src-make folder, so this is a part of the distribution).
 
 Everything else that is going on can be clearly found in the build.bat script - the bundle created is renamed to mdmtoolsap_bundle, couple more lines are added to get it running, the bat files are renamed, and the path to bundle is changed to mdmtoolsap_bundle within those bat files. Results are in dist/ subdirectory.
+
+## Documentation
+
+- [Architecture](docs/architecture.md) — stable overview of the toolchain and how the
+  readers, diff, and reporters fit together.
+
