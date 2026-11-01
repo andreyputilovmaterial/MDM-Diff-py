@@ -33,6 +33,21 @@ MDD A --mdmreadpy--> JSON A --\
 MDD B --mdmreadpy--> JSON B --/
 ```
 
+## Data format — source of truth
+
+The **report JSON format** and the **rich-text content format** are specified once, in
+`mdmreportpy`, and are the master definition for the whole toolchain:
+
+- `src/lib/mdmreadpy/src/lib/mdmreportpy/docs/report-json-format.md` — the JSON
+  "report" shape.
+- `src/lib/mdmreadpy/src/lib/mdmreportpy/docs/rich-text-format.md` — cell / header
+  content shapes and `role` semantics.
+
+Every reader (the MDD reader and the `otherformatsreadpy_*` readers), the diff tool
+(`src/diff.py` / `src/diff_engine`), and every reporter (`mdmreportpy`,
+`mdmexcelreportpy`) defer to those two files. Per-tool docs may describe their own
+producer/consumer view, but the two files above are authoritative for the common shape.
+
 ## Submodules (`.gitmodules`)
 
 | Path | Purpose | Remote |

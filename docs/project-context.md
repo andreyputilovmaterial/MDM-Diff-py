@@ -79,6 +79,11 @@ Static assets (HTML/CSS/JS templates, the git `_VERSION` string) are embedded vi
   FAQ).
 - **JSON is the interchange format.** Readers emit JSON; reporters consume it. The
   intermediate `.json` files are normally deleted after execution in the shipped BATs.
+- **Source of truth for the data format is `mdmreportpy`.** The report JSON format and
+  the rich-text content format are defined once, in
+  `src/lib/mdmreadpy/src/lib/mdmreportpy/docs/report-json-format.md` and
+  `.../docs/rich-text-format.md`. All readers, the diff tool, and all reporters defer to
+  those files as the master definition.
 - **Portability constraints** (see `.clinerules/02-python-portability.md`): relative
   imports, `__init__.py` everywhere, no runtime static assets, minimal dependencies.
 - **Windows/COM only for MDD input.** Reading MDDs requires IBM/Unicom Professional;
@@ -93,6 +98,12 @@ Static assets (HTML/CSS/JS templates, the git `_VERSION` string) are embedded vi
   helpers live in `src/common_functions.py`. Breaking change: the `--disable-plugin`
   values were renamed to `mdd_combine_attributes`, `mdd_validate_labels`,
   `diff_add_classes`, `page_wrap_tables_for_memory_saving`.
+- **Non-standard properties on rich-text segments.** Rich-text segments (`text`/`parts`
+  plus a `role`) may carry extra, non-standard properties. They must not be a blocker
+  in any tool (HTML report, diff, Excel, …) and must not become visible text in the
+  HTML report, but they are **not guaranteed** to be preserved, interpreted, or diffed
+  meaningfully — e.g. `role` is not semantically diffable. See
+  `mdmreportpy/docs/rich-text-format.md`.
 
 ## 5. Repository rules
 
@@ -107,7 +118,9 @@ Static assets (HTML/CSS/JS templates, the git `_VERSION` string) are embedded vi
 1. Introduce `docs/project-context.md` (this file) and the read/update convention at
    root and in the `mdmreadpy` / `mdmreportpy` submodules. *(this step)*
 2. Align the JSON format between `mdmreadpy` (producer) and `mdmreportpy` (consumer) —
-   the output spec of the former should be the input spec of the latter.
+   the output spec of the former should be the input spec of the latter. The source of
+   truth for this alignment is `mdmreportpy`'s `docs/report-json-format.md` and
+   `docs/rich-text-format.md`.
 3. Add tests around the JSON shaping / reporting pure functions.
    *(Partial: `mdmreadpy` has `tests/test_row_name_maker.py`; `mdmreportpy` now has
    `tests/test_common_functions.py` and `tests/test_backend_plugins.py`.)*
@@ -122,8 +135,9 @@ Static assets (HTML/CSS/JS templates, the git `_VERSION` string) are embedded vi
 
 ## 7. Open questions
 
-- Exact final list of report cell-content shapes and `role` values (being formalized in
-  `mdmreportpy/docs/project-context.md`).
+- Exact final list of report cell-content shapes and `role` values (now drafted in
+  `mdmreportpy/docs/rich-text-format.md`; still to be validated against real producer
+  output).
 - Whether `ms markitdown`'s heavy dependency set should remain optional/vendored (see
   root `README.md`).
 - Whether rich-text `column_headers` should be *produced* by readers (e.g. `mdmreadpy`

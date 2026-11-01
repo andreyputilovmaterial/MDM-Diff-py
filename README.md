@@ -55,4 +55,11 @@ Everything else that is going on can be clearly found in the build.bat script - 
 
 - [Architecture](docs/architecture.md) — stable overview of the toolchain and how the
   readers, diff, and reporters fit together.
+- **Source of truth for the data format** — the report JSON format and the rich-text
+  format are defined once, in `mdmreportpy`
+  ([`src/lib/mdmreadpy/src/lib/mdmreportpy/docs/report-json-format.md`](src/lib/mdmreadpy/src/lib/mdmreportpy/docs/report-json-format.md)
+  and
+  [`.../docs/rich-text-format.md`](src/lib/mdmreadpy/src/lib/mdmreportpy/docs/rich-text-format.md)).
+  Every reader, the diff tool, and every reporter defer to those two files as the master
+  definition.
 
