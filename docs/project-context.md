@@ -4,6 +4,8 @@
 > Status: `mdmreportpy` backend plugins extracted to `src/plugins/` with a uniform
 > hook contract; sanitization helpers extracted to `src/common_functions.py`; tests
 > added. NOTE: `--disable-plugin` backend plugin names changed.
+> (2026-11-02) Decision: rich-text (`parts`/`role`) `column_headers` are supported in
+> the common JSON shape; the diff tool needs a follow-up to pass them through (see §6).
 >
 > **Convention:** read this file at the start of every task and update it at the end,
 > so it stays the permanently updated context of the current work (see
@@ -109,6 +111,14 @@ Static assets (HTML/CSS/JS templates, the git `_VERSION` string) are embedded vi
 3. Add tests around the JSON shaping / reporting pure functions.
    *(Partial: `mdmreadpy` has `tests/test_row_name_maker.py`; `mdmreportpy` now has
    `tests/test_common_functions.py` and `tests/test_backend_plugins.py`.)*
+4. **Rich-text `column_headers` in the diff tool — need/plan, no implementation yet.**
+   *(Decision 2026-11-02: the common JSON shape supports rich-text `column_headers`
+   (`parts`/`role`) like cell values.)* `src/diff.py` (plus `src/diff_engine` /
+   `src/diff_older`) currently stringifies header values with f-strings
+   (`f'{header}'`, `f'{header} (Left file)'`), which flattens any list/dict into its
+   Python `repr`. It must be changed to pass rich-text values through unchanged and to
+   append the `(Left file)` / `(Right file)` suffix as a separate `part` (or a role)
+   rather than concatenating strings.
 
 ## 7. Open questions
 
@@ -116,3 +126,6 @@ Static assets (HTML/CSS/JS templates, the git `_VERSION` string) are embedded vi
   `mdmreportpy/docs/project-context.md`).
 - Whether `ms markitdown`'s heavy dependency set should remain optional/vendored (see
   root `README.md`).
+- Whether rich-text `column_headers` should be *produced* by readers (e.g. `mdmreadpy`
+  translation headers) or only *accepted* by reporters, and which custom `role` values
+  reporters should render specially.
