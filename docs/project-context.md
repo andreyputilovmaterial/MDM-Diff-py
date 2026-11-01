@@ -1,7 +1,7 @@
 # Project Context — MDM-Diff-py
 
-> Last updated: 2026-10-23
-> Status: initial capture for the root repository.
+> Last updated: 2026-11-01
+> Status: row-name convention added in `mdmreadpy`; consumer list extended with URLs.
 >
 > **Convention:** read this file at the start of every task and update it at the end,
 > so it stays the permanently updated context of the current work (see
@@ -39,6 +39,8 @@ Every reader produces the same JSON "report" shape, and every reporter consumes 
 - **The canonical JSON consumer / HTML reporter** is
   `src/lib/mdmreadpy/src/lib/mdmreportpy` (`report_create.py`); Excel export lives in
   `src/lib/mdmexcelreportpy`.
+- **Translation overlay helper** — `MDM-TranslationOverlayHelper`
+  (<https://github.com/andreyputilovmaterial/MDM-TranslationOverlayHelper.git>).
 - **Diffing** lives in `src/diff_engine` (current) and `src/diff_older` (legacy).
 - **`src/launcher.py`** is the universal dispatcher (`--program ...`) used by the
   bundled `mdmtoolsap_bundle.py`.
@@ -47,14 +49,14 @@ Every reader produces the same JSON "report" shape, and every reporter consumes 
 
 Submodules (see `.gitmodules`):
 
-| Path | Purpose |
-| --- | --- |
-| `src/lib/mdmreadpy` | Read MDD → JSON (Windows + IBM/Unicom Professional). |
-| `src/lib/mdmreadpy/src/lib/mdmreportpy` | JSON → HTML report. |
-| `src/lib/mdmexcelreportpy` | JSON → Excel. |
-| `src/lib/mddtoschema` | MDD → JSON schema. |
-| `src/lib/otherformatsreadpy_*` | Other readers (excel, spss, txt, metadata, ms markitdown). |
-| `src_dev_build/lib/pinliner` | Single-file bundling. |
+| Path | Purpose | Remote |
+| --- | --- | --- |
+| `src/lib/mdmreadpy` | Read MDD → JSON (Windows + IBM/Unicom Professional). | <https://github.com/andreyputilovmaterial/MDD-read-py.git> |
+| `src/lib/mdmreadpy/src/lib/mdmreportpy` | JSON → HTML report. | <https://github.com/andreyputilovmaterial/MDM-HTMLReport-py.git> |
+| `src/lib/mdmexcelreportpy` | JSON → Excel. | <https://github.com/andreyputilovmaterial/MDM-ExcelReport-py.git> |
+| `src/lib/mddtoschema` | MDD → JSON schema. | <https://github.com/andreyputilovmaterial/MDM-ToSchema-py.git> |
+| `src/lib/otherformatsreadpy_*` | Other readers (excel, spss, txt, metadata, ms markitdown). | — |
+| `src_dev_build/lib/pinliner` | Single-file bundling. | <https://github.com/The-city-not-present/pinliner.git> |
 
 ## 3. Build & distribution
 
@@ -77,6 +79,11 @@ Static assets (HTML/CSS/JS templates, the git `_VERSION` string) are embedded vi
   imports, `__init__.py` everywhere, no runtime static assets, minimal dependencies.
 - **Windows/COM only for MDD input.** Reading MDDs requires IBM/Unicom Professional;
   all other formats are platform-independent.
+- **Row names are configurable.** `mdmreadpy` builds each row's `name` via a pluggable
+  row-name convention (`--config-row-name-convention ap|mdm`; see `mdmreadpy`'s README/docs).
+  The active convention is recorded in `report_scheme.flags` as
+  `mdmreadpy:config:row-name-convention:<name>`. The default (`ap`) uses a `.`
+  separator, which the diff tool relies on for hierarchical grouping.
 
 ## 5. Repository rules
 
@@ -93,7 +100,7 @@ Static assets (HTML/CSS/JS templates, the git `_VERSION` string) are embedded vi
 2. Align the JSON format between `mdmreadpy` (producer) and `mdmreportpy` (consumer) —
    the output spec of the former should be the input spec of the latter.
 3. Add tests around the JSON shaping / reporting pure functions (currently no automated
-   tests anywhere).
+   tests anywhere). *(Partial: `mdmreadpy` now has `tests/test_row_name_maker.py`.)*
 
 ## 7. Open questions
 
