@@ -1,7 +1,9 @@
 # Project Context — MDM-Diff-py
 
-> Last updated: 2026-11-01
-> Status: row-name convention added in `mdmreadpy`; consumer list extended with URLs.
+> Last updated: 2026-11-02
+> Status: `mdmreportpy` backend plugins extracted to `src/plugins/` with a uniform
+> hook contract; sanitization helpers extracted to `src/common_functions.py`; tests
+> added. NOTE: `--disable-plugin` backend plugin names changed.
 >
 > **Convention:** read this file at the start of every task and update it at the end,
 > so it stays the permanently updated context of the current work (see
@@ -84,6 +86,11 @@ Static assets (HTML/CSS/JS templates, the git `_VERSION` string) are embedded vi
   The active convention is recorded in `report_scheme.flags` as
   `mdmreadpy:config:row-name-convention:<name>`. The default (`ap`) uses a `.`
   separator, which the diff tool relies on for hierarchical grouping.
+- **`mdmreportpy` backend plugins** are isolated in `src/plugins/` with a uniform
+  contract (`PluginContext` + named hook points + `run_plugins`), and sanitization
+  helpers live in `src/common_functions.py`. Breaking change: the `--disable-plugin`
+  values were renamed to `mdd_combine_attributes`, `mdd_validate_labels`,
+  `diff_add_classes`, `page_wrap_tables_for_memory_saving`.
 
 ## 5. Repository rules
 
@@ -99,8 +106,9 @@ Static assets (HTML/CSS/JS templates, the git `_VERSION` string) are embedded vi
    root and in the `mdmreadpy` / `mdmreportpy` submodules. *(this step)*
 2. Align the JSON format between `mdmreadpy` (producer) and `mdmreportpy` (consumer) —
    the output spec of the former should be the input spec of the latter.
-3. Add tests around the JSON shaping / reporting pure functions (currently no automated
-   tests anywhere). *(Partial: `mdmreadpy` now has `tests/test_row_name_maker.py`.)*
+3. Add tests around the JSON shaping / reporting pure functions.
+   *(Partial: `mdmreadpy` has `tests/test_row_name_maker.py`; `mdmreportpy` now has
+   `tests/test_common_functions.py` and `tests/test_backend_plugins.py`.)*
 
 ## 7. Open questions
 
