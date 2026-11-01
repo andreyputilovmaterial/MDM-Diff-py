@@ -52,7 +52,7 @@ Submodules (see `.gitmodules`):
 | Path | Purpose | Remote |
 | --- | --- | --- |
 | `src/lib/mdmreadpy` | Read MDD → JSON (Windows + IBM/Unicom Professional). | <https://github.com/andreyputilovmaterial/MDD-read-py.git> |
-| `src/lib/mdmreadpy/src/lib/mdmreportpy` | JSON → HTML report. | <https://github.com/andreyputilovmaterial/MDM-HTMLReport-py.git> |
+| `src/lib/mdmreadpy/src/lib/mdmreportpy` | JSON → HTML report. | <https://github.com/andreyputilovmaterial/MDM-Report-py.git> |
 | `src/lib/mdmexcelreportpy` | JSON → Excel. | <https://github.com/andreyputilovmaterial/MDM-ExcelReport-py.git> |
 | `src/lib/mddtoschema` | MDD → JSON schema. | <https://github.com/andreyputilovmaterial/MDM-ToSchema-py.git> |
 | `src/lib/otherformatsreadpy_*` | Other readers (excel, spss, txt, metadata, ms markitdown). | — |
