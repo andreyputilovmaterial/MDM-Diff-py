@@ -1,6 +1,9 @@
 @ECHO OFF
 SETLOCAL enabledelayedexpansion
 
+CALL "..\run_init.bat"
+if errorlevel 1 exit /b %errorlevel%
+
 
 SET "MDD_A=Data\p221366_wave19.mdd"
 
@@ -57,12 +60,12 @@ ECHO -
 ECHO 1. read MDD A
 ECHO read from: %MDD_A%
 ECHO write to: .json
-python "../dist/mdmtoolsap_bundle.py" --program read_mdd --mdd "%MDD_A%" --config-features %MDD_READ_CONFIG_FEATURELIST% --config-section %MDD_READ_CONFIG_SECTIONLIST% %MDD_READ_CONFIG_SETTINGS%
+..\.venv\Scripts\python.exe "../dist/mdmtoolsap_bundle.py" --program read_mdd --mdd "%MDD_A%" --config-features %MDD_READ_CONFIG_FEATURELIST% --config-section %MDD_READ_CONFIG_SECTIONLIST% %MDD_READ_CONFIG_SETTINGS%
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 ECHO -
 ECHO 2. generate excel
-python "../dist/mdmtoolsap_bundle.py" --program report_excel --inpfile "%MDD_A_JSON%"
+..\.venv\Scripts\python.exe "../dist/mdmtoolsap_bundle.py" --program report_excel --inpfile "%MDD_A_JSON%"
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 ECHO -

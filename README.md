@@ -9,11 +9,25 @@ Download mdmtoolsap_bundle.py and a BAT for your file type file from
 
 Edit the BAT file and insert paths to compared files.
 
+Each distributed BAT (e.g. `run_diff_excel.bat`) starts by calling `run_init.bat`,
+which creates a local `.venv` virtual environment, installs `requirements.txt`, and
+then installs the optional per-reader/per-reporter dependencies from
+`optional_dependencies/` best-effort. The BAT then runs the bundle with the virtual
+environment's Python (`.venv\Scripts\python.exe`). On macOS/Linux use `run_init.sh`
+and the corresponding `.sh` launchers.
+
 You need python installed to run this. To compare MDDs, you need IBM/Unicom Professional to have this tool running. It is a requirement. If not dealing with MDDs, having Unicom/IBM Professional is unnecessary.
 
 ### On necessary dependencies and ms markitdown
 
 If you don't need to read input files with ms markitdown, dependencies are minimal. You just won't be able to use that ms markitdown way of reading files. Actually, ms markitdown is quite powerful - using it, you can read, html, excel, pdf, images, transcribed audio, etc. But it has a lot of dependencies now (it was much simpler is earlier versions), including openai libraries, azure-ai-documentintelligence, etc... Ms markitdown now comes with docker file - a different way of running the scripts - it is supposed that you create and run a container with python code. This diff tool was initially started as a simple script, so I am not sure if it worth it installing all these complicated dependencies without version control on your local machine. It's not a good practice, cause versions of packages might be important.
+
+The core dependencies (`pandas`, `numpy`, `xlsxwriter`, `pydantic`) live in the root
+`requirements.txt` and are always installed. Everything else — including `pywin32`
+(MDD, Windows-only) and `markitdown` (heavy) — is declared in each reader's/reporter's
+own `requirements.txt` under `src/lib/`; `build.bat`/`build.sh` copy those into
+`dist/optional_dependencies/` and `run_init` installs them best-effort, so a missing
+optional package only disables the corresponding reader/reporter.
 
 ## Frequently asked questions
 
@@ -43,13 +57,50 @@ Ok, you are starting the tool and it crashes. Error messages report some problem
 
 Besides that, I tried to make error messages very descriptive, reporting anything that is going on not really well. I am also printing blocks where it happened - row names, seciton names... so that it's easy to understand what's causing the problem.
 
+## Three ways to launch the program
+
+There is one universal dispatcher — `src/launcher.py` — that routes `--program <name>`
+to the right entry point, but the same program can be started three equivalent ways.
+This schema is repeated in every submodule that ships a `launcher.py`
+(`mdmreadpy`, `mdmreportpy`, `mdmexcelreportpy`, `mddtoschema`).
+
+1. **From the single-file bundle** (what end users get). `build.bat`/`build.sh` run
+   `pinliner` to produce `dist/mdmtoolsap_bundle.py` and append
+   `from src import launcher; launcher.main()`. The BAT launchers in
+   `src_bat_scripts/` are copied (and renamed) into `dist/` — e.g.
+   `run_calling_bundle_excel.bat` → `dist/run_diff_excel.bat` — and drive the bundle
+   with the venv Python:
+
+       run_init.bat
+       .venv\Scripts\python.exe mdmtoolsap_bundle.py --program diff ...
+
+2. **Pointing at the exact program module** (development, most direct). Run the
+   entry-point module itself, bypassing the dispatcher:
+
+       python "../src/diff.py" --cmp-scheme-left A.json --cmp-scheme-right B.json
+
+   See `src_bat_scripts/run_individual_scripts.bat`.
+
+3. **Through the launcher proxy** (development, single dispatch point). Run the
+   dispatcher directly:
+
+       python "../src/launcher.py" --program diff ...
+
+   See `src_bat_scripts/run_as_directory.bat`.
+
 ## For developers: how to build distributable files?
 
-There is a script, build.bat
+There are two equivalent scripts: `build.bat` (Windows) and `build.sh` (macOS/Linux).
 
 You need pinliner to run this, but the version found on internet was not working well for me. I made certain fixes, please use my personal pinliner version (inluded in src-make folder, so this is a part of the distribution).
 
-Everything else that is going on can be clearly found in the build.bat script - the bundle created is renamed to mdmtoolsap_bundle, couple more lines are added to get it running, the bat files are renamed, and the path to bundle is changed to mdmtoolsap_bundle within those bat files. Results are in dist/ subdirectory.
+Everything else that is going on can be clearly found in the build scripts: the bundle
+created is renamed to `mdmtoolsap_bundle.py`, a couple more lines are added to get it
+running, the bat files are renamed, and the path to the bundle is changed to
+`mdmtoolsap_bundle.py` (and the launcher python is switched to the venv python) within
+those bat files. The build also collects every `requirements.txt` under `src/lib/`
+into `dist/optional_dependencies/` and copies `run_init.bat`/`run_init.sh` into
+`dist/`. Results are in `dist/` subdirectory.
 
 ## Documentation
 

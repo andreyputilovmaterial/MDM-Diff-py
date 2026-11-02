@@ -1,11 +1,22 @@
 # Project Context — MDM-Diff-py
 
 > Last updated: 2026-11-02
+> (2026-11-02) Build & packaging: per-reader/per-reporter `requirements.txt` added under
+> `src/lib/`; `build.bat` + a new `build.sh` collect them into
+> `dist/optional_dependencies/` and copy `run_init.bat`/`run_init.sh` into `dist/`;
+> `run_init` prepares a `.venv` and installs base + optional requirements best-effort;
+> dist BAT run scripts now drive the bundle with the venv Python. The three launch
+> strategies (bundle / direct module / launcher proxy) are documented in `README.md` and
+> `docs/architecture.md`.
 > Status: `mdmreportpy` backend plugins extracted to `src/plugins/` with a uniform
 > hook contract; sanitization helpers extracted to `src/common_functions.py`; tests
 > added. NOTE: `--disable-plugin` backend plugin names changed.
 > (2026-11-02) Decision: rich-text (`parts`/`role`) `column_headers` are supported in
 > the common JSON shape; the diff tool needs a follow-up to pass them through (see §6).
+> (2026-11-02) Added a `--output-filename` CLI option to both reporters (`mdmreportpy`
+> and `mdmexcelreportpy`); when set it is used verbatim as the output path (matching
+> `src/diff_print_expected_filename.py`), otherwise the name is derived from the input
+> JSON as before.
 >
 > **Convention:** read this file at the start of every task and update it at the end,
 > so it stays the permanently updated context of the current work (see
@@ -104,6 +115,11 @@ Static assets (HTML/CSS/JS templates, the git `_VERSION` string) are embedded vi
   HTML report, but they are **not guaranteed** to be preserved, interpreted, or diffed
   meaningfully — e.g. `role` is not semantically diffable. See
   `mdmreportpy/docs/rich-text-format.md`.
+- **Reporter output file name.** Both reporters (`mdmreportpy` HTML and
+  `mdmexcelreportpy` Excel) derive the output name from the input JSON (`.json` →
+  `.html` / `.xlsx`, written next to the input). A `--output-filename` CLI option now
+  overrides this; when set it is used **verbatim** as the path (no extension appended),
+  consistent with `--output-filename` in `src/diff_print_expected_filename.py`.
 
 ## 5. Repository rules
 

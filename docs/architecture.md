@@ -61,7 +61,45 @@ producer/consumer view, but the two files above are authoritative for the common
 
 ## Build & distribution
 
-`build.bat` uses the vendored `pinliner` fork to produce a single-file
-`dist/mdmtoolsap_bundle.py`, patches it to call `src.launcher.main()`, and copies
-LICENSE/README/requirements into `dist/`. BAT launchers in `src_bat_scripts/` drive
-specific workflows.
+`build.bat` (Windows) / `build.sh` (macOS/Linux) use the vendored `pinliner` fork to
+produce a single-file `dist/mdmtoolsap_bundle.py`, patch it to call
+`src.launcher.main()`, and copy LICENSE/README/requirements into `dist/`. BAT launchers
+in `src_bat_scripts/` drive specific workflows; they are copied (and renamed) into
+`dist/`, and during that copy the bundle path is rewritten to `mdmtoolsap_bundle.py`
+and the launcher python is switched to the venv python (`.venv\Scripts\python.exe`).
+
+The build also collects every `requirements.txt` under `src/lib/` (each reader's and
+reporter's own dependencies) into `dist/optional_dependencies/`, preserving their path
+under `src/`, and copies `run_init.bat`/`run_init.sh` into `dist/`. `run_init` creates
+a local `.venv`, installs the root `requirements.txt`, then installs the optional
+requirements best-effort (a missing optional package only disables the corresponding
+reader/reporter).
+
+## Three ways to launch a program
+
+Every part that ships a `launcher.py` (`src/`, `mdmreadpy`, `mdmreportpy`,
+`mdmexcelreportpy`, `mddtoschema`) can be started three equivalent ways:
+
+1. **Single-file bundle** (distribution). `pinliner` bundles the tree and the build
+   appends `from src import launcher; launcher.main()`. Run it with the venv Python:
+
+   ```
+   .venv\Scripts\python.exe mdmtoolsap_bundle.py --program <name> [args]
+   ```
+
+2. **Direct module invocation** (development). Run an entry-point module directly:
+
+   ```
+   python src/diff.py [args]          # e.g. the diff tool
+   python src/lib/mdmreadpy/src/read_mdd.py --mdd file.mdd
+   ```
+
+3. **Launcher proxy** (development). Run the universal dispatcher directly:
+
+   ```
+   python src/launcher.py --program <name> [args]
+   ```
+
+The three root-level BAT examples in `src_bat_scripts/` map one-to-one onto these:
+`run_calling_bundle_*.bat` (bundle), `run_individual_scripts.bat` (direct module), and
+`run_as_directory.bat` (launcher proxy).

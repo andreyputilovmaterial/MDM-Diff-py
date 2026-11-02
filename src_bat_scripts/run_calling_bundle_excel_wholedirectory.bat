@@ -1,6 +1,9 @@
 @ECHO OFF
 SETLOCAL enabledelayedexpansion
 
+CALL "..\run_init.bat"
+if errorlevel 1 exit /b %errorlevel%
+
 REM :: folder to take files for comparison:
 SET "FOLDER_RECENT=P:\150_Jagou\150_BES Fiscal Year 25 Global\IPS\Tables\12.18.2024"
 

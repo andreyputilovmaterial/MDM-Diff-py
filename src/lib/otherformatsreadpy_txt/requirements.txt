@@ -1,0 +1,8 @@
+# Runtime dependencies (pip-installable packages), one per line.
+# Install with:  pip install -r requirements.txt
+#
+# This reader only uses the Python standard library (pathlib, re, json, codecs,
+# datetime). This file exists so build.bat/build.sh's optional-dependency
+# discovery still collects it into dist/optional_dependencies/ and documents that
+# this reader is intentionally self-contained (a comment-only requirements file
+# is a no-op for `pip install -r`).

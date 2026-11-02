@@ -1,0 +1,31 @@
+# Runtime dependencies (pip-installable packages), one per line.
+# Install with:  pip install -r requirements.txt
+#
+# The ms-markitdown reader delegates to Microsoft's MarkItDown library (vendored
+# under lib/markitdown). The list below mirrors markitdown's own
+# `packages/markitdown/pyproject.toml` [project] dependencies. MarkItDown has a
+# large dependency tree (openai, azure-ai-documentintelligence, etc.), so it is
+# installed best-effort by run_init.bat/run_init.sh: a missing/failed install
+# must not break the rest of the tool. If markitdown is unavailable, this reader
+# raises a readable error when used.
+
+beautifulsoup4
+requests
+mammoth
+markdownify
+numpy
+python-pptx
+pandas
+openpyxl
+xlrd
+pdfminer.six
+puremagic
+pydub
+olefile
+youtube-transcript-api
+SpeechRecognition
+pathvalidate
+charset-normalizer
+openai
+azure-ai-documentintelligence
+azure-identity

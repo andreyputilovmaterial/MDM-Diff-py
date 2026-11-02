@@ -1,6 +1,9 @@
 @ECHO OFF
 SETLOCAL enabledelayedexpansion
 
+CALL "..\run_init.bat"
+if errorlevel 1 exit /b %errorlevel%
+
 
 
 IF "%~1"=="" (
@@ -25,7 +28,7 @@ IF "%~2"=="" (
 set "TEXTFILE_OLD_JSON=%TEXTFILE_OLD%.json"
 set "TEXTFILE_RECENT_JSON=%TEXTFILE_RECENT%.json"
 
-FOR /F "delims=" %%i IN ('python "../dist/mdmtoolsap_bundle.py" --program diff_print_expected_filename --cmp-scheme-left "%TEXTFILE_OLD_JSON%" --cmp-scheme-right "%TEXTFILE_RECENT_JSON%" ') DO SET "OUTPUT_FINAL_DIFF_JSON=%%i"
+FOR /F "delims=" %%i IN ('..\.venv\Scripts\python.exe "../dist/mdmtoolsap_bundle.py" --program diff_print_expected_filename --cmp-scheme-left "%TEXTFILE_OLD_JSON%" --cmp-scheme-right "%TEXTFILE_RECENT_JSON%" ') DO SET "OUTPUT_FINAL_DIFF_JSON=%%i"
 
 
 ECHO -
@@ -33,12 +36,12 @@ ECHO 1. read FILE A
 ECHO read from: %TEXTFILE_OLD%
 ECHO write to: .json
 @REM python "-c" "import sys;from pathlib import Path;import re;import argparse;import json;from datetime import datetime, timezone;data=json.loads('{ ""report_type"": ""TextFile"", ""source_file"": ""insert"", ""report_datetime_utc"": ""insert"", ""report_datetime_local"": ""insert"", ""source_file_metadata"": [ ], ""report_scheme"": { ""columns"": [ ""rawtextcontents"" ], ""column_headers"": { ""rawtextcontents"": ""File Contents"" }, ""flags"": [] }, ""sections"": [ { ""name"": ""filecontents"", ""content"": [ { ""name"": """", ""rawtextcontents"": ""insert"" } ] } ] }');parser = argparse.ArgumentParser();parser.add_argument( '--inpfile' );args = parser.parse_args();inp_file = Path(args.inpfile);data['source_file']='{f}'.format(f=inp_file);data['report_datetime_utc']='{f}'.format(f=(datetime.now()).astimezone(tz=timezone.utc).strftime('%%Y-%%m-%%dT%%H:%%M:%%SZ'),);data['report_datetime_local']='{f}'.format(f=(datetime.now()).strftime('%%Y-%%m-%%dT%%H:%%M:%%SZ'));inp_file_obj=open(inp_file,'r');filecontents=inp_file_obj.read();data['sections'][0]['content'][0]['rawtextcontents']=filecontents;result_json_fname = ( Path(inp_file).parents[0] / '{basename}{ext}'.format(basename=Path(inp_file).name,ext='.json') if Path(inp_file).is_file() else re.sub(r'^\s*?(.*?)\s*?$',lambda m: '{base}{added}'.format(base=m[1],added='.json'),'{path}'.format(path=inp_file)) );outfile = open(result_json_fname, 'w');outfile.write(json.dumps(data))" --inpfile "%TEXTFILE_OLD%"python "-c" 
-python ../dist/mdmtoolsap_bundle.py --program read_excel --inpfile "%TEXTFILE_OLD%"
+..\.venv\Scripts\python.exe ../dist/mdmtoolsap_bundle.py --program read_excel --inpfile "%TEXTFILE_OLD%"
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b %errorlevel% )
 
 @REM ECHO -
 @REM ECHO 2. generate html
-@REM python "../dist/mdmtoolsap_bundle.py" --program report --inpfile "%TEXTFILE_OLD_JSON%"
+@REM ..\.venv\Scripts\python.exe "../dist/mdmtoolsap_bundle.py" --program report --inpfile "%TEXTFILE_OLD_JSON%"
 @REM if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b %errorlevel% )
 
 ECHO -
@@ -46,23 +49,23 @@ ECHO 3. read FILE B
 ECHO read from: %TEXTFILE_RECENT%
 ECHO write to: .json
 @REM python "-c" "import sys;from pathlib import Path;import re;import argparse;import json;from datetime import datetime, timezone;data=json.loads('{ ""report_type"": ""TextFile"", ""source_file"": ""insert"", ""report_datetime_utc"": ""insert"", ""report_datetime_local"": ""insert"", ""source_file_metadata"": [ ], ""report_scheme"": { ""columns"": [ ""rawtextcontents"" ], ""column_headers"": { ""rawtextcontents"": ""File Contents"" }, ""flags"": [] }, ""sections"": [ { ""name"": ""filecontents"", ""content"": [ { ""name"": """", ""rawtextcontents"": ""insert"" } ] } ] }');parser = argparse.ArgumentParser();parser.add_argument( '--inpfile' );args = parser.parse_args();inp_file = Path(args.inpfile);data['source_file']='{f}'.format(f=inp_file);data['report_datetime_utc']='{f}'.format(f=(datetime.now()).astimezone(tz=timezone.utc).strftime('%%Y-%%m-%%dT%%H:%%M:%%SZ'),);data['report_datetime_local']='{f}'.format(f=(datetime.now()).strftime('%%Y-%%m-%%dT%%H:%%M:%%SZ'));inp_file_obj=open(inp_file,'r');filecontents=inp_file_obj.read();data['sections'][0]['content'][0]['rawtextcontents']=filecontents;result_json_fname = ( Path(inp_file).parents[0] / '{basename}{ext}'.format(basename=Path(inp_file).name,ext='.json') if Path(inp_file).is_file() else re.sub(r'^\s*?(.*?)\s*?$',lambda m: '{base}{added}'.format(base=m[1],added='.json'),'{path}'.format(path=inp_file)) );outfile = open(result_json_fname, 'w');outfile.write(json.dumps(data))" --inpfile "%TEXTFILE_RECENT%"python "-c" 
-python ../dist/mdmtoolsap_bundle.py --program read_excel --inpfile "%TEXTFILE_RECENT%"
+..\.venv\Scripts\python.exe ../dist/mdmtoolsap_bundle.py --program read_excel --inpfile "%TEXTFILE_RECENT%"
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b %errorlevel% )
 
 @REM ECHO -
 @REM ECHO 4. generate html
-@REM python "../dist/mdmtoolsap_bundle.py" --program report --inpfile "%TEXTFILE_RECENT_JSON%"
+@REM ..\.venv\Scripts\python.exe "../dist/mdmtoolsap_bundle.py" --program report --inpfile "%TEXTFILE_RECENT_JSON%"
 @REM if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b %errorlevel% )
 
 ECHO -
 ECHO 5. diff
 REM :: you can add  --config-skip-rows-nochange flag
-python "../dist/mdmtoolsap_bundle.py" --program diff --cmp-scheme-left "%TEXTFILE_OLD_JSON%" --cmp-scheme-right "%TEXTFILE_RECENT_JSON%" --output-filename "!OUTPUT_FINAL_DIFF_JSON!" --cmp-format combined
+..\.venv\Scripts\python.exe "../dist/mdmtoolsap_bundle.py" --program diff --cmp-scheme-left "%TEXTFILE_OLD_JSON%" --cmp-scheme-right "%TEXTFILE_RECENT_JSON%" --output-filename "!OUTPUT_FINAL_DIFF_JSON!" --cmp-format combined
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b %errorlevel% )
 
 ECHO -
 ECHO 6. final html with diff!
-python "../dist/mdmtoolsap_bundle.py" --program report --inpfile "%OUTPUT_FINAL_DIFF_JSON%"
+..\.venv\Scripts\python.exe "../dist/mdmtoolsap_bundle.py" --program report --inpfile "%OUTPUT_FINAL_DIFF_JSON%"
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b %errorlevel% )
 
 ECHO -

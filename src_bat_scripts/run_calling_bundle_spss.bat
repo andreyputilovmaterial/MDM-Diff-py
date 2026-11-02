@@ -1,6 +1,9 @@
 @ECHO OFF
 SETLOCAL enabledelayedexpansion
 
+CALL "..\run_init.bat"
+if errorlevel 1 exit /b %errorlevel%
+
 
 @REM :: link your files here
 SET "SPSS_A=examples\p221366_wave19.spss"
@@ -56,20 +59,20 @@ REM :: file names with file schemes in json
 SET "SPSS_A_JSON=%SPSS_A%.json"
 SET "SPSS_B_JSON=%SPSS_B%.json"
 
-FOR /F "delims=" %%i IN ('python "../dist/mdmtoolsap_bundle.py" --program diff_print_expected_filename --cmp-scheme-left "%SPSS_A_JSON%" --cmp-scheme-right "%SPSS_B_JSON%" ') DO SET "OUTPUT_FINAL_DIFF_JSON=%%i"
+FOR /F "delims=" %%i IN ('..\.venv\Scripts\python.exe "../dist/mdmtoolsap_bundle.py" --program diff_print_expected_filename --cmp-scheme-left "%SPSS_A_JSON%" --cmp-scheme-right "%SPSS_B_JSON%" ') DO SET "OUTPUT_FINAL_DIFF_JSON=%%i"
 
 
 ECHO -
 ECHO 1. read SPSS A
 ECHO read from: %SPSS_A%
 ECHO write to: .json
-python "../dist/mdmtoolsap_bundle.py" --program read_spss --inpfile "%SPSS_A%" %SPSS_READ_CONFIG%
+..\.venv\Scripts\python.exe "../dist/mdmtoolsap_bundle.py" --program read_spss --inpfile "%SPSS_A%" %SPSS_READ_CONFIG%
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 IF %CONFIG_PRODUCE_HTML_EACH_SPSS% (
     ECHO -
     ECHO 2. generate html
-    python "../dist/mdmtoolsap_bundle.py" --program report --inpfile "%SPSS_A_JSON%"
+    ..\.venv\Scripts\python.exe "../dist/mdmtoolsap_bundle.py" --program report --inpfile "%SPSS_A_JSON%"
     if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 )
 
@@ -77,24 +80,24 @@ ECHO -
 ECHO 3. read SPSS B
 ECHO read from: %SPSS_B%
 ECHO write to: .json
-python "../dist/mdmtoolsap_bundle.py" --program read_spss --inpfile "%SPSS_B%" %SPSS_READ_CONFIG%
+..\.venv\Scripts\python.exe "../dist/mdmtoolsap_bundle.py" --program read_spss --inpfile "%SPSS_B%" %SPSS_READ_CONFIG%
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 IF %CONFIG_PRODUCE_HTML_EACH_SPSS% (
     ECHO -
     ECHO 4. generate html
-    python "../dist/mdmtoolsap_bundle.py" --program report --inpfile "%SPSS_B_JSON%"
+    ..\.venv\Scripts\python.exe "../dist/mdmtoolsap_bundle.py" --program report --inpfile "%SPSS_B_JSON%"
     if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 )
 
 ECHO -
 ECHO 5. diff
-python "../dist/mdmtoolsap_bundle.py" --program diff --cmp-scheme-left "%SPSS_A_JSON%" --cmp-scheme-right "%SPSS_B_JSON%" --output-filename "!OUTPUT_FINAL_DIFF_JSON!"
+..\.venv\Scripts\python.exe "../dist/mdmtoolsap_bundle.py" --program diff --cmp-scheme-left "%SPSS_A_JSON%" --cmp-scheme-right "%SPSS_B_JSON%" --output-filename "!OUTPUT_FINAL_DIFF_JSON!"
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 ECHO -
 ECHO 6. final html with diff!
-python "../dist/mdmtoolsap_bundle.py" --program report --inpfile "%OUTPUT_FINAL_DIFF_JSON%"
+..\.venv\Scripts\python.exe "../dist/mdmtoolsap_bundle.py" --program report --inpfile "%OUTPUT_FINAL_DIFF_JSON%"
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 ECHO -
