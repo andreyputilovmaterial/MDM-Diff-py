@@ -1,6 +1,49 @@
 # Project Context — MDM-Diff-py
 
 > Last updated: 2026-11-03
+> (2026-11-03) Documented and tested side-by-side line alignment. Added a
+> "Side-by-side line alignment" section to `docs/diff-engine.md` (and the duplicate
+> `src/diff_engine/README.md`) describing `count_linebreaks` (a trailing newline counts as
+> an empty line) and `fill_same_number_linebreaks` (appends trailing `'\n' * N` context
+> segments to the *shorter* side so both sides occupy the same number of lines). Added
+> tests `TestCountLinebreaks`, `TestFillSameNumberLinebreaks`,
+> `TestSideBySideLineAlignment` (line-count invariant over a multi-line corpus) and
+> `TestKnownPropertyListEmptyValueIssue` to `tests/test_diff_engine_richtext.py`. While
+> verifying, found and fixed a bug in `finddiff_values_text_formatsidebyside`
+> (`src/diff_engine/diff_functions.py`): the "one side empty" branches returned without
+> padding, so `''` vs `'a\nb'` produced a 1-line vs 2-line mismatch — it now runs
+> `fill_same_number_linebreaks` once at the end for every branch. Flagged a remaining
+> issue (xfail): a property list whose every value is empty is treated as `(none)` by
+> `is_empty`, so `[{'name':'k','value':''}]` collapses to `[]` (losing the key) and can
+> leave line counts unequal.
+> (2026-11-03) Added an extensive diff-engine test suite
+> `tests/test_diff_engine_richtext.py` (round-trip invariants over a matrix of
+> str/segment/list/property-list values, structural expectations, and regressions
+> for GitHub issues #21 and #24). While writing it, found and fixed two real bugs in
+> `src/diff_engine/common_functions.py`: (1) `as_format()` only converted one step, so a
+> common format reachable only through an intermediate step (e.g. `(dict) → (str)`)
+> crashed with "converter fn is not found" — it now path-finds via BFS through
+> `possible_transformations`; (2) `as_plain_text()` rendered a property-list value that
+> is itself rich text via `str()` (Python repr) instead of its rendered text — now uses
+> `as_plain_text(record["value"])`, matching `as_sequence_with_roles`. Verified #21:
+> `ErrorCantSplitAtomicPiece` is raised when a character diff crosses an atomic
+> dict/property-list piece (and not raised when the piece is wholly added/removed/
+> unchanged). Verified #24 for the covered shapes via the combined round-trip invariant.
+> Flagged one remaining known bug (not yet fixed, tracked as `xfail`): multi-line text
+> diffs with a differing line count can introduce spurious spaces (e.g. `a\nb\nc` vs
+> `a\nb` produces `a\nb \nc` on the left) due to empty-line padding in the word-level
+> text path. Also noted `did_change()` on a combined result containing a plain dict
+> raises `ErrorDiffClassesNotPossibleToDetect` (edge case).
+> (2026-11-03) Documented the diff engine internals: added `docs/diff-engine.md`
+> (canonical) and a duplicate `src/diff_engine/README.md`, linked from
+> `docs/architecture.md`. Covers the core principle (rich text → flat `(role, char)`
+> sequence → diff → map back to blocks), the value formats (`detect_format`), the common
+> format denominator, the three output modes (`formatsidebyside`/`formatcombined`/
+> `formatsimple`), the two-step text diff (trimmed line-level then char-level), keyed
+> property-list comparison, and the `split_piece`/`ErrorCantSplitAtomicPiece` mapping-back
+> edge cases. Also fixed two latent `TypeError`s in `src/diff_engine/common_functions.py`:
+> `detect_segment_role` (dict branch) called `result.append()` without an argument, and
+> `as_sequence_with_roles` (property-list branch) called `enumerate()` without an iterable.
 > (2026-11-03) Rich-text `column_headers` in the diff tool: `src/diff.py` no longer
 > stringifies header values with f-strings. Global (`compile_col_headers`) and
 > per-section headers now diff the common label via
@@ -258,6 +301,14 @@ Static assets (HTML/CSS/JS templates, the git `_VERSION` string) are embedded vi
 
 ## 7. Open questions
 
+- **`is_empty` semantics for property lists (undecided).** `is_empty` currently treats a
+  property list as empty when *all of its values* are empty, so
+  `[{'name': 'k', 'value': ''}]` collapses to `[]` during diffing (losing the key and
+  possibly leaving side-by-side line counts unequal). But the same value renders as
+  non-empty text `[ k = "" ]` via `as_plain_text`, so `is_empty` and the rendering
+  disagree. Options to consider: (a) treat a property list as empty only when the *list*
+  is empty; (b) make `is_empty` consistent with `as_plain_text`; (c) leave as-is and rely
+  on the `xfail` test `TestKnownPropertyListEmptyValueIssue`. No decision yet.
 - Exact final list of report cell-content shapes and `role` values (now drafted in
   `mdmreportpy/docs/rich-text-format.md`; still to be validated against real producer
   output).

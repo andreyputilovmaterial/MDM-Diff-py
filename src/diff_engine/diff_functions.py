@@ -531,6 +531,10 @@ def finddiff_values_text_formatsidebyside( cmpdata_l, cmpdata_r, config ):
                 result_left += result_piece_left
                 result_right += result_piece_right
         assert (result_left, result_right) == fill_same_number_linebreaks(result_left,result_right), 'Warning: num of linebreaks does not match' # TODO: remove this line, for speed
+    # Also pad the "one side empty vs multi-line" cases (the branches above
+    # return early without aligning), so left and right always occupy the same
+    # number of lines when rendered side by side.
+    result_left, result_right = fill_same_number_linebreaks(result_left,result_right)
     return result_left, result_right
 
 def finddiff_values_list_matchingastext_formatsidebyside( cmpdata_l, cmpdata_r, config ):

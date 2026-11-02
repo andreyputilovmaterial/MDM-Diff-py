@@ -131,7 +131,7 @@ def detect_segment_role(input):
         for key, value in input.items():
             role = detect_segment_role(value)
             if not is_empty(role):
-                result.append()
+                result.append(role)
         result = set(result)
         if len(result)==1:
             return next(iter(result))
@@ -535,10 +535,31 @@ def as_format(inp, format_source, format_dest):
     """
     if format_source==format_dest:
         return inp
-    converter = possible_transformations.get(format_source,{}).get(format_dest,None)
-    if not converter:
+    # BFS to find the shortest conversion path (a direct edge is the common case).
+    prev = {format_source: None}
+    queue = deque([format_source])
+    while queue:
+        node = queue.popleft()
+        if node == format_dest:
+            break
+        for nxt in possible_transformations.get(node, {}):
+            if nxt not in prev:
+                prev[nxt] = node
+                queue.append(nxt)
+    if format_dest not in prev:
         raise Exception(f'Hmmm, reading compared values for diff, called to convert format from {format_source} to {format_dest} but converter fn is not found')
-    result = converter(inp,format_source)
+    # Reconstruct the path (excluding the source node), then apply each converter.
+    path = []
+    node = format_dest
+    while node != format_source:
+        path.append(node)
+        node = prev[node]
+    path.reverse()
+    result = inp
+    current = format_source
+    for nxt in path:
+        result = possible_transformations[current][nxt](result, current)
+        current = nxt
     # assert detect_format(result) in [format_dest,'(none)','(uncategorized)'], f'Hmmm, reading compared values for diff, called to convert format from {format_source} to {format_dest}, successfully converted but the target format does not match the dest ({detect_format(result)})'
     return result
 
@@ -649,7 +670,7 @@ def as_plain_text(inp_value,flags=[]):
     elif is_property_list(inp_value):
         def esc(s):
             return f'{s}'.replace('"','""')
-        return '[ '+', '.join([f'{record["name"]} = "{esc(record["value"])}"' for record in inp_value])+' ]'
+        return '[ '+', '.join([f'{record["name"]} = "{esc(as_plain_text(record["value"]))}"' for record in inp_value])+' ]'
     elif is_diff_segment_dict(inp_value):
         return as_plain_text(get_segment_payload(inp_value))
     elif isinstance(inp_value,list):
@@ -709,7 +730,7 @@ def as_sequence_with_roles(inp_value,parent_level_role=None,flags=[]):
     elif is_property_list(inp_value):
         result = []
         result += [(parent_level_role,'['),(parent_level_role,' '),]
-        for i,record in enumerate():
+        for i,record in enumerate(inp_value):
             if i>0:
                 result += [(parent_level_role,','),(parent_level_role,' '),]
             txt = f'{record["name"]} = "'
