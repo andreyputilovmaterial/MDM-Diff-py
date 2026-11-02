@@ -1,8 +1,13 @@
 @ECHO OFF
 SETLOCAL enabledelayedexpansion
 
-CALL "..\run_init.bat"
-if errorlevel 1 exit /b %errorlevel%
+
+@REM ============================================================
+@REM GLOBAL DEFINITIONS
+@REM ============================================================
+@REM Input files, output options and config switches live here.
+@REM Everything you may want to edit is above the EXECUTION banner;
+@REM you normally don't need to change anything below it.
 
 
 @REM put your files here
@@ -70,6 +75,15 @@ SET MDD_READ_CONFIG_SETTINGS=!MDD_READ_CONFIG_SETTINGS!  --config-features %MDD_
 REM :: file names with file schemes in json
 SET "MDD_WORKFLOW1_BEFORE_JSON=%MDD_WORKFLOW1_BEFORE%.json"
 SET "MDD_WORKFLOW1_AFTER_JSON=%MDD_WORKFLOW1_AFTER%.json"
+
+
+@REM ============================================================
+@REM EXECUTION
+@REM ============================================================
+@REM You normally don't need to change anything below this line.
+
+CALL "..\run_init.bat"
+if errorlevel 1 exit /b %errorlevel%
 
 FOR /F "delims=" %%i IN ('..\.venv\Scripts\python.exe "../dist/mdmtoolsap_bundle.py" --program diff_print_expected_filename --cmp-scheme-left "%MDD_WORKFLOW1_BEFORE_JSON%" --cmp-scheme-right "%MDD_WORKFLOW1_AFTER_JSON%" ') DO SET "DIFF_WORKFLOW1_JSON=%%i"
 

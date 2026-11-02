@@ -1,8 +1,13 @@
 @ECHO OFF
 SETLOCAL enabledelayedexpansion
 
-CALL "..\run_init.bat"
-if errorlevel 1 exit /b %errorlevel%
+
+@REM ============================================================
+@REM GLOBAL DEFINITIONS
+@REM ============================================================
+@REM Input files, output options and config switches live here.
+@REM Everything you may want to edit is above the EXECUTION banner;
+@REM you normally don't need to change anything below it.
 
 REM :: folder to take files for comparison:
 SET "FOLDER_RECENT=P:\150_Jagou\150_BES Fiscal Year 25 Global\IPS\Tables\12.18.2024"
@@ -21,6 +26,16 @@ SET "FNAME_SUBSTITUTE_PART_INSTEADOF=2301349"
 
 REM FOR /f %%i IN ('echo %cd%') DO SET "CURRDIR=%%i"
 SET "CURRDIR=%cd%"
+
+
+@REM ============================================================
+@REM EXECUTION
+@REM ============================================================
+@REM You normally don't need to change anything below this line.
+
+CALL "..\run_init.bat"
+if errorlevel 1 exit /b %errorlevel%
+
 PUSHD "%FOLDER_RECENT%"
 
     FOR /f "delims=" %%f IN ('DIR /b /a-d-h-s *.xlsx') DO (
