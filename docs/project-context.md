@@ -1,6 +1,14 @@
 # Project Context — MDM-Diff-py
 
 > Last updated: 2026-11-02
+> (2026-11-02) Decision: dropped the `Makefile` in favor of plain shell build scripts.
+> There is no uniform cross-platform way to run Make; a simple `.sh` build script is
+> much more universally supported — `build.sh` runs natively on macOS/Linux and on
+> Windows via Git Bash, while `make` cannot. The root `Makefile` is removed (it was
+> also incomplete — `build.sh`/`build.bat` already cover the whole build: clean,
+> version, mdmread, template, bundle, patch, copy scripts, copy test). `build.bat`
+> (Windows) and `build.sh` (macOS/Linux) remain the two build entry points.
+> Closes GitHub issue #31.
 > (2026-11-02) README dependency note corrected: `read_excel` also needs `openpyxl`
 > (it hardcodes `pd.ExcelFile(..., engine='openpyxl')` in `read_excel_lrw.py` /
 > `read_excel_general.py`), so `otherformatsreadpy_excel/requirements.txt` now lists it;
