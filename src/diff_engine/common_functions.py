@@ -383,6 +383,33 @@ def detect_format(input,avoid_none=False):
     else:
         return '(uncategorized)'
 
+def with_appended_part(value, part):
+    """Return ``value`` (a rich-text value) with ``part`` appended as an extra segment.
+
+    ``value`` is any rich-text value as produced by the diff engine — a plain
+    string, a segment dict (``text``/``parts``), a list of segments, or (rarely)
+    a dict/property list. ``part`` is an additional segment (normally
+    ``{'text': '...'}``), appended verbatim so callers can add a plain suffix
+    such as `` (Left file)`` without flattening the existing rich text.
+
+    The result is a ``{'parts': [...]}`` wrapper: the existing parts followed by
+    ``part``.
+    """
+    fmt = detect_format(value)
+    if fmt == '(list)':
+        parts = list(value)
+    elif fmt == '(segment)':
+        parts = list(value['parts']) if isinstance(value.get('parts'), list) else [value]
+    elif fmt == '(none)':
+        parts = []
+    elif fmt == '(str)':
+        parts = [{'text': f'{value}'}]
+    else:
+        # '(dict)' / '(propertylist)' / '(uncategorized)': keep the value as a
+        # single opaque part; it still renders via the consumers' plain-text path.
+        parts = [value]
+    return {'parts': parts + [part]}
+
 def as_format_none(input,source_fmt=None):
     """Convert source input to format "(none)"
     

@@ -1,6 +1,16 @@
 # Project Context — MDM-Diff-py
 
 > Last updated: 2026-11-03
+> (2026-11-03) Rich-text `column_headers` in the diff tool: `src/diff.py` no longer
+> stringifies header values with f-strings. Global (`compile_col_headers`) and
+> per-section headers now diff the common label via
+> `diff_functions.finddiff_values_general_formatcombined` (combined `<col>`) and
+> `finddiff_values_general_formatsidebyside` (`<col>_left` / `<col>_right`), and the
+> ` (Left file)` / ` (Right file)` suffix is appended as a separate part using a new
+> `with_appended_part` helper in `src/diff_engine/common_functions.py`. Tests added in
+> `tests/test_richtext_column_headers.py` (root), and consumer coverage added in
+> `mdmreportpy` (`tests/test_common_functions.py`) and `mdmexcelreportpy`
+> (`tests/test_column_headers.py`) for raw-string and rich-text header shapes.
 > (2026-11-03) Launcher smoke test: added a dependency-free ``--program done`` (prints
 > ``done`` in green) to ``src/launcher.py`` plus ``tests/test_done_program.py``. To let
 > ``done`` load before any build step (no ``GENERATED/``) or optional deps, the launcher
@@ -241,14 +251,10 @@ Static assets (HTML/CSS/JS templates, the git `_VERSION` string) are embedded vi
 3. Add tests around the JSON shaping / reporting pure functions.
    *(Partial: `mdmreadpy` has `tests/test_row_name_maker.py`; `mdmreportpy` now has
    `tests/test_common_functions.py` and `tests/test_backend_plugins.py`.)*
-4. **Rich-text `column_headers` in the diff tool — need/plan, no implementation yet.**
-   *(Decision 2026-11-02: the common JSON shape supports rich-text `column_headers`
-   (`parts`/`role`) like cell values.)* `src/diff.py` (plus `src/diff_engine` /
-   `src/diff_older`) currently stringifies header values with f-strings
-   (`f'{header}'`, `f'{header} (Left file)'`), which flattens any list/dict into its
-   Python `repr`. It must be changed to pass rich-text values through unchanged and to
-   append the `(Left file)` / `(Right file)` suffix as a separate `part` (or a role)
-   rather than concatenating strings.
+4. ~~Rich-text `column_headers` in the diff tool~~ — done (2026-11-03). The diff tool
+   now passes header values through the same `finddiff_values_general_format*` path
+   used for cell values, and appends `(Left file)` / `(Right file)` as a separate
+   `parts` chunk via `with_appended_part` in `src/diff_engine/common_functions.py`.
 
 ## 7. Open questions
 

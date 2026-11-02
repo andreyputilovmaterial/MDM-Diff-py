@@ -16,6 +16,7 @@ if __name__ == '__main__':
     from diff_engine.common_functions import (
         normalize_input_relocate_diff_markers,
         did_change,
+        with_appended_part,
     )
     from helper_utility.perfmonitor import PerformanceMonitor
     from helper_make_diffflag_field_text import make_diffflag_text
@@ -28,6 +29,7 @@ elif '.' in __name__:
     from .diff_engine.common_functions import (
         normalize_input_relocate_diff_markers,
         did_change,
+        with_appended_part,
     )
     from .helper_utility.perfmonitor import PerformanceMonitor
     from .helper_make_diffflag_field_text import make_diffflag_text
@@ -40,6 +42,7 @@ else:
     from diff_engine.common_functions import (
         normalize_input_relocate_diff_markers,
         did_change,
+        with_appended_part,
     )
     from helper_utility.perfmonitor import PerformanceMonitor
     from helper_make_diffflag_field_text import make_diffflag_text
@@ -133,14 +136,17 @@ def find_diff(data_left,data_right,config):
     
     def compile_col_headers(data_left,data_right,config):
         column_headers_combined = {'name':'Item name','flagdiff':'Diff flag'}
-        for key in dict.keys({**data_right.get('report_scheme',{}).get('column_headers',{}),**data_left.get('report_scheme',{}).get('column_headers',{})}):
-            if key in data_left.get('report_scheme',{}).get('column_headers',{}):
-                column_headers_combined[f'{key}'] = f'{data_left.get("report_scheme",{}).get("column_headers",{})[key]}'
-                column_headers_combined[f'{key}_left'] = f'{data_left.get("report_scheme",{}).get("column_headers",{})[key]} (Left file)'
-            if key in data_right.get('report_scheme',{}).get('column_headers',{}):
-                if not( f'{key}' in column_headers_combined ):
-                    column_headers_combined[f'{key}'] = f'{data_right.get("report_scheme",{}).get("column_headers",{})[key]}'
-                column_headers_combined[f'{key}_right'] = f'{data_right.get("report_scheme",{}).get("column_headers",{})[key]} (Right file)'
+        headers_left = data_left.get('report_scheme',{}).get('column_headers',{}) or {}
+        headers_right = data_right.get('report_scheme',{}).get('column_headers',{}) or {}
+        for key in dict.keys({**headers_right, **headers_left}):
+            val_left = headers_left.get(key)
+            val_right = headers_right.get(key)
+            diff_left, diff_right = diff_functions.finddiff_values_general_formatsidebyside(val_left, val_right, config)
+            column_headers_combined[f'{key}'] = diff_functions.finddiff_values_general_formatcombined(val_left, val_right, config)
+            if key in headers_left:
+                column_headers_combined[f'{key}_left'] = with_appended_part(diff_left, {'text': ' (Left file)'})
+            if key in headers_right:
+                column_headers_combined[f'{key}_right'] = with_appended_part(diff_right, {'text': ' (Right file)'})
         return column_headers_combined
 
     datetime_start = datetime.now()
@@ -274,13 +280,16 @@ def find_diff(data_left,data_right,config):
             if 'column_headers' in section_other_props:
                 column_headers_left = (file_l_section['column_headers'] or {}) if 'column_headers' in file_l_section else {}
                 column_headers_right = (file_r_section['column_headers'] or {}) if 'column_headers' in file_r_section else {}
-                section_other_props['column_headers'] = { **column_headers_left, **column_headers_right }
-                column_headers = section_other_props['column_headers']
-                for col_id, lab in ({**column_headers}).items():
-                    lab_left = (column_headers_left[col_id] if col_id in column_headers_left else lab) or lab
-                    lab_right = (column_headers_right[col_id] if col_id in column_headers_right else lab) or lab
-                    section_other_props['column_headers'][f'{col_id}_left'] = f'{lab_left} (Left file)'
-                    section_other_props['column_headers'][f'{col_id}_right'] = f'{lab_right} (Right file)'
+                column_headers_merged = {**column_headers_left, **column_headers_right}
+                section_other_props['column_headers'] = {}
+                for col_id in dict.keys({**column_headers_right, **column_headers_left}):
+                    lab = column_headers_merged.get(col_id)
+                    lab_left = column_headers_left.get(col_id) or lab
+                    lab_right = column_headers_right.get(col_id) or lab
+                    section_other_props['column_headers'][f'{col_id}'] = diff_functions.finddiff_values_general_formatcombined(lab_left, lab_right, config)
+                    diff_left, diff_right = diff_functions.finddiff_values_general_formatsidebyside(lab_left, lab_right, config)
+                    section_other_props['column_headers'][f'{col_id}_left'] = with_appended_part(diff_left, {'text': ' (Left file)'})
+                    section_other_props['column_headers'][f'{col_id}_right'] = with_appended_part(diff_right, {'text': ' (Right file)'})
 
             result_this_section = []
 
