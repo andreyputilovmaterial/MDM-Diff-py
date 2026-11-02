@@ -1,6 +1,17 @@
 # Project Context — MDM-Diff-py
 
 > Last updated: 2026-11-03
+> (2026-11-03) Launcher smoke test: added a dependency-free ``--program done`` (prints
+> ``done`` in green) to ``src/launcher.py`` plus ``tests/test_done_program.py``. To let
+> ``done`` load before any build step (no ``GENERATED/``) or optional deps, the launcher
+> now imports every entry-point module lazily via ``_import_module`` and the version
+> string via ``_import_version`` (falls back to ``unknown``). Also trimmed
+> ``helper_make_diff_output_filename.py``'s three-way starter import to a two-way
+> flat/relative form (it's a top-level helper imported flat by directly-run starters, so
+> a plain relative import would break ``python src/diff.py``). Same ``done`` program +
+> test added to the mdmreadpy/mdmreportpy/mdmexcelreportpy/mddtoschema submodules.
+> `build.sh`/`build.bat` now finish with `python dist/mdmtoolsap_bundle.py --program done`
+> to smoke-test the built bundle (prints green `done`, fails the build on error).
 > (2026-11-03) Removed all traces of the deprecated `<<ADDED>>` / `<<REMOVED>>` /
 > `<<ENDADDED>>` / `<<ENDREMOVED>>` / `<<DATE:...>>` / `<<KEYWORD>>` text markers.
 > `mdmreportpy`'s `html_sanitize_text` no longer rewrites markers into diff `<span>`s or

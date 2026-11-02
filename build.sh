@@ -150,4 +150,10 @@ echo "Done"
 
 echo "-"
 echo "-"
+echo "Verify the bundle: run --program done..."
+python dist/mdmtoolsap_bundle.py --program done || fail
+echo "Done"
+
+echo "-"
+echo "-"
 echo "All done, the end"

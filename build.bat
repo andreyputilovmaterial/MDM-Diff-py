@@ -178,5 +178,12 @@ ECHO Done
 
 ECHO -
 ECHO -
+ECHO Verify the bundle: run --program done...
+python dist\mdmtoolsap_bundle.py --program done
+if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && exit /b %errorlevel% )
+ECHO Done
+
+ECHO -
+ECHO -
 ECHO All done, the end
 

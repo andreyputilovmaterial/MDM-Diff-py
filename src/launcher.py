@@ -9,24 +9,11 @@ import importlib
 
 
 
-if __name__ == '__main__':
-    # run as a program
-    from GENERATED._VERSION import _VERSION as diff_script_version
-    from diff_older import diff_obsolete
-    import diff
-    import diff_print_expected_filename
-elif '.' in __name__:
-    # package
-    from .GENERATED._VERSION import _VERSION as diff_script_version
-    from .diff_older import diff_obsolete
-    from . import diff
-    from . import diff_print_expected_filename
-else:
-    # included with no parent package
-    from GENERATED._VERSION import _VERSION as diff_script_version
-    from diff_older import diff_obsolete
-    import diff
-    import diff_print_expected_filename
+# Entry-point modules (``diff``, ``diff_obsolete``, ``diff_print_expected_filename``,
+# the readers/reporters, and the generated version string) are imported lazily inside
+# their ``call_*`` handlers via :func:`_import_module`. This keeps the launcher
+# loadable without any third-party dependencies or build artifacts (no ``GENERATED/``
+# directory), so ``--program done`` works as a smoke test in a fresh checkout.
 
 
 
@@ -39,11 +26,12 @@ STDOUT_COLOR_GREEN = "\033[32m"
 
 
 def _import_module(flat_name):
-    # Lazily import a reader/reporter module so the bundle can load without its
+    # Lazily import an entry-point module so the launcher can load without any
     # optional third-party dependencies (pandas, numpy, xlsxwriter, pydantic,
     # pywin32, markitdown, ...). `flat_name` is the module's dotted path below
-    # the launcher package, e.g. 'lib.otherformatsreadpy_excel.read_excel_entry'.
-    # Mirrors the three-way conditional import used by entry-point scripts.
+    # the launcher package, e.g. 'lib.otherformatsreadpy_excel.read_excel_entry'
+    # or 'diff'. Mirrors the three-way conditional import used by entry-point
+    # scripts.
     if __name__ == '__main__':
         # run as a program
         return importlib.import_module(flat_name)
@@ -55,14 +43,27 @@ def _import_module(flat_name):
         return importlib.import_module(flat_name)
 
 
+def _import_version():
+    # The generated version string only exists after a build step has written
+    # ``GENERATED/_VERSION.py``. Fall back to a placeholder so ``--program version``
+    # still works (and ``--program done`` never needs it) in a fresh checkout.
+    try:
+        version_module = _import_module('GENERATED._VERSION')
+    except ImportError:
+        return 'unknown'
+    return version_module._VERSION
+
 
 def call_diff_obsolete_program(*argcs,**kwargs):
+    diff_obsolete = _import_module('diff_older.diff_obsolete')
     return diff_obsolete.entry_point(*argcs,**kwargs)
 
 def call_diff_program(*argcs,**kwargs):
+    diff = _import_module('diff')
     return diff.entry_point(*argcs,**kwargs)
 
 def call_diff_filename_program(*argcs,**kwargs):
+    diff_print_expected_filename = _import_module('diff_print_expected_filename')
     return diff_print_expected_filename.entry_point(*argcs,**kwargs)
 
 def call_read_mdd_program(*argcs,**kwargs):
@@ -104,9 +105,12 @@ hello, world! From diff
     print(msg)
     return True
 
+def call_done_program(*argcs,**kwargs):
+    print(f'{STDOUT_COLOR_GREEN}done{STDOUT_COLOR_RESET}')
+    return True
+
 def call_printversion_program(*argcs,**kwargs):
-    msg = diff_script_version
-    msg = msg.strip()
+    msg = _import_version().strip()
     print(msg)
     return True
 
@@ -127,6 +131,7 @@ run_programs = {
     'report_html': call_report_html_program,
     'report_excel': call_report_excel_program,
     'test': call_test_program,
+    'done': call_done_program,
     'version': call_printversion_program,
 }
 

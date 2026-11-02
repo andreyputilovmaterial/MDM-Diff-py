@@ -1,14 +1,12 @@
 
 from difflib import SequenceMatcher
 
-if __name__ == '__main__':
-    # run as a program
-    from diff_engine import diff_functions
-elif '.' in __name__:
-    # package
+if '.' in __name__:
+    # imported as a package member (or from within the pinliner bundle)
     from .diff_engine import diff_functions
 else:
-    # included with no parent package
+    # imported as a top-level module by a directly-run entry point
+    # (e.g. ``python src/diff.py`` or ``python src/launcher.py --program diff``)
     from diff_engine import diff_functions
 
 
