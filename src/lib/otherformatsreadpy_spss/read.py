@@ -5,8 +5,6 @@ import json
 import traceback, sys
 from datetime import datetime, timezone
 
-import pandas as pd
-
 
 
 if __name__ == '__main__':
