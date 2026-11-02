@@ -1,20 +1,16 @@
 # Runtime dependencies (pip-installable packages), one per line.
 # Install with:  pip install -r requirements.txt
 #
-# These packages are required to import and run the distributed
-# mdmtoolsap_bundle.py: the universal launcher (src/launcher.py) imports every
-# reader and reporter up front, so their core dependencies are needed even when a
-# particular reader is not used in a given run.
+# The core bundle is intentionally dependency-free beyond the Python standard
+# library: src/launcher.py imports readers/reporters lazily, so basic workflows
+# (diffing text files, rendering an already-produced JSON report) run without any
+# third-party packages. This comment-only file is a no-op for `pip install -r`.
 #
 # Optional, platform-specific, and heavy dependencies are intentionally NOT listed
 # here. Each reader/reporter declares its own requirements in a requirements.txt
 # under src/lib/; build.bat/build.sh collect those into
 # dist/optional_dependencies/ and run_init.bat/run_init.sh install them
-# best-effort. A missing optional dependency only disables the corresponding
-# reader/reporter (e.g. pywin32 for MDD on Windows, markitdown for
-# ms-markitdown-based reading).
-
-pandas
-numpy
-xlsxwriter
-pydantic
+# best-effort. A missing optional dependency only disables the program that needs
+# it, and only when you actually run it (e.g. pywin32 for MDD on Windows,
+# markitdown for office documents, pandas/numpy/openpyxl for Excel, pyreadstat
+# for SPSS).

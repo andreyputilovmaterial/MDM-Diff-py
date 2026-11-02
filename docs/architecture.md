@@ -75,6 +75,13 @@ a local `.venv`, installs the root `requirements.txt`, then installs the optiona
 requirements best-effort (a missing optional package only disables the corresponding
 reader/reporter).
 
+The build requires the vendored `pinliner` fork (`src_dev_build/lib/pinliner`, a git
+submodule with local fixes) — use this copy rather than the upstream package. The only
+optional helpers are `csscompressor` and `rjsmin`, declared in `mdmreportpy`'s
+`requirements.txt`; they minify the HTML report's embedded CSS/JS when present (the
+report renders un-minified with a one-time warning otherwise) and are not needed to run
+the bundle.
+
 ## Three ways to launch a program
 
 Every part that ships a `launcher.py` (`src/`, `mdmreadpy`, `mdmreportpy`,

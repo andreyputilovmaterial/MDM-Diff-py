@@ -1,11 +1,31 @@
 # Project Context — MDM-Diff-py
 
 > Last updated: 2026-11-02
+> (2026-11-02) README dependency note corrected: `read_excel` also needs `openpyxl`
+> (it hardcodes `pd.ExcelFile(..., engine='openpyxl')` in `read_excel_lrw.py` /
+> `read_excel_general.py`), so `otherformatsreadpy_excel/requirements.txt` now lists it;
+> `xlsxwriter` remains only for `report_excel` (writing). README "On dependencies"
+> section shortened; `mdd_to_schema` marked "not actively used, a future feature".
 > (2026-11-02) Removed the vendored `microsoft/markitdown` submodule from
 > `src/lib/otherformatsreadpy_general_msmarkitdown/lib/`. The reader now imports
 > `markitdown` as a normal pip dependency (its `requirements.txt` declares
 > `markitdown[pdf,xlsx,docx,pptx,xls,outlook]`), so markitdown is no longer inlined
 > into the pinliner bundle.
+> (2026-11-02) Root `requirements.txt` is now stdlib-only (a comment-only no-op).
+> `src/launcher.py` imports readers/reporters lazily, so the bundle loads without
+> `pandas`/`numpy`/`xlsxwriter`/`pydantic`; each reader/reporter declares its own
+> dependency (e.g. `pyreadstat` for SPSS, `pandas`+`numpy`+`openpyxl` for Excel,
+> `pandas`+`xlsxwriter` for the Excel report, `pydantic` for schema), installed
+> best-effort as optional dependencies.
+> (2026-11-02) README restructured to be user-facing: removed the ms-markitdown
+> explainer and the `csscompressor`/`rjsmin` dependency note; "three ways to launch"
+> and the detailed build steps live in `docs/architecture.md`, with the README keeping
+> a short "For developers" summary that links there.
+> (2026-11-02) BAT launchers restructured: each `src_bat_scripts/run_calling_bundle_*.bat`
+> now has a "GLOBAL DEFINITIONS" section at the top (input files, output options,
+> config switches) followed by an "EXECUTION" section that starts by calling
+> `run_init.bat`. README "How to start it" rewritten around this: edit paths at the
+> top, then run the BAT.
 > (2026-11-02) Build & packaging: per-reader/per-reporter `requirements.txt` added under
 > `src/lib/`; `build.bat` + a new `build.sh` collect them into
 > `dist/optional_dependencies/` and copy `run_init.bat`/`run_init.sh` into `dist/`;
@@ -102,6 +122,11 @@ Static assets (HTML/CSS/JS templates, the git `_VERSION` string) are embedded vi
   those files as the master definition.
 - **Portability constraints** (see `.clinerules/02-python-portability.md`): relative
   imports, `__init__.py` everywhere, no runtime static assets, minimal dependencies.
+- **Dependencies are optional and per-program.** The root bundle is stdlib-only; the
+  launcher imports readers/reporters lazily, and each reader/reporter declares its own
+  `requirements.txt` under `src/lib/` (collected to `dist/optional_dependencies/`,
+  installed best-effort). A missing dependency only disables the program that needs it,
+  and only when that program is run.
 - **Windows/COM only for MDD input.** Reading MDDs requires IBM/Unicom Professional;
   all other formats are platform-independent.
 - **Row names are configurable.** `mdmreadpy` builds each row's `name` via a pluggable

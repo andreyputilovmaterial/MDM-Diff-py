@@ -4,32 +4,33 @@ A new iteration of diff between MDD files, Excel files (wow!), SPSS (inluding on
 
 ## How to start it
 
-Download mdmtoolsap_bundle.py and a BAT for your file type file from
-[Releases](../../releases/latest).
+1. Download `mdmtoolsap_bundle.py` and the BAT launcher for your file type from
+   [Releases](../../releases/latest).
+2. Open the BAT file. At the top is a **GLOBAL DEFINITIONS** section with the input
+   file paths, output options, and config switches — that's the only part you need to
+   edit.
+3. Run the BAT file. Everything below the `EXECUTION` banner runs automatically.
 
-Edit the BAT file and insert paths to compared files.
+On the first run the BAT prepares a local Python environment (`.venv`) and installs the
+dependencies it needs — you only need Python installed. Each file type pulls in its own
+pip packages automatically; only comparing MDDs additionally requires IBM/Unicom
+Professional on Windows.
 
-Each distributed BAT (e.g. `run_diff_excel.bat`) starts by calling `run_init.bat`,
-which creates a local `.venv` virtual environment, installs `requirements.txt`, and
-then installs the optional per-reader/per-reporter dependencies from
-`optional_dependencies/` best-effort. The BAT then runs the bundle with the virtual
-environment's Python (`.venv\Scripts\python.exe`). On macOS/Linux use `run_init.sh`
-and the corresponding `.sh` launchers.
+### On dependencies
 
-You need python installed to run this. To compare MDDs, you need IBM/Unicom Professional to have this tool running. It is a requirement. If not dealing with MDDs, having Unicom/IBM Professional is unnecessary.
+Each reader/reporter pulls in its own pip packages, installed automatically
+(best-effort) by the BAT on first run — if one is missing, only that program is
+affected:
 
-### On necessary dependencies and ms markitdown
+- `read_mdd` → `pywin32` + IBM/Unicom Professional (Windows only).
+- `read_excel` → `pandas`, `numpy`, `openpyxl`.
+- `read_spss` → `pyreadstat`.
+- `read_msmarkitdown` → `markitdown`.
+- `report_excel` → `pandas`, `xlsxwriter`.
+- `mdd_to_schema` → `pydantic` (+ `pywin32`) — not actively used, a future feature.
 
-If you don't need to read input files with ms markitdown, dependencies are minimal. You just won't be able to use that ms markitdown way of reading files. Actually, ms markitdown is quite powerful - using it, you can read, html, excel, pdf, images, transcribed audio, etc. But it has a lot of dependencies now (it was much simpler is earlier versions), including openai libraries, azure-ai-documentintelligence, etc... Ms markitdown now comes with docker file - a different way of running the scripts - it is supposed that you create and run a container with python code. This diff tool was initially started as a simple script, so I am not sure if it worth it installing all these complicated dependencies without version control on your local machine. It's not a good practice, cause versions of packages might be important.
-
-The core dependencies (`pandas`, `numpy`, `xlsxwriter`, `pydantic`) live in the root
-`requirements.txt` and are always installed. Everything else — including `pywin32`
-(MDD, Windows-only) and `markitdown` (heavy) — is declared in each reader's/reporter's
-own `requirements.txt` under `src/lib/`; `build.bat`/`build.sh` copy those into
-`dist/optional_dependencies/` and `run_init` installs them best-effort, so a missing
-optional package only disables the corresponding reader/reporter. `markitdown` is
-installed from PyPI as a regular optional dependency (it is *not* bundled into
-`mdmtoolsap_bundle.py`).
+Everything else (text/metadata readers and the HTML report) needs only the Python
+standard library.
 
 ## Frequently asked questions
 
@@ -43,7 +44,7 @@ installed from PyPI as a regular optional dependency (it is *not* bundled into
 * Excel tabs. This is maybe even more important than comparing MDDs
 * SPSS - I suggest only comparing metadata (columns/variables and category analysis values) and not comparing data (this can be configured from within BAT file) because the results are printed in html page - if you include data - the page would probably be too big to load in browser, even in smallest projects. However, the tool is capable of reading and comparing SPSS file contents.
 * Any text files, including tab scripts and dms scripts. I highly recommend using it for DA exports
-* Any pdf, ppts, word, xlsx, even transcripted audio or images - everything that can be read with ms markitdown (WARNING: see a note above on "On necessary dependencies and ms markitdown")
+* Any pdf, ppts, word, xlsx, even transcripted audio or images - everything that can be read with ms markitdown
 * Diff on diffs! The concept is:<br />Step 1, we find diff between workflow 1 before and after, save as diff 1. Step 2, we find diff between workflow 2 before and after, save as diff 2. Step 3, we compare diff 1 vs diff 2, to see that same updates were implemented in both workflows. Like, same changes are seen in old and new auto-mdd from DA, and same updates are made in old and new survey mdd.
 
 ## What are the output formats that this tool can generate?
@@ -59,55 +60,30 @@ Ok, you are starting the tool and it crashes. Error messages report some problem
 
 Besides that, I tried to make error messages very descriptive, reporting anything that is going on not really well. I am also printing blocks where it happened - row names, seciton names... so that it's easy to understand what's causing the problem.
 
-## Three ways to launch the program
+## For developers
 
-There is one universal dispatcher — `src/launcher.py` — that routes `--program <name>`
-to the right entry point, but the same program can be started three equivalent ways.
-This schema is repeated in every submodule that ships a `launcher.py`
-(`mdmreadpy`, `mdmreportpy`, `mdmexcelreportpy`, `mddtoschema`).
+This README is written for end users. To build the distributable files yourself, run
+the program from the source tree, or understand the internals, see
+[Architecture](docs/architecture.md) — it documents the data flow, the report data
+format, the submodule layout, the build step, and the three ways to launch a program
+(single-file bundle / direct module / launcher proxy).
 
-1. **From the single-file bundle** (what end users get). `build.bat`/`build.sh` run
-   `pinliner` to produce `dist/mdmtoolsap_bundle.py` and append
-   `from src import launcher; launcher.main()`. The BAT launchers in
-   `src_bat_scripts/` are copied (and renamed) into `dist/` — e.g.
-   `run_calling_bundle_excel.bat` → `dist/run_diff_excel.bat` — and drive the bundle
-   with the venv Python:
+Short version:
 
-       run_init.bat
-       .venv\Scripts\python.exe mdmtoolsap_bundle.py --program diff ...
+- **Build:** `build.bat` (Windows) or `build.sh` (macOS/Linux) use the vendored
+  `pinliner` fork to produce `dist/mdmtoolsap_bundle.py`, rename the BAT launchers,
+  and collect each reader's/reporter's `requirements.txt` into
+  `dist/optional_dependencies/`.
+- **Launch from source:** either run an entry-point module directly
+  (`python src/diff.py ...`) or the universal dispatcher
+  (`python src/launcher.py --program <name> ...`).
+- **Optional helpers:** `csscompressor`/`rjsmin` minify the HTML report's embedded
+  CSS/JS. They are optional and end users don't need them.
 
-2. **Pointing at the exact program module** (development, most direct). Run the
-   entry-point module itself, bypassing the dispatcher:
+### Documentation
 
-       python "../src/diff.py" --cmp-scheme-left A.json --cmp-scheme-right B.json
-
-   See `src_bat_scripts/run_individual_scripts.bat`.
-
-3. **Through the launcher proxy** (development, single dispatch point). Run the
-   dispatcher directly:
-
-       python "../src/launcher.py" --program diff ...
-
-   See `src_bat_scripts/run_as_directory.bat`.
-
-## For developers: how to build distributable files?
-
-There are two equivalent scripts: `build.bat` (Windows) and `build.sh` (macOS/Linux).
-
-You need pinliner to run this, but the version found on internet was not working well for me. I made certain fixes, please use my personal pinliner version (inluded in src-make folder, so this is a part of the distribution).
-
-Everything else that is going on can be clearly found in the build scripts: the bundle
-created is renamed to `mdmtoolsap_bundle.py`, a couple more lines are added to get it
-running, the bat files are renamed, and the path to the bundle is changed to
-`mdmtoolsap_bundle.py` (and the launcher python is switched to the venv python) within
-those bat files. The build also collects every `requirements.txt` under `src/lib/`
-into `dist/optional_dependencies/` and copies `run_init.bat`/`run_init.sh` into
-`dist/`. Results are in `dist/` subdirectory.
-
-## Documentation
-
-- [Architecture](docs/architecture.md) — stable overview of the toolchain and how the
-  readers, diff, and reporters fit together.
+- [Architecture](docs/architecture.md) — stable overview: data flow, the report data
+  format, submodules, build & distribution, and the three ways to launch a program.
 - **Source of truth for the data format** — the report JSON format and the rich-text
   format are defined once, in `mdmreportpy`
   ([`src/lib/mdmreadpy/src/lib/mdmreportpy/docs/report-json-format.md`](src/lib/mdmreadpy/src/lib/mdmreportpy/docs/report-json-format.md)
