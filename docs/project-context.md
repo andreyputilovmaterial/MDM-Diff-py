@@ -1,6 +1,17 @@
 # Project Context — MDM-Diff-py
 
 > Last updated: 2026-11-02
+> (2026-11-02) Regression guard: pinliner is a build-time-only tool and must never be
+> inlined into `dist/mdmtoolsap_bundle.py`. Added
+> `tests/test_bundle_excludes_pinliner.py` (root) plus the same test in the `mdmreadpy`
+> and `mdmreportpy` submodules. The test runs the exact `pinliner ... src` step and
+> asserts the bundle's `inliner_packages` table contains no module named `*pinliner*` or
+> `*src_dev_build*`. Finding: pinliner does **not** scan imports — it walks the package
+> directory and inlines every `.py` file inside a Python package (a dir with an
+> `__init__.py`); `src_dev_build/` (like `tests/`/`dist/`) is skipped only because it has
+> no `__init__.py`, so the exclusion is implicit and fragile — the test guards against a
+> future `__init__.py` being added there.
+
 > (2026-11-02) Expanded `.clinerules/00-non-interactive-terminal-commands.md` (root +
 > submodules) to also forbid here-documents (use `git commit -m` flags or a
 > `printf`-written `-F` file) and to disable editors/credential prompts
