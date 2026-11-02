@@ -1,6 +1,14 @@
 # Project Context — MDM-Diff-py
 
 > Last updated: 2026-11-03
+> (2026-11-03) Removed all traces of the deprecated `<<ADDED>>` / `<<REMOVED>>` /
+> `<<ENDADDED>>` / `<<ENDREMOVED>>` / `<<DATE:...>>` / `<<KEYWORD>>` text markers.
+> `mdmreportpy`'s `html_sanitize_text` no longer rewrites markers into diff `<span>`s or
+> raises on them (it just HTML-escapes them as plain text), `diff_add_classes` no longer
+> detects the old string markers, and `diff_engine` dropped its commented-out marker
+> check. Diff highlighting now relies purely on the structural rich-text `role` format.
+> `src/diff_older/` is left frozen as a historical capture (see
+> `.clinerules/05-diff-older-frozen.md`). Closes GitHub issue #13.
 > (2026-11-03) Standardized the `.gitignore` test-directory rule across root + all
 > submodules: the old broad `[Tt]est*` pattern (which hid any `test_*`/`tests/` folder)
 > was replaced with the explicit `tests-real-sensitive-data/` ignore, so regular `tests/`
@@ -205,6 +213,7 @@ Static assets (HTML/CSS/JS templates, the git `_VERSION` string) are embedded vi
 - `.clinerules/02-python-portability.md` — pinliner/`GENERATED` constraints.
 - `.clinerules/03-code-style-errors.md` — fail early, readable errors, no over-validation.
 - `.clinerules/04-testing.md` — test new features, guard regressions.
+- `.clinerules/05-diff-older-frozen.md` — `src/diff_older/` is a frozen historical capture; do not edit.
 - `.clinerules/08-commit-messages.md` — commit subject/body style.
 - `.clinerules/09-github-issues.md` — fetch open issues at commit/push time and add
   `Closes #N` / `Fixes #N` / `Resolves #N` references.

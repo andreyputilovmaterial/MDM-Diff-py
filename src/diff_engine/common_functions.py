@@ -67,8 +67,6 @@ def detect_diffsegment_str_role(input: str):
     This is only important when we call diff on diffs. So we need to filter inputs and identify "segment types" first. If something
     is a "change" block - we process it. If something is "context" - we pass through. If else - not sure, we'll raise and exception and handle it and see what we can do/should do
     """
-    # if '<<ADDED>>' in input or '<<REMOVED>>' in input:
-    #     raise ErrorInlineMarkupNotSupported(f'Error: found <<ADDED>> or <<REMOVED>> marker in string; this is not supported anymore')
     raise ErrorDiffClassesNotPossibleToDetect(f'Each returned segment must clearly identify if it\'s a "change" segment or "context" segment: {input} of type {detect_format(input)}') # should be already detected at this point - we can't detect if it's input or a change block from string; it should have been wrapped with dict with { "role" : ...}
 def detect_diffsegment_role(input):
     """A function to detect segment type
