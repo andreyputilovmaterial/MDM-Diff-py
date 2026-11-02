@@ -1,6 +1,18 @@
 # Project Context — MDM-Diff-py
 
-> Last updated: 2026-11-02
+> Last updated: 2026-11-03
+> (2026-11-03) Standardized the `.gitignore` test-directory rule across root + all
+> submodules: the old broad `[Tt]est*` pattern (which hid any `test_*`/`tests/` folder)
+> was replaced with the explicit `tests-real-sensitive-data/` ignore, so regular `tests/`
+> and `test_*` folders are tracked. Fixed in root, `mdmreadpy`, `mddtoschema`,
+> `mdmreportpy`, `diff-lib`, `MDM-Syntax-Parser-py` (`mdmexcelreportpy` already had it in
+> `bac1bec`); stale comments updated to match. Closes GitHub issue #29.
+> (2026-11-03) GitHub issue triage: closed #4 (argparse params now handled in
+> `src/launcher.py` and passed down to each entry point), #17 (errors printed red in all
+> active programs), #33 (`build.sh`/`build.bat` copy LICENSE into `dist/`), and
+> `MDM-ExcelReport-py` #1 (Excel reporter handles rich-text `role`). Added a status
+> comment on #5 (markitdown/pinliner warnings resolved; `= open()` → `with open()` cleanup
+> remains).
 > (2026-11-02) Added `.clinerules/09-github-issues.md` (root + all 6
 > `andreyputilovmaterial/*` submodules): when asked to commit/push, the agent derives the
 > repo from `git remote get-url origin` and fetches open issues from the public GitHub REST
