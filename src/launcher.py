@@ -2,6 +2,7 @@
 import argparse
 # from pathlib import Path
 import traceback, sys
+import importlib
 
 
 
@@ -14,42 +15,18 @@ if __name__ == '__main__':
     from diff_older import diff_obsolete
     import diff
     import diff_print_expected_filename
-    from lib.mdmreadpy.src import read_mdd
-    from lib.mddtoschema.src import read_mdd as mdd_to_schema
-    from lib.otherformatsreadpy_txt import read as read_txt
-    from lib.otherformatsreadpy_general_msmarkitdown import read as read_msmarkitdown
-    from lib.otherformatsreadpy_excel import read_excel_entry as read_excel
-    from lib.otherformatsreadpy_spss import read as read_spss
-    from lib.mdmreadpy.src.lib.mdmreportpy.src import report_create as report_html_create
-    from lib.mdmexcelreportpy.src import report_create as report_excel_create
 elif '.' in __name__:
     # package
     from .GENERATED._VERSION import _VERSION as diff_script_version
     from .diff_older import diff_obsolete
     from . import diff
     from . import diff_print_expected_filename
-    from .lib.mdmreadpy.src import read_mdd
-    from .lib.mddtoschema.src import read_mdd as mdd_to_schema
-    from .lib.otherformatsreadpy_txt import read as read_txt
-    from .lib.otherformatsreadpy_general_msmarkitdown import read as read_msmarkitdown
-    from .lib.otherformatsreadpy_excel import read_excel_entry as read_excel
-    from .lib.otherformatsreadpy_spss import read as read_spss
-    from .lib.mdmreadpy.src.lib.mdmreportpy.src import report_create as report_html_create
-    from .lib.mdmexcelreportpy.src import report_create as report_excel_create
 else:
     # included with no parent package
     from GENERATED._VERSION import _VERSION as diff_script_version
     from diff_older import diff_obsolete
     import diff
     import diff_print_expected_filename
-    from lib.mdmreadpy.src import read_mdd
-    from lib.mddtoschema.src import read_mdd as mdd_to_schema
-    from lib.otherformatsreadpy_txt import read as read_txt
-    from lib.otherformatsreadpy_general_msmarkitdown import read as read_msmarkitdown
-    from lib.otherformatsreadpy_excel import read_excel_entry as read_excel
-    from lib.otherformatsreadpy_spss import read as read_spss
-    from lib.mdmreadpy.src.lib.mdmreportpy.src import report_create as report_html_create
-    from lib.mdmexcelreportpy.src import report_create as report_excel_create
 
 
 
@@ -58,6 +35,24 @@ else:
 STDOUT_COLOR_RED = "\033[31m"
 STDOUT_COLOR_RESET = "\033[0m"
 STDOUT_COLOR_GREEN = "\033[32m"
+
+
+
+def _import_module(flat_name):
+    # Lazily import a reader/reporter module so the bundle can load without its
+    # optional third-party dependencies (pandas, numpy, xlsxwriter, pydantic,
+    # pywin32, markitdown, ...). `flat_name` is the module's dotted path below
+    # the launcher package, e.g. 'lib.otherformatsreadpy_excel.read_excel_entry'.
+    # Mirrors the three-way conditional import used by entry-point scripts.
+    if __name__ == '__main__':
+        # run as a program
+        return importlib.import_module(flat_name)
+    elif '.' in __name__:
+        # package
+        return importlib.import_module('.' + flat_name, package=__package__)
+    else:
+        # included with no parent package
+        return importlib.import_module(flat_name)
 
 
 
@@ -71,27 +66,35 @@ def call_diff_filename_program(*argcs,**kwargs):
     return diff_print_expected_filename.entry_point(*argcs,**kwargs)
 
 def call_read_mdd_program(*argcs,**kwargs):
+    read_mdd = _import_module('lib.mdmreadpy.src.read_mdd')
     return read_mdd.entry_point(*argcs,**kwargs)
 
 def call_build_schema_program(*argcs,**kwargs):
+    mdd_to_schema = _import_module('lib.mddtoschema.src.read_mdd')
     return mdd_to_schema.entry_point(*argcs,**kwargs)
 
 def call_read_excel_program(*argcs,**kwargs):
+    read_excel = _import_module('lib.otherformatsreadpy_excel.read_excel_entry')
     return read_excel.entry_point(*argcs,**kwargs)
 
 def call_read_spss_program(*argcs,**kwargs):
+    read_spss = _import_module('lib.otherformatsreadpy_spss.read')
     return read_spss.entry_point(*argcs,**kwargs)
 
 def call_read_txt_program(*argcs,**kwargs):
+    read_txt = _import_module('lib.otherformatsreadpy_txt.read')
     return read_txt.entry_point(*argcs,**kwargs)
 
 def call_read_msmarkitdown_program(*argcs,**kwargs):
+    read_msmarkitdown = _import_module('lib.otherformatsreadpy_general_msmarkitdown.read')
     return read_msmarkitdown.entry_point(*argcs,**kwargs)
 
 def call_report_html_program(*argcs,**kwargs):
+    report_html_create = _import_module('lib.mdmreadpy.src.lib.mdmreportpy.src.report_create')
     return report_html_create.entry_point(*argcs,**kwargs)
 
 def call_report_excel_program(*argcs,**kwargs):
+    report_excel_create = _import_module('lib.mdmexcelreportpy.src.report_create')
     return report_excel_create.entry_point(*argcs,**kwargs)
 
 def call_test_program(*argcs,**kwargs):
