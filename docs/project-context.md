@@ -1,6 +1,15 @@
 # Project Context — MDM-Diff-py
 
 > Last updated: 2026-11-02
+> (2026-11-02) Added `.clinerules/09-github-issues.md` (root + all 6
+> `andreyputilovmaterial/*` submodules): when asked to commit/push, the agent derives the
+> repo from `git remote get-url origin` and fetches open issues from the public GitHub REST
+> API (`GET /repos/{owner}/{repo}/issues?state=open`, no token needed — repo and submodules
+> are public). It matches issue titles/bodies against the pending diff; a strong match gets
+> an automatic `Closes #N` / `Fixes #N` / `Resolves #N` reference in the commit message, a
+> weak match is confirmed with the user first. Fallback on rate-limit/private: ask the user
+> or use a `GH_TOKEN`. Also listed the previously-missing 08/09/11 rules in §5.
+
 > (2026-11-02) Regression guard: pinliner is a build-time-only tool and must never be
 > inlined into `dist/mdmtoolsap_bundle.py`. Added
 > `tests/test_bundle_excludes_pinliner.py` (root) plus the same test in the `mdmreadpy`
@@ -184,6 +193,10 @@ Static assets (HTML/CSS/JS templates, the git `_VERSION` string) are embedded vi
 - `.clinerules/02-python-portability.md` — pinliner/`GENERATED` constraints.
 - `.clinerules/03-code-style-errors.md` — fail early, readable errors, no over-validation.
 - `.clinerules/04-testing.md` — test new features, guard regressions.
+- `.clinerules/08-commit-messages.md` — commit subject/body style.
+- `.clinerules/09-github-issues.md` — fetch open issues at commit/push time and add
+  `Closes #N` / `Fixes #N` / `Resolves #N` references.
+- `.clinerules/11-submodules-commits.md` — submodule commits must exist on their remote.
 
 ## 6. Current focus / roadmap
 
