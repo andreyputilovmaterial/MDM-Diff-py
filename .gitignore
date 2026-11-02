@@ -13,7 +13,7 @@ report.*
 # Examples directory (top-level only)
 examples/
 
-# Test directories (case-insensitive, any level)
+# Test directories with real sensitive data (any level); regular tests/ are tracked
 tests-real-sensitive-data/
 
 # --- Python artifacts ---
