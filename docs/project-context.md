@@ -1,6 +1,11 @@
 # Project Context — MDM-Diff-py
 
 > Last updated: 2026-11-02
+> (2026-11-02) Expanded `.clinerules/00-non-interactive-terminal-commands.md` (root +
+> submodules) to also forbid here-documents (use `git commit -m` flags or a
+> `printf`-written `-F` file) and to disable editors/credential prompts
+> (`--no-pager -c core.editor=true`, `GIT_EDITOR=true GIT_TERMINAL_PROMPT=0`), after a
+> `git commit -F - <<'EOF'` heredoc left the terminal stuck at the `heredoc>` prompt.
 > (2026-11-02) Decision: dropped the `Makefile` in favor of plain shell build scripts.
 > There is no uniform cross-platform way to run Make; a simple `.sh` build script is
 > much more universally supported — `build.sh` runs natively on macOS/Linux and on
@@ -162,6 +167,8 @@ Static assets (HTML/CSS/JS templates, the git `_VERSION` string) are embedded vi
 ## 5. Repository rules
 
 - `.clinerules/00-project-context.md` — read/update this file each task.
+- `.clinerules/00-non-interactive-terminal-commands.md` — no pagers/editors/prompts,
+  no here-documents; prefer non-interactive commands that exit on their own.
 - `.clinerules/01-design-principles.md` — modularity, testing, minimal deps, consistency.
 - `.clinerules/02-python-portability.md` — pinliner/`GENERATED` constraints.
 - `.clinerules/03-code-style-errors.md` — fail early, readable errors, no over-validation.
