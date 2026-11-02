@@ -27,7 +27,9 @@ The core dependencies (`pandas`, `numpy`, `xlsxwriter`, `pydantic`) live in the 
 (MDD, Windows-only) and `markitdown` (heavy) — is declared in each reader's/reporter's
 own `requirements.txt` under `src/lib/`; `build.bat`/`build.sh` copy those into
 `dist/optional_dependencies/` and `run_init` installs them best-effort, so a missing
-optional package only disables the corresponding reader/reporter.
+optional package only disables the corresponding reader/reporter. `markitdown` is
+installed from PyPI as a regular optional dependency (it is *not* bundled into
+`mdmtoolsap_bundle.py`).
 
 ## Frequently asked questions
 

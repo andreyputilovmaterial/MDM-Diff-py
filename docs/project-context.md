@@ -1,6 +1,11 @@
 # Project Context — MDM-Diff-py
 
 > Last updated: 2026-11-02
+> (2026-11-02) Removed the vendored `microsoft/markitdown` submodule from
+> `src/lib/otherformatsreadpy_general_msmarkitdown/lib/`. The reader now imports
+> `markitdown` as a normal pip dependency (its `requirements.txt` declares
+> `markitdown[pdf,xlsx,docx,pptx,xls,outlook]`), so markitdown is no longer inlined
+> into the pinliner bundle.
 > (2026-11-02) Build & packaging: per-reader/per-reporter `requirements.txt` added under
 > `src/lib/`; `build.bat` + a new `build.sh` collect them into
 > `dist/optional_dependencies/` and copy `run_init.bat`/`run_init.sh` into `dist/`;
@@ -154,8 +159,9 @@ Static assets (HTML/CSS/JS templates, the git `_VERSION` string) are embedded vi
 - Exact final list of report cell-content shapes and `role` values (now drafted in
   `mdmreportpy/docs/rich-text-format.md`; still to be validated against real producer
   output).
-- Whether `ms markitdown`'s heavy dependency set should remain optional/vendored (see
-  root `README.md`).
+- ~~Whether `ms markitdown`'s heavy dependency set should remain optional/vendored.~~
+  *(Resolved 2026-11-02: the vendored submodule was removed; `markitdown` is now a
+  pip dependency installed best-effort, still optional — see root `README.md`.)*
 - Whether rich-text `column_headers` should be *produced* by readers (e.g. `mdmreadpy`
   translation headers) or only *accepted* by reporters, and which custom `role` values
   reporters should render specially.

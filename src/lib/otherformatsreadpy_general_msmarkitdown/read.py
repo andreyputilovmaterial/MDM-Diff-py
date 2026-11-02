@@ -7,18 +7,11 @@ from datetime import datetime, timezone
 
 
 
+MarkItDown = None
 did_import_fail = None
 
 try:
-    if __name__ == '__main__':
-        # run as a program
-        from lib.markitdown.packages.markitdown.src.markitdown._markitdown import MarkItDown
-    elif '.' in __name__:
-        # package
-        from .lib.markitdown.packages.markitdown.src.markitdown._markitdown import MarkItDown
-    else:
-        # included with no parent package
-        from lib.markitdown.packages.markitdown.src.markitdown._markitdown import MarkItDown
+    from markitdown import MarkItDown
 except Exception as e:
     did_import_fail = e
 
