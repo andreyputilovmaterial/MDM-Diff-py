@@ -1,6 +1,15 @@
 # Project Context — MDM-Diff-py
 
 > Last updated: 2026-11-03
+> (2026-11-03) Fixed `mdmreportpy.produce_html` so it no longer crashes when
+> `config['script_version']` is missing (e.g. `config={}`). The version is now
+> resolved once via `(config.get('script_version') or '').strip() or '?'`, used in the
+> `:scriptversion:` flag, and rendered as `sanitize_cssfield(script_version) or '?'` so
+> an unknown version shows a literal `?` in `data-script-version` /
+> `window.reportScriptVersion` (the previous `'???'` fallback sanitized to an empty
+> string). Added regression test
+> `TestEndToEnd.test_produce_html_defaults_missing_script_version_to_question_mark`
+> in `mdmreportpy/tests/test_backend_plugins.py`.
 > (2026-11-03) Spread the synthetic example/test fixtures from
 > `tests-real-sensitive-data/testsuite/` into each program's `tests/fixtures/` (root
 > diff tool, `mdmreadpy`, `mdmreportpy`, `mdmexcelreportpy`) and added
