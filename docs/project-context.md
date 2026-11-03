@@ -1,6 +1,18 @@
 # Project Context — MDM-Diff-py
 
 > Last updated: 2026-11-03
+> (2026-11-03) Documented diff-on-diff (diffing a diff) in `docs/diff-engine.md`
+> (duplicate `src/diff_engine/README.md`), with a pointer from `docs/architecture.md`. The
+> new "Diff-on-diff" section describes the two global techniques: (1) role relocation via
+> `normalize_input_relocate_diff_markers` (existing `added`/`removed`/`source_*` roles are
+> pushed to `source_*` so they don't collide with the fresh `added`/`removed`), and (2)
+> splitting every segment into `context` vs `change` blocks via
+> `detect_diffsegment_role`/`detect_segment_role` (context blocks pass through unchanged,
+> only change blocks are re-diffed). Documents the left↔right change-alignment invariant,
+> the nested-role result (e.g. `{"role":"removed","text":{"role":"source_added",…}}`), and
+> how `mdmreportpy` highlights it (plain diff = fills; `.mdmdiff-in-diff` = new changes as
+> outlines, relocated `source_*` as light fills). Example files referenced from
+> `tests-real-sensitive-data/testsuite/`.
 > (2026-11-03) Documented and tested side-by-side line alignment. Added a
 > "Side-by-side line alignment" section to `docs/diff-engine.md` (and the duplicate
 > `src/diff_engine/README.md`) describing `count_linebreaks` (a trailing newline counts as

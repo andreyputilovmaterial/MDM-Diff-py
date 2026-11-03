@@ -179,26 +179,89 @@ matcher).
 This is how `source_file_metadata` and attribute lists are compared structurally — by key,
 not as flat text.
 
-## Segment diffing & diff-on-diff
+## Segment diffing
 
 `finddiff_values_segment_*` handles a single `(segment)`:
 
 - If both `role`s are `context`, the payloads are passed through as context without
-  diffing.
+  diffing (this is the "context block" pass-through used by diff-on-diff).
 - If roles differ but payloads are identical, one side is marked `removed` and the other
   `added` (a role change is not semantically diffable — see `rich-text-format.md`).
 - Otherwise it recurses into the `text`/`parts` payload (casting `text` to a `(list)` of
   parts when needed).
-
-When diffing a diff (input that already carries diff roles),
-`normalize_input_relocate_diff_markers()` first relocates existing `added`/`removed` roles
-to `source_*` so the second pass can tell "added before" apart from "added by this diff".
 
 ## Dict diffing
 
 `finddiff_values_dict_*` combines the two dicts' keys and diffs each value recursively.
 Keys present on only one side produce an `added`/`removed` value (or `None` on the missing
 side in side-by-side mode).
+
+## Diff-on-diff (diffing a diff)
+
+The diff tool's own output is a valid report JSON (`report_type: "diff"`), so two diff
+reports can themselves be diffed, producing a **second-level diff**. `src/diff.py`
+`find_diff` detects this — when either input is a diff report (the
+`diff_source_*:data-type:diff` flag) it sets `config['input_is_diff']` and enters a special
+mode. Concrete example files live in `tests-real-sensitive-data/testsuite/`:
+`a1_*.mdd.json` / `b1_*.mdd.json` are the sources, `report.diff.a1_…` and
+`report.diff.b1_…` are first-level diffs, and
+`report.diff.report.diff.-a1_-b1_---…---….mdd.json` is the second-level diff.
+
+Two global techniques make this possible.
+
+### 1. Relocating existing roles (`source_*`)
+
+Before a cell value coming from a previous diff is compared,
+`normalize_input_relocate_diff_markers()` rewrites every change role it already carries:
+
+| input role | relocated to |
+| --- | --- |
+| `added` | `source_added` |
+| `removed` | `source_removed` |
+| `source_added` / `source_removed` / `source_change` | `source_`-prefixed again |
+| `context` / `None` / anything else | unchanged |
+
+This pushes the *previous* diff's `added`/`removed` marks out of the way so the second
+pass can freely assign fresh `added`/`removed` without the two layers colliding.
+
+### 2. Splitting into `context` and `change` blocks
+
+Every segment is classified as either a **`change`** block (`role` in `added`, `removed`,
+`source_added`, `source_removed`, `source_change`) or a **`context`** block
+(`role: context`), via `detect_diffsegment_role()` / `detect_segment_role()`. The segment
+handler (`finddiff_values_segment_*`) uses this classification: two `context` blocks are
+passed through untouched, while `change` blocks are processed and receive new
+`added`/`removed` marks.
+
+The **goal** of this splitting is an invariant: the changes found on the left must line up
+with the same changes on the right. Large unchanged runs in between (`context` blocks) are
+allowed — indeed expected — to be identical on both sides; what matters is that the
+`change` blocks correspond left ↔ right.
+
+### Result: nested roles
+
+A second-level diff therefore nests roles. For example, from
+`tests-real-sensitive-data/testsuite/`:
+
+```json
+{"role": "removed", "text": {"role": "source_added", "text": " listed"}}
+```
+
+reads as: the text ` listed` was *added* in the first-level diff (inner `source_added`),
+and is now *removed* in the second-level diff (outer `removed`).
+
+### How it is highlighted
+
+`mdmreportpy` renders roles as (possibly nested) spans — see
+`src/lib/mdmreadpy/src/lib/mdmreportpy/src/common_functions.py`
+(`html_sanitize_value_general`) and `src/templates/mdmreporttable.css`:
+
+- **Plain diff** — `added` = green fill, `removed` = red fill.
+- **Diff-of-diff** (the report is wrapped in `.mdmdiff-in-diff`) — the *new*
+  `added`/`removed` become **outlines** (green/red borders, no fill), while the relocated
+  `source_added`/`source_removed` become **light fills**. The two layers are therefore
+  visually distinct and stack: the underlying first-level change shows through the outline
+  of the new second-level change.
 
 ## Roles & segment terminology
 

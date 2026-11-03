@@ -16,8 +16,10 @@ Every reader produces the same JSON "report" shape, and every reporter consumes 
 - **MDD reader** — `src/lib/mdmreadpy` (`read_mdd.py`), drives the COM API of
   IBM/Unicom Professional (Windows + Professional required).
 - **Diff tool** — `src/diff_engine` (current) / `src/diff_older` (legacy). Reads one or
-  two JSON reports and writes a new JSON report. Internals are documented in
-  `docs/diff-engine.md` (duplicated at `src/diff_engine/README.md`).
+  two JSON reports and writes a new JSON report. A diff report is itself a valid input, so
+  two diffs can be diffed again (diff-on-diff). Internals are documented in
+  `docs/diff-engine.md` (duplicated at `src/diff_engine/README.md`), including the
+  diff-on-diff `source_*` role relocation and `context`/`change` block splitting.
 - **HTML reporter** — `src/lib/mdmreadpy/src/lib/mdmreportpy` (`report_create.py`).
 - **Excel reporter** — `src/lib/mdmexcelreportpy`.
 - **Translation overlay helper** — `MDM-TranslationOverlayHelper`
