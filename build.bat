@@ -152,14 +152,14 @@ ECHO Collect optional per-reader/per-reporter requirements into dist\optional_de
 powershell -NoProfile -Command ^
 "$srcRoot = (Resolve-Path 'src').Path; ^
 $destRoot = 'dist\optional_dependencies'; ^
-Get-ChildItem -Path (Join-Path $srcRoot 'lib') -Recurse -Filter 'requirements.txt' -File | Where-Object { ^
-    $_.FullName -notmatch '\\dist\\' -and $_.FullName -notmatch '\\.git\\' -and $_.FullName -notmatch '\\GENERATED\\' ^
-} | ForEach-Object { ^
-    $rel = $_.FullName.Substring($srcRoot.Length + 1); ^
+$files = Get-ChildItem -Path (Join-Path $srcRoot 'lib') -Recurse -Filter 'requirements.txt' -File; ^
+foreach ($f in $files) { ^
+    if ($f.FullName.Contains('\dist\') -or $f.FullName.Contains('\.git\') -or $f.FullName.Contains('\GENERATED\')) { continue }; ^
+    $rel = $f.FullName.Substring($srcRoot.Length + 1); ^
     $dest = Join-Path $destRoot $rel; ^
     $destDir = Split-Path -Parent $dest; ^
-    if (-not (Test-Path $destDir)) { New-Item -ItemType Directory -Path $destDir -Force | Out-Null }; ^
-    Copy-Item $_.FullName $dest -Force; ^
+    if (-not (Test-Path $destDir)) { $null = New-Item -ItemType Directory -Path $destDir -Force }; ^
+    Copy-Item $f.FullName $dest -Force; ^
     Write-Host ('copying optional requirements: ' + $rel) ^
 }; "
 ECHO Done

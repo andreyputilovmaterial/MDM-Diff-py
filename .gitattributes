@@ -1,2 +1,4 @@
 
 *.mrs linguist-language=VBScript
+*.bat text eol=crlf
+*.sh  text eol=lf
