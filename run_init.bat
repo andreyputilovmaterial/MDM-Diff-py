@@ -27,9 +27,11 @@ echo.
 @REM The distributed copy scans optional_dependencies\ instead.
 if exist "src\lib" (
     for /r "src\lib" %%f in (requirements.txt) do (
-        echo Installing optional dependencies: %%f
-        "%pythonexecutable%" -m pip install -r "%%f"
-        if errorlevel 1 echo WARNING: optional dependencies in %%f not installed - the corresponding reader/reporter will be unavailable
+        if exist "%%f" (
+            echo Installing optional dependencies: %%f
+            "%pythonexecutable%" -m pip install -r "%%f"
+            if errorlevel 1 echo WARNING: optional dependencies in %%f not installed - the corresponding reader/reporter will be unavailable
+        )
     )
 )
 
