@@ -1,0 +1,2571 @@
+{
+    "report_type": "MDD",
+    "source_file": "C:\\Users\\aputilov\\Downloads\\b1_tomorrow.mdd",
+    "report_datetime_utc": "2026-11-02T23:50:38Z",
+    "report_datetime_local": "2026-11-02T15:50:38Z",
+    "source_file_metadata": [
+        {
+            "name": "MDD",
+            "value": "C:\\Users\\aputilov\\Downloads\\b1_tomorrow.mdd"
+        },
+        {
+            "name": "generated with mdmtoolsap-mddread script version",
+            "value": "v1.001.001-7-gb5f7d7c",
+            "role": "sronly"
+        }
+    ],
+    "report_scheme": {
+        "columns": [
+            "name",
+            "label",
+            "attributes",
+            "properties",
+            "scripting"
+        ],
+        "column_headers": {
+            "name": "Item name",
+            "label": "Label",
+            "attributes": "Item Attributes",
+            "properties": "Custom properties",
+            "scripting": "Scripts"
+        },
+        "flags": [
+            "data-type:mdd"
+        ]
+    },
+    "sections": [
+        {
+            "name": "languages",
+            "content": [
+                {
+                    "name": "ENU",
+                    "label": "English (United States)"
+                }
+            ]
+        },
+        {
+            "name": "shared_lists",
+            "content": [
+                {
+                    "name": "SL_Attributes",
+                    "label": "",
+                    "properties": [],
+                    "scripting": "SL_Attributes - define\r\n{\r\n    Trust \"Is a brand I trust\",\r\n    ValueForMoney \"Good value for money\"\r\n};"
+                },
+                {
+                    "name": "SL_Attributes.categories[Trust]",
+                    "label": "Is a brand I trust",
+                    "properties": [],
+                    "scripting": "Trust \"Is a brand I trust\""
+                },
+                {
+                    "name": "SL_Attributes.categories[ValueForMoney]",
+                    "label": "Good value for money",
+                    "properties": [],
+                    "scripting": "ValueForMoney \"Good value for money\""
+                },
+                {
+                    "name": "SL_StateList",
+                    "label": "",
+                    "properties": [],
+                    "scripting": "SL_StateList - define\r\n{\r\n    ID \"Idaho\"\r\n        [\r\n            Value = 1\r\n        ],\r\n    CA \"California\"\r\n        [\r\n            Value = \"2\"\r\n        ]\r\n    factor(173)\r\n};"
+                },
+                {
+                    "name": "SL_StateList.categories[ID]",
+                    "label": "Idaho",
+                    "properties": [
+                        {
+                            "name": "Value",
+                            "value": "1"
+                        }
+                    ],
+                    "scripting": "ID \"Idaho\"\r\n    [\r\n        Value = 1\r\n    ]"
+                },
+                {
+                    "name": "SL_StateList.categories[CA]",
+                    "label": "California",
+                    "properties": [
+                        {
+                            "name": "Value",
+                            "value": "2"
+                        }
+                    ],
+                    "scripting": "CA \"California\"\r\n    [\r\n        Value = \"2\"\r\n    ]\r\nfactor(173)"
+                }
+            ]
+        },
+        {
+            "name": "fields",
+            "content": [
+                {
+                    "name": "",
+                    "properties": [],
+                    "scripting": "Metadata (en-US, Question, Label)\r\n\r\n    SL_StateList - define\r\n    {\r\n        ID \"Idaho\"\r\n            [\r\n                Value = 1\r\n            ],\r\n        CA \"California\"\r\n            [\r\n                Value = \"2\"\r\n            ]\r\n        factor(173)\r\n    };\r\n    SL_Attributes - define\r\n    {\r\n        Trust \"Is a brand I trust\",\r\n        ValueForMoney \"Good value for money\"\r\n    };\r\n\r\n    ShellVersion -\r\n    long;\r\n\r\n    SnifferData - block fields\r\n    (\r\n        DeviceType -\r\n        categorical [1..1]\r\n        {\r\n            Mobile \"Mobile\",\r\n            Desktop \"Desktop\"\r\n        };\r\n\r\n    );\r\n\r\n    COMP \"Completion indicator\"\r\n    categorical [1..1]\r\n    {\r\n        One \"One\",\r\n        Done \"Done\"\r\n    };\r\n\r\n    SL_BrandList \"Brands\"\r\n    categorical\r\n    {\r\n        Nike \"Nike\",\r\n        CocaCola \"Coca Cola\",\r\n        Tesla \"Tesla\"\r\n            [\r\n                Elon = true\r\n            ],\r\n        ESPN \"ESPN\"\r\n        {\r\n            Select \"Select\" fix,\r\n            Stream \"Stream\"\r\n            {\r\n                YesStream \"Yes <b>stream</b>\",\r\n                NoStream \"No </b>stream</b>\"\r\n            }\r\n        } ran\r\n    };\r\n\r\n    ProgramVersion -\r\n    long [0 .. 255];\r\n\r\n    YearBorn \"Which year.\"\r\n        [\r\n            ShortName = \"S1\",\r\n            FullName = \"S1_YearBorn\",\r\n            Scout = \"Rule\"\r\n        ]\r\n    long [1915 .. 2031];\r\n\r\n    CurrDate \"Programmatic variable\"\r\n    date;\r\n\r\n    YearReal \"Year #2\"\r\n        [\r\n            DRemove = true\r\n        ]\r\n    double [0 .. 2031];\r\n\r\n    Gender \"What is your gender\"\r\n        [\r\n            ShortName = \"S2\",\r\n            FullName = \"S2_Gender\",\r\n            KeypadType = \"Something\",\r\n            Scout = \"Rule\"\r\n        ]\r\n    categorical\r\n    {\r\n        Male \"Male\"\r\n            [\r\n                Value = 1\r\n            ],\r\n        Female \"Female\"\r\n            [\r\n                Value = \"2\"\r\n            ],\r\n        OtherSpec \"Other\" fix nofilter\r\n    } ran;\r\n\r\n    Ethnicity \"Which race(s) or ethnicity do you consider yourself to be?\"\r\n        [\r\n            ShortName = \"S6\",\r\n            FullName = \"S6_Ethnicity\",\r\n            Logic = \"Show to all.\",\r\n            RespondentLogic = \"Show to respondent.\",\r\n            RI = \"standard\"\r\n        ]\r\n    categorical [1..]\r\n    {\r\n        AmericanIndianAlaskan \"American Indian or Alaskan Native\",\r\n        AsianIncludesAsian \"Asian (includes Asian Indian, Chinese, Filipino, Japanese, Korean, and Vietnamese)\",\r\n        BlackAA \"Black or African American\",\r\n        HispAndorLatino \"Hispanic and/or Latino\",\r\n        MiddleEasternNorth \"Middle Eastern or North African\",\r\n        NativeHawaiianPacific \"Native Hawaiian or Pacific Islander (includes Samoan, Guamanian, and Chamorro)\",\r\n        WhiteCauc \"White or Caucasian\",\r\n        OtherSpecNotListed \"Other not listed (specify)\" other(use OtherSpecNotListed ) fix,\r\n        PreferNotSay \"Prefer not to say\" fix exclusive\r\n    } ran\r\n    helperfields (\r\n        OtherSpecNotListed \"\"\r\n        text;\r\n    );\r\n\r\n    ZipCode \"Please enter your 5-digit zip code.\"\r\n        [\r\n            ShortName = \"S5\",\r\n            FullName = \"S5_ZipCode\",\r\n            Logic = \"Show to all.\",\r\n            RespondentLogic = \"Show to respondent.\",\r\n            ProgrammerComment = \"Programmer Comment: term immediately after 3 incorrect attempts\",\r\n            MobileKeypad = \"numeric\",\r\n            RI = \"ZipRI\"\r\n        ]\r\n    text [5..5]\r\n    helperfields (\r\n        StandardTexts - block fields\r\n        (\r\n            Errors - block fields\r\n            (\r\n                InvalidText \"Please enter a 5-digit zip code.\"\r\n                info;\r\n\r\n                TooLitleText \"Please enter a 5-digit zip code.\"\r\n                info;\r\n\r\n            );\r\n\r\n        );\r\n    ) validation(\"\\d{5}\");\r\n\r\n    BrandLoop \"Ask about brands\"\r\n        [\r\n            ShortName = \"BrandLoop\",\r\n            FullName = \"BrandLoop\"\r\n        ]\r\n    loop\r\n    {\r\n        SL_BrandList inline -\r\n        {\r\n        }\r\n    } fields -\r\n    (\r\n        Hey \"Hey\"\r\n        text [0..254];\r\n\r\n        LTR \"How likely are you to recommend\"\r\n            [\r\n                ShortName = \"M1\",\r\n                FullName = \"M1_LTR\"\r\n            ]\r\n        categorical\r\n        {\r\n            _1 \"1\",\r\n            _2 \"2\",\r\n            _3 \"3\",\r\n            _4 \"4\",\r\n            _5 \"5\"\r\n        };\r\n\r\n        Attributes \"Which of the below\"\r\n            [\r\n                ShortName = \"M2\",\r\n                FullName = \"M2_Attributes\"\r\n            ]\r\n        loop\r\n        {\r\n            SL_Attributes use \\\\.SL_Attributes -\r\n        } fields -\r\n        (\r\n            GV \"How are you\"\r\n            categorical\r\n            {\r\n                Yes \"Yes\",\r\n                No \"No\"\r\n            };\r\n\r\n        ) expand grid;\r\n\r\n        NumLoop -\r\n            [\r\n                ShortName = \"M3\",\r\n                FullName = \"M3_NumLoop\"\r\n            ]\r\n        loop [1..3] fields -\r\n        (\r\n            Num \"Num\"\r\n            long;\r\n\r\n        ) expand;\r\n\r\n        Ethnicity \"Which race(s) or ethnicity do you consider yourself to be?\"\r\n            [\r\n                ShortName = \"M6\",\r\n                FullName = \"M6_Ethnicity\",\r\n                Logic = \"Show to all.\",\r\n                RespondentLogic = \"Show to respondent.\",\r\n                RI = \"standard\"\r\n            ]\r\n        categorical [1..]\r\n        {\r\n            AmericanIndianAlaskan \"American Indian or Alaskan Native\",\r\n            AsianIncludesAsian \"Asian (includes Asian Indian, Chinese, Filipino, Japanese, Korean, and Vietnamese)\",\r\n            BlackAA \"Black or African American\",\r\n            HispAndorLatino \"Hispanic and/or Latino\",\r\n            MiddleEasternNorth \"Middle Eastern or North African\",\r\n            NativeHawaiianPacific \"Native Hawaiian or Pacific Islander (includes Samoan, Guamanian, and Chamorro)\",\r\n            WhiteCauc \"White or Caucasian\",\r\n            OtherSpecNotListed \"Other not listed (specify)\" other(use OtherSpecNotListed ) fix,\r\n            PreferNotSay \"Prefer not to say\" fix exclusive\r\n        } ran\r\n        helperfields (\r\n            OtherSpecNotListed \"\"\r\n            text;\r\n        );\r\n\r\n    ) expand;\r\n\r\n    PaAGE_Test \"Test page\"\r\n        [\r\n            IsTestPage = true,\r\n            Tested = 999\r\n        ]\r\n    page(\r\n        BrandLoop\r\n    );\r\n\r\nEnd Metadata\r\n\r\nRouting (Web)\r\n\r\nEnd Routing"
+                },
+                {
+                    "name": "Respondent",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "3"
+                        },
+                        {
+                            "name": "type",
+                            "value": "block"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "Variables reserved for respondent identification",
+                    "properties": [],
+                    "scripting": "Respondent \"Variables reserved for respondent identification\" block fields\r\n(\r\n    Serial \"Serial number\"\r\n    long [1..]\r\n    helperfields (\r\n        SourceFile \"What source file (for example, TIFF) can be used to get the respondent's serial number?\"\r\n        text\r\n        usagetype(\"SourceFile\");\r\n    );\r\n\r\n    Origin \"What product created this data?\"\r\n    categorical [1..]\r\n    {\r\n        Scan \"Scan\",\r\n        HTMLPlayer \"Interviewer Server/HTML player\",\r\n        CATI_HTMLPlayer \"Interviewer Server CATI / HTML player\",\r\n        CATI_TTYPlayer \"Interviewer Server CATI / TTY player\",\r\n        DataEntryPlayer \"Data Entry Player\",\r\n        - \"Other\" other(use \"Other\" )\r\n    }\r\n    helperfields (\r\n        \"Other\" \"Other\"\r\n        text [0..25];\r\n    );\r\n\r\n    ID \"ID\"\r\n    text [0..50];\r\n\r\n);"
+                },
+                {
+                    "name": "Respondent.Serial",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/long"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "1"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "1"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "None"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "Serial number",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "True"
+                        }
+                    ],
+                    "scripting": "Serial \"Serial number\"\r\nlong [1..]\r\nhelperfields (\r\n    SourceFile \"What source file (for example, TIFF) can be used to get the respondent's serial number?\"\r\n    text\r\n    usagetype(\"SourceFile\");\r\n);"
+                },
+                {
+                    "name": "Respondent.Serial.SourceFile",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/text"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "2"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "None"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "None"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        },
+                        {
+                            "name": "is_helper_field",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "What source file (for example, TIFF) can be used to get the respondent's serial number?",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "False"
+                        }
+                    ],
+                    "scripting": "SourceFile \"What source file (for example, TIFF) can be used to get the respondent's serial number?\"\r\ntext\r\nusagetype(\"SourceFile\");"
+                },
+                {
+                    "name": "Respondent.Origin",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/categorical"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "3"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "1"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "None"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "What product created this data?",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "True"
+                        }
+                    ],
+                    "scripting": "Origin \"What product created this data?\"\r\ncategorical [1..]\r\n{\r\n    Scan \"Scan\",\r\n    HTMLPlayer \"Interviewer Server/HTML player\",\r\n    CATI_HTMLPlayer \"Interviewer Server CATI / HTML player\",\r\n    CATI_TTYPlayer \"Interviewer Server CATI / TTY player\",\r\n    DataEntryPlayer \"Data Entry Player\",\r\n    - \"Other\" other(use \"Other\" )\r\n}\r\nhelperfields (\r\n    \"Other\" \"Other\"\r\n    text [0..25];\r\n);"
+                },
+                {
+                    "name": "Respondent.Origin.categories[Scan]",
+                    "label": "Scan",
+                    "properties": [],
+                    "scripting": "Scan \"Scan\""
+                },
+                {
+                    "name": "Respondent.Origin.categories[HTMLPlayer]",
+                    "label": "Interviewer Server/HTML player",
+                    "properties": [],
+                    "scripting": "HTMLPlayer \"Interviewer Server/HTML player\""
+                },
+                {
+                    "name": "Respondent.Origin.categories[CATI_HTMLPlayer]",
+                    "label": "Interviewer Server CATI / HTML player",
+                    "properties": [],
+                    "scripting": "CATI_HTMLPlayer \"Interviewer Server CATI / HTML player\""
+                },
+                {
+                    "name": "Respondent.Origin.categories[CATI_TTYPlayer]",
+                    "label": "Interviewer Server CATI / TTY player",
+                    "properties": [],
+                    "scripting": "CATI_TTYPlayer \"Interviewer Server CATI / TTY player\""
+                },
+                {
+                    "name": "Respondent.Origin.categories[DataEntryPlayer]",
+                    "label": "Data Entry Player",
+                    "properties": [],
+                    "scripting": "DataEntryPlayer \"Data Entry Player\""
+                },
+                {
+                    "name": "Respondent.Origin.categories[Other]",
+                    "label": "Other",
+                    "properties": [],
+                    "scripting": "- \"Other\" other(use \"Other\" )"
+                },
+                {
+                    "name": "Respondent.Origin.Other",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/text"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "2"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "0"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "25"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        },
+                        {
+                            "name": "is_helper_field",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "Other",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "False"
+                        }
+                    ],
+                    "scripting": "\"Other\" \"Other\"\r\ntext [0..25];"
+                },
+                {
+                    "name": "Respondent.ID",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/text"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "2"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "0"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "50"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "ID",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "True"
+                        }
+                    ],
+                    "scripting": "ID \"ID\"\r\ntext [0..50];"
+                },
+                {
+                    "name": "DataCollection",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "3"
+                        },
+                        {
+                            "name": "type",
+                            "value": "block"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "Variables reserved for data collection",
+                    "properties": [],
+                    "scripting": "DataCollection \"Variables reserved for data collection\" block fields\r\n(\r\n    Status \"What is the status of this interview?\"\r\n    categorical [1..]\r\n    {\r\n        Completed \"Completed successfully\",\r\n        Active \"Active / In progress\",\r\n        TimedOut \"Timed out\",\r\n        ScriptStopped \"Stopped by script\",\r\n        RespondentStopped \"Stopped by respondent\",\r\n        Shutdown \"Interview system shutdown\",\r\n        Reviewed \"Reviewed\",\r\n        Signal \"Stopped by signal\",\r\n        Test \"Test data\"\r\n    };\r\n\r\n    InterviewerID \"Who interviewed this respondent?\"\r\n    text [0..50];\r\n\r\n    StartTime \"At what time did this interview start?\"\r\n    date;\r\n\r\n    FinishTime \"At what time did this interview finish?\"\r\n    date;\r\n\r\n    MetadataVersionNumber \"Which metadata version was used for this interview?\"\r\n    text [0..15];\r\n\r\n    MetadataVersionGUID \"Which metadata version was used for this interview?\"\r\n    text [0..36];\r\n\r\n    RoutingContext \"Which routing context was used for this interview?\"\r\n    categorical [1..1]\r\n    {\r\n        PAPER \"Paper\",\r\n        SIF \"Quancept based SIF routing\",\r\n        Web \"Web\"\r\n    };\r\n\r\n    Variant \"Which variant was used for this interview?\"\r\n    text [0..255];\r\n\r\n    EndQuestion \"What question was the respondent on when the interview ended?\"\r\n    text [0..255];\r\n\r\n    TerminateSignal \"What signal value was used to terminate this interview?\"\r\n    long [0..];\r\n\r\n    SeedValue \"What seed value was used in interviewing this respondent?\"\r\n    long;\r\n\r\n    InterviewEngine \"Which interview engine version was used for this interview?\"\r\n    text [0..15];\r\n\r\n    CurrentPage \"Which interview page is the respondent currently on?\"\r\n    long [0..];\r\n\r\n    Debug \"What debug information has the interviewing engine written?\"\r\n    text [0..1024];\r\n\r\n    ServerTimeZone \"Server time zone\"\r\n    long;\r\n\r\n    InterviewerTimeZone \"Interviewer time zone\"\r\n    long;\r\n\r\n    RespondentTimeZone \"Respondent time zone\"\r\n    long;\r\n\r\n    BatchID \"System generated unique batch identifier\"\r\n    text [0..50];\r\n\r\n    BatchName \"What name do you want to assign to this batch?\"\r\n    text [0..50];\r\n\r\n    DataEntryMode \"What is the data entry mode of this respondent?\"\r\n    categorical [1..1]\r\n    {\r\n        Initial \"Initial Entry\",\r\n        Full \"Full Verification\",\r\n        Partial \"Partial Verification\",\r\n        Maintenance \"Maintenance\"\r\n    };\r\n\r\n    Removed \"Is the data of this respondent removed?\"\r\n    boolean;\r\n\r\n    InterviewMode \"What is the interview mode of this respondent?\"\r\n    categorical [1..1]\r\n    {\r\n        Web \"Web\",\r\n        Phone \"Phone\",\r\n        Local \"Local\",\r\n        DataEntry \"DataEntry\"\r\n    };\r\n\r\n);"
+                },
+                {
+                    "name": "DataCollection.Status",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/categorical"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "3"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "1"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "None"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "What is the status of this interview?",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "True"
+                        }
+                    ],
+                    "scripting": "Status \"What is the status of this interview?\"\r\ncategorical [1..]\r\n{\r\n    Completed \"Completed successfully\",\r\n    Active \"Active / In progress\",\r\n    TimedOut \"Timed out\",\r\n    ScriptStopped \"Stopped by script\",\r\n    RespondentStopped \"Stopped by respondent\",\r\n    Shutdown \"Interview system shutdown\",\r\n    Reviewed \"Reviewed\",\r\n    Signal \"Stopped by signal\",\r\n    Test \"Test data\"\r\n};"
+                },
+                {
+                    "name": "DataCollection.Status.categories[Completed]",
+                    "label": "Completed successfully",
+                    "properties": [],
+                    "scripting": "Completed \"Completed successfully\""
+                },
+                {
+                    "name": "DataCollection.Status.categories[Active]",
+                    "label": "Active / In progress",
+                    "properties": [],
+                    "scripting": "Active \"Active / In progress\""
+                },
+                {
+                    "name": "DataCollection.Status.categories[TimedOut]",
+                    "label": "Timed out",
+                    "properties": [],
+                    "scripting": "TimedOut \"Timed out\""
+                },
+                {
+                    "name": "DataCollection.Status.categories[ScriptStopped]",
+                    "label": "Stopped by script",
+                    "properties": [],
+                    "scripting": "ScriptStopped \"Stopped by script\""
+                },
+                {
+                    "name": "DataCollection.Status.categories[RespondentStopped]",
+                    "label": "Stopped by respondent",
+                    "properties": [],
+                    "scripting": "RespondentStopped \"Stopped by respondent\""
+                },
+                {
+                    "name": "DataCollection.Status.categories[Shutdown]",
+                    "label": "Interview system shutdown",
+                    "properties": [],
+                    "scripting": "Shutdown \"Interview system shutdown\""
+                },
+                {
+                    "name": "DataCollection.Status.categories[Reviewed]",
+                    "label": "Reviewed",
+                    "properties": [],
+                    "scripting": "Reviewed \"Reviewed\""
+                },
+                {
+                    "name": "DataCollection.Status.categories[Signal]",
+                    "label": "Stopped by signal",
+                    "properties": [],
+                    "scripting": "Signal \"Stopped by signal\""
+                },
+                {
+                    "name": "DataCollection.Status.categories[Test]",
+                    "label": "Test data",
+                    "properties": [],
+                    "scripting": "Test \"Test data\""
+                },
+                {
+                    "name": "DataCollection.InterviewerID",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/text"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "2"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "0"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "50"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "Who interviewed this respondent?",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "False"
+                        }
+                    ],
+                    "scripting": "InterviewerID \"Who interviewed this respondent?\"\r\ntext [0..50];"
+                },
+                {
+                    "name": "DataCollection.StartTime",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/date"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "5"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "At what time did this interview start?",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "True"
+                        }
+                    ],
+                    "scripting": "StartTime \"At what time did this interview start?\"\r\ndate;"
+                },
+                {
+                    "name": "DataCollection.FinishTime",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/date"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "5"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "At what time did this interview finish?",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "True"
+                        }
+                    ],
+                    "scripting": "FinishTime \"At what time did this interview finish?\"\r\ndate;"
+                },
+                {
+                    "name": "DataCollection.MetadataVersionNumber",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/text"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "2"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "0"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "15"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "Which metadata version was used for this interview?",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "True"
+                        }
+                    ],
+                    "scripting": "MetadataVersionNumber \"Which metadata version was used for this interview?\"\r\ntext [0..15];"
+                },
+                {
+                    "name": "DataCollection.MetadataVersionGUID",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/text"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "2"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "0"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "36"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "Which metadata version was used for this interview?",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "False"
+                        }
+                    ],
+                    "scripting": "MetadataVersionGUID \"Which metadata version was used for this interview?\"\r\ntext [0..36];"
+                },
+                {
+                    "name": "DataCollection.RoutingContext",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/categorical"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "3"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "1"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "1"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "Which routing context was used for this interview?",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "False"
+                        }
+                    ],
+                    "scripting": "RoutingContext \"Which routing context was used for this interview?\"\r\ncategorical [1..1]\r\n{\r\n    PAPER \"Paper\",\r\n    SIF \"Quancept based SIF routing\",\r\n    Web \"Web\"\r\n};"
+                },
+                {
+                    "name": "DataCollection.RoutingContext.categories[PAPER]",
+                    "label": "Paper",
+                    "properties": [],
+                    "scripting": "PAPER \"Paper\""
+                },
+                {
+                    "name": "DataCollection.RoutingContext.categories[SIF]",
+                    "label": "Quancept based SIF routing",
+                    "properties": [],
+                    "scripting": "SIF \"Quancept based SIF routing\""
+                },
+                {
+                    "name": "DataCollection.RoutingContext.categories[Web]",
+                    "label": "Web",
+                    "properties": [],
+                    "scripting": "Web \"Web\""
+                },
+                {
+                    "name": "DataCollection.Variant",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/text"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "2"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "0"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "255"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "Which variant was used for this interview?",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "False"
+                        }
+                    ],
+                    "scripting": "Variant \"Which variant was used for this interview?\"\r\ntext [0..255];"
+                },
+                {
+                    "name": "DataCollection.EndQuestion",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/text"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "2"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "0"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "255"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "What question was the respondent on when the interview ended?",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "False"
+                        }
+                    ],
+                    "scripting": "EndQuestion \"What question was the respondent on when the interview ended?\"\r\ntext [0..255];"
+                },
+                {
+                    "name": "DataCollection.TerminateSignal",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/long"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "1"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "0"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "None"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "What signal value was used to terminate this interview?",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "True"
+                        }
+                    ],
+                    "scripting": "TerminateSignal \"What signal value was used to terminate this interview?\"\r\nlong [0..];"
+                },
+                {
+                    "name": "DataCollection.SeedValue",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/long"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "1"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "None"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "None"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "What seed value was used in interviewing this respondent?",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "False"
+                        }
+                    ],
+                    "scripting": "SeedValue \"What seed value was used in interviewing this respondent?\"\r\nlong;"
+                },
+                {
+                    "name": "DataCollection.InterviewEngine",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/text"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "2"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "0"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "15"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "Which interview engine version was used for this interview?",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "False"
+                        }
+                    ],
+                    "scripting": "InterviewEngine \"Which interview engine version was used for this interview?\"\r\ntext [0..15];"
+                },
+                {
+                    "name": "DataCollection.CurrentPage",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/long"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "1"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "0"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "None"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "Which interview page is the respondent currently on?",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "False"
+                        }
+                    ],
+                    "scripting": "CurrentPage \"Which interview page is the respondent currently on?\"\r\nlong [0..];"
+                },
+                {
+                    "name": "DataCollection.Debug",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/text"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "2"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "0"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "1024"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "What debug information has the interviewing engine written?",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "False"
+                        }
+                    ],
+                    "scripting": "Debug \"What debug information has the interviewing engine written?\"\r\ntext [0..1024];"
+                },
+                {
+                    "name": "DataCollection.ServerTimeZone",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/long"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "1"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "None"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "None"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "Server time zone",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "False"
+                        }
+                    ],
+                    "scripting": "ServerTimeZone \"Server time zone\"\r\nlong;"
+                },
+                {
+                    "name": "DataCollection.InterviewerTimeZone",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/long"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "1"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "None"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "None"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "Interviewer time zone",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "False"
+                        }
+                    ],
+                    "scripting": "InterviewerTimeZone \"Interviewer time zone\"\r\nlong;"
+                },
+                {
+                    "name": "DataCollection.RespondentTimeZone",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/long"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "1"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "None"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "None"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "Respondent time zone",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "False"
+                        }
+                    ],
+                    "scripting": "RespondentTimeZone \"Respondent time zone\"\r\nlong;"
+                },
+                {
+                    "name": "DataCollection.BatchID",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/text"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "2"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "0"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "50"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "System generated unique batch identifier",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "False"
+                        }
+                    ],
+                    "scripting": "BatchID \"System generated unique batch identifier\"\r\ntext [0..50];"
+                },
+                {
+                    "name": "DataCollection.BatchName",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/text"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "2"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "0"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "50"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "What name do you want to assign to this batch?",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "False"
+                        }
+                    ],
+                    "scripting": "BatchName \"What name do you want to assign to this batch?\"\r\ntext [0..50];"
+                },
+                {
+                    "name": "DataCollection.DataEntryMode",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/categorical"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "3"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "1"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "1"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "What is the data entry mode of this respondent?",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "False"
+                        }
+                    ],
+                    "scripting": "DataEntryMode \"What is the data entry mode of this respondent?\"\r\ncategorical [1..1]\r\n{\r\n    Initial \"Initial Entry\",\r\n    Full \"Full Verification\",\r\n    Partial \"Partial Verification\",\r\n    Maintenance \"Maintenance\"\r\n};"
+                },
+                {
+                    "name": "DataCollection.DataEntryMode.categories[Initial]",
+                    "label": "Initial Entry",
+                    "properties": [],
+                    "scripting": "Initial \"Initial Entry\""
+                },
+                {
+                    "name": "DataCollection.DataEntryMode.categories[Full]",
+                    "label": "Full Verification",
+                    "properties": [],
+                    "scripting": "Full \"Full Verification\""
+                },
+                {
+                    "name": "DataCollection.DataEntryMode.categories[Partial]",
+                    "label": "Partial Verification",
+                    "properties": [],
+                    "scripting": "Partial \"Partial Verification\""
+                },
+                {
+                    "name": "DataCollection.DataEntryMode.categories[Maintenance]",
+                    "label": "Maintenance",
+                    "properties": [],
+                    "scripting": "Maintenance \"Maintenance\""
+                },
+                {
+                    "name": "DataCollection.Removed",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/boolean"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "7"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "Is the data of this respondent removed?",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "False"
+                        }
+                    ],
+                    "scripting": "Removed \"Is the data of this respondent removed?\"\r\nboolean;"
+                },
+                {
+                    "name": "DataCollection.InterviewMode",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/categorical"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "3"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "1"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "1"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "What is the interview mode of this respondent?",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "False"
+                        }
+                    ],
+                    "scripting": "InterviewMode \"What is the interview mode of this respondent?\"\r\ncategorical [1..1]\r\n{\r\n    Web \"Web\",\r\n    Phone \"Phone\",\r\n    Local \"Local\",\r\n    DataEntry \"DataEntry\"\r\n};"
+                },
+                {
+                    "name": "DataCollection.InterviewMode.categories[Web]",
+                    "label": "Web",
+                    "properties": [],
+                    "scripting": "Web \"Web\""
+                },
+                {
+                    "name": "DataCollection.InterviewMode.categories[Phone]",
+                    "label": "Phone",
+                    "properties": [],
+                    "scripting": "Phone \"Phone\""
+                },
+                {
+                    "name": "DataCollection.InterviewMode.categories[Local]",
+                    "label": "Local",
+                    "properties": [],
+                    "scripting": "Local \"Local\""
+                },
+                {
+                    "name": "DataCollection.InterviewMode.categories[DataEntry]",
+                    "label": "DataEntry",
+                    "properties": [],
+                    "scripting": "DataEntry \"DataEntry\""
+                },
+                {
+                    "name": "DataCleaning",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "3"
+                        },
+                        {
+                            "name": "type",
+                            "value": "block"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "Variables reserved for data cleaning",
+                    "properties": [],
+                    "scripting": "DataCleaning \"Variables reserved for data cleaning\" block fields\r\n(\r\n    Note \"Add a cleaning note about this respondent here.\"\r\n    text [0..1024];\r\n\r\n    Status \"What is the data cleaning status of this respondent?\"\r\n    categorical [1..]\r\n    {\r\n        Clean \"Clean\",\r\n        NeedsReview \"Needs review\"\r\n    };\r\n\r\n    ReviewStatus \"What is the data cleaning review status of this respondent?\"\r\n    categorical [1..]\r\n    {\r\n        FlaggedForReview \"Flagged for review\",\r\n        FlaggedForMove \"Flagged for move\",\r\n        FlaggedForCopy \"Flagged for copy\",\r\n        FlaggedForDelete \"Flagged for delete\"\r\n    };\r\n\r\n);"
+                },
+                {
+                    "name": "DataCleaning.Note",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/text"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "2"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "0"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "1024"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "Add a cleaning note about this respondent here.",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "False"
+                        }
+                    ],
+                    "scripting": "Note \"Add a cleaning note about this respondent here.\"\r\ntext [0..1024];"
+                },
+                {
+                    "name": "DataCleaning.Status",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/categorical"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "3"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "1"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "None"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "What is the data cleaning status of this respondent?",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "False"
+                        }
+                    ],
+                    "scripting": "Status \"What is the data cleaning status of this respondent?\"\r\ncategorical [1..]\r\n{\r\n    Clean \"Clean\",\r\n    NeedsReview \"Needs review\"\r\n};"
+                },
+                {
+                    "name": "DataCleaning.Status.categories[Clean]",
+                    "label": "Clean",
+                    "properties": [],
+                    "scripting": "Clean \"Clean\""
+                },
+                {
+                    "name": "DataCleaning.Status.categories[NeedsReview]",
+                    "label": "Needs review",
+                    "properties": [],
+                    "scripting": "NeedsReview \"Needs review\""
+                },
+                {
+                    "name": "DataCleaning.ReviewStatus",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/categorical"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "3"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "1"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "None"
+                        },
+                        {
+                            "name": "is_system",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "What is the data cleaning review status of this respondent?",
+                    "properties": [
+                        {
+                            "name": "VISIBLE",
+                            "value": "False"
+                        }
+                    ],
+                    "scripting": "ReviewStatus \"What is the data cleaning review status of this respondent?\"\r\ncategorical [1..]\r\n{\r\n    FlaggedForReview \"Flagged for review\",\r\n    FlaggedForMove \"Flagged for move\",\r\n    FlaggedForCopy \"Flagged for copy\",\r\n    FlaggedForDelete \"Flagged for delete\"\r\n};"
+                },
+                {
+                    "name": "DataCleaning.ReviewStatus.categories[FlaggedForReview]",
+                    "label": "Flagged for review",
+                    "properties": [],
+                    "scripting": "FlaggedForReview \"Flagged for review\""
+                },
+                {
+                    "name": "DataCleaning.ReviewStatus.categories[FlaggedForMove]",
+                    "label": "Flagged for move",
+                    "properties": [],
+                    "scripting": "FlaggedForMove \"Flagged for move\""
+                },
+                {
+                    "name": "DataCleaning.ReviewStatus.categories[FlaggedForCopy]",
+                    "label": "Flagged for copy",
+                    "properties": [],
+                    "scripting": "FlaggedForCopy \"Flagged for copy\""
+                },
+                {
+                    "name": "DataCleaning.ReviewStatus.categories[FlaggedForDelete]",
+                    "label": "Flagged for delete",
+                    "properties": [],
+                    "scripting": "FlaggedForDelete \"Flagged for delete\""
+                },
+                {
+                    "name": "ShellVersion",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/long"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "1"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "None"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "None"
+                        }
+                    ],
+                    "label": "",
+                    "properties": [],
+                    "scripting": "ShellVersion -\r\nlong;"
+                },
+                {
+                    "name": "SnifferData",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "3"
+                        },
+                        {
+                            "name": "type",
+                            "value": "block"
+                        }
+                    ],
+                    "label": "",
+                    "properties": [],
+                    "scripting": "SnifferData - block fields\r\n(\r\n    DeviceType -\r\n    categorical [1..1]\r\n    {\r\n        Mobile \"Mobile\",\r\n        Desktop \"Desktop\"\r\n    };\r\n\r\n);"
+                },
+                {
+                    "name": "SnifferData.DeviceType",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/categorical"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "3"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "1"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "1"
+                        }
+                    ],
+                    "label": "",
+                    "properties": [],
+                    "scripting": "DeviceType -\r\ncategorical [1..1]\r\n{\r\n    Mobile \"Mobile\",\r\n    Desktop \"Desktop\"\r\n};"
+                },
+                {
+                    "name": "SnifferData.DeviceType.categories[Mobile]",
+                    "label": "Mobile",
+                    "properties": [],
+                    "scripting": "Mobile \"Mobile\""
+                },
+                {
+                    "name": "SnifferData.DeviceType.categories[Desktop]",
+                    "label": "Desktop",
+                    "properties": [],
+                    "scripting": "Desktop \"Desktop\""
+                },
+                {
+                    "name": "COMP",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/categorical"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "3"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "1"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "1"
+                        }
+                    ],
+                    "label": "Completion indicator",
+                    "properties": [],
+                    "scripting": "COMP \"Completion indicator\"\r\ncategorical [1..1]\r\n{\r\n    One \"One\",\r\n    Done \"Done\"\r\n};"
+                },
+                {
+                    "name": "COMP.categories[One]",
+                    "label": "One",
+                    "properties": [],
+                    "scripting": "One \"One\""
+                },
+                {
+                    "name": "COMP.categories[Done]",
+                    "label": "Done",
+                    "properties": [],
+                    "scripting": "Done \"Done\""
+                },
+                {
+                    "name": "SL_BrandList",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/categorical"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "3"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "None"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "None"
+                        }
+                    ],
+                    "label": "Brands",
+                    "properties": [],
+                    "scripting": "SL_BrandList \"Brands\"\r\ncategorical\r\n{\r\n    Nike \"Nike\",\r\n    CocaCola \"Coca Cola\",\r\n    Tesla \"Tesla\"\r\n        [\r\n            Elon = true\r\n        ],\r\n    ESPN \"ESPN\"\r\n    {\r\n        Select \"Select\" fix,\r\n        Stream \"Stream\"\r\n        {\r\n            YesStream \"Yes <b>stream</b>\",\r\n            NoStream \"No </b>stream</b>\"\r\n        }\r\n    } ran\r\n};"
+                },
+                {
+                    "name": "SL_BrandList.categories[Nike]",
+                    "label": "Nike",
+                    "properties": [],
+                    "scripting": "Nike \"Nike\""
+                },
+                {
+                    "name": "SL_BrandList.categories[CocaCola]",
+                    "label": "Coca Cola",
+                    "properties": [],
+                    "scripting": "CocaCola \"Coca Cola\""
+                },
+                {
+                    "name": "SL_BrandList.categories[Tesla]",
+                    "label": "Tesla",
+                    "properties": [
+                        {
+                            "name": "Elon",
+                            "value": "True"
+                        }
+                    ],
+                    "scripting": "Tesla \"Tesla\"\r\n    [\r\n        Elon = true\r\n    ]"
+                },
+                {
+                    "name": "SL_BrandList.categories[Select]",
+                    "label": "Select",
+                    "properties": [],
+                    "scripting": "Select \"Select\" fix"
+                },
+                {
+                    "name": "SL_BrandList.categories[YesStream]",
+                    "label": "Yes <b>stream</b>",
+                    "properties": [],
+                    "scripting": "YesStream \"Yes <b>stream</b>\""
+                },
+                {
+                    "name": "SL_BrandList.categories[NoStream]",
+                    "label": "No </b>stream</b>",
+                    "properties": [],
+                    "scripting": "NoStream \"No </b>stream</b>\""
+                },
+                {
+                    "name": "ProgramVersion",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/long"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "1"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "0"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "255"
+                        }
+                    ],
+                    "label": "",
+                    "properties": [],
+                    "scripting": "ProgramVersion -\r\nlong [0 .. 255];"
+                },
+                {
+                    "name": "YearBorn",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/long"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "1"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "1915"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "2031"
+                        }
+                    ],
+                    "label": "Which year.",
+                    "properties": [
+                        {
+                            "name": "FullName",
+                            "value": "S1_YearBorn"
+                        },
+                        {
+                            "name": "Scout",
+                            "value": "Rule"
+                        },
+                        {
+                            "name": "ShortName",
+                            "value": "S1"
+                        }
+                    ],
+                    "scripting": "YearBorn \"Which year.\"\r\n    [\r\n        ShortName = \"S1\",\r\n        FullName = \"S1_YearBorn\",\r\n        Scout = \"Rule\"\r\n    ]\r\nlong [1915 .. 2031];"
+                },
+                {
+                    "name": "CurrDate",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/date"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "5"
+                        }
+                    ],
+                    "label": "Programmatic variable",
+                    "properties": [],
+                    "scripting": "CurrDate \"Programmatic variable\"\r\ndate;"
+                },
+                {
+                    "name": "YearReal",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/double"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "6"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "0.0"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "2031.0"
+                        }
+                    ],
+                    "label": "Year #2",
+                    "properties": [
+                        {
+                            "name": "DRemove",
+                            "value": "True"
+                        }
+                    ],
+                    "scripting": "YearReal \"Year #2\"\r\n    [\r\n        DRemove = true\r\n    ]\r\ndouble [0 .. 2031];"
+                },
+                {
+                    "name": "Gender",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/categorical"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "3"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "None"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "None"
+                        }
+                    ],
+                    "label": "What is your gender",
+                    "properties": [
+                        {
+                            "name": "FullName",
+                            "value": "S2_Gender"
+                        },
+                        {
+                            "name": "KeypadType",
+                            "value": "Something"
+                        },
+                        {
+                            "name": "Scout",
+                            "value": "Rule"
+                        },
+                        {
+                            "name": "ShortName",
+                            "value": "S2"
+                        }
+                    ],
+                    "scripting": "Gender \"What is your gender\"\r\n    [\r\n        ShortName = \"S2\",\r\n        FullName = \"S2_Gender\",\r\n        KeypadType = \"Something\",\r\n        Scout = \"Rule\"\r\n    ]\r\ncategorical\r\n{\r\n    Male \"Male\"\r\n        [\r\n            Value = 1\r\n        ],\r\n    Female \"Female\"\r\n        [\r\n            Value = \"2\"\r\n        ],\r\n    OtherSpec \"Other\" fix nofilter\r\n} ran;"
+                },
+                {
+                    "name": "Gender.categories[Male]",
+                    "label": "Male",
+                    "properties": [
+                        {
+                            "name": "Value",
+                            "value": "1"
+                        }
+                    ],
+                    "scripting": "Male \"Male\"\r\n    [\r\n        Value = 1\r\n    ]"
+                },
+                {
+                    "name": "Gender.categories[Female]",
+                    "label": "Female",
+                    "properties": [
+                        {
+                            "name": "Value",
+                            "value": "2"
+                        }
+                    ],
+                    "scripting": "Female \"Female\"\r\n    [\r\n        Value = \"2\"\r\n    ]"
+                },
+                {
+                    "name": "Gender.categories[OtherSpec]",
+                    "label": "Other",
+                    "properties": [],
+                    "scripting": "OtherSpec \"Other\" fix nofilter"
+                },
+                {
+                    "name": "Ethnicity",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/categorical"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "3"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "1"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "None"
+                        }
+                    ],
+                    "label": "Which race(s) or ethnicity do you consider yourself to be?",
+                    "properties": [
+                        {
+                            "name": "FullName",
+                            "value": "S6_Ethnicity"
+                        },
+                        {
+                            "name": "Logic",
+                            "value": "Show to all."
+                        },
+                        {
+                            "name": "RI",
+                            "value": "standard"
+                        },
+                        {
+                            "name": "RespondentLogic",
+                            "value": "Show to respondent."
+                        },
+                        {
+                            "name": "ShortName",
+                            "value": "S6"
+                        }
+                    ],
+                    "scripting": "Ethnicity \"Which race(s) or ethnicity do you consider yourself to be?\"\r\n    [\r\n        ShortName = \"S6\",\r\n        FullName = \"S6_Ethnicity\",\r\n        Logic = \"Show to all.\",\r\n        RespondentLogic = \"Show to respondent.\",\r\n        RI = \"standard\"\r\n    ]\r\ncategorical [1..]\r\n{\r\n    AmericanIndianAlaskan \"American Indian or Alaskan Native\",\r\n    AsianIncludesAsian \"Asian (includes Asian Indian, Chinese, Filipino, Japanese, Korean, and Vietnamese)\",\r\n    BlackAA \"Black or African American\",\r\n    HispAndorLatino \"Hispanic and/or Latino\",\r\n    MiddleEasternNorth \"Middle Eastern or North African\",\r\n    NativeHawaiianPacific \"Native Hawaiian or Pacific Islander (includes Samoan, Guamanian, and Chamorro)\",\r\n    WhiteCauc \"White or Caucasian\",\r\n    OtherSpecNotListed \"Other not listed (specify)\" other(use OtherSpecNotListed ) fix,\r\n    PreferNotSay \"Prefer not to say\" fix exclusive\r\n} ran\r\nhelperfields (\r\n    OtherSpecNotListed \"\"\r\n    text;\r\n);"
+                },
+                {
+                    "name": "Ethnicity.categories[AmericanIndianAlaskan]",
+                    "label": "American Indian or Alaskan Native",
+                    "properties": [],
+                    "scripting": "AmericanIndianAlaskan \"American Indian or Alaskan Native\""
+                },
+                {
+                    "name": "Ethnicity.categories[AsianIncludesAsian]",
+                    "label": "Asian (includes Asian Indian, Chinese, Filipino, Japanese, Korean, and Vietnamese)",
+                    "properties": [],
+                    "scripting": "AsianIncludesAsian \"Asian (includes Asian Indian, Chinese, Filipino, Japanese, Korean, and Vietnamese)\""
+                },
+                {
+                    "name": "Ethnicity.categories[BlackAA]",
+                    "label": "Black or African American",
+                    "properties": [],
+                    "scripting": "BlackAA \"Black or African American\""
+                },
+                {
+                    "name": "Ethnicity.categories[HispAndorLatino]",
+                    "label": "Hispanic and/or Latino",
+                    "properties": [],
+                    "scripting": "HispAndorLatino \"Hispanic and/or Latino\""
+                },
+                {
+                    "name": "Ethnicity.categories[MiddleEasternNorth]",
+                    "label": "Middle Eastern or North African",
+                    "properties": [],
+                    "scripting": "MiddleEasternNorth \"Middle Eastern or North African\""
+                },
+                {
+                    "name": "Ethnicity.categories[NativeHawaiianPacific]",
+                    "label": "Native Hawaiian or Pacific Islander (includes Samoan, Guamanian, and Chamorro)",
+                    "properties": [],
+                    "scripting": "NativeHawaiianPacific \"Native Hawaiian or Pacific Islander (includes Samoan, Guamanian, and Chamorro)\""
+                },
+                {
+                    "name": "Ethnicity.categories[WhiteCauc]",
+                    "label": "White or Caucasian",
+                    "properties": [],
+                    "scripting": "WhiteCauc \"White or Caucasian\""
+                },
+                {
+                    "name": "Ethnicity.categories[OtherSpecNotListed]",
+                    "label": "Other not listed (specify)",
+                    "properties": [],
+                    "scripting": "OtherSpecNotListed \"Other not listed (specify)\" other(use OtherSpecNotListed ) fix"
+                },
+                {
+                    "name": "Ethnicity.categories[PreferNotSay]",
+                    "label": "Prefer not to say",
+                    "properties": [],
+                    "scripting": "PreferNotSay \"Prefer not to say\" fix exclusive"
+                },
+                {
+                    "name": "Ethnicity.OtherSpecNotListed",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/text"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "2"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "None"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "None"
+                        },
+                        {
+                            "name": "is_helper_field",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "",
+                    "properties": [],
+                    "scripting": "OtherSpecNotListed \"\"\r\ntext;"
+                },
+                {
+                    "name": "ZipCode",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/text"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "2"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "5"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "5"
+                        }
+                    ],
+                    "label": "Please enter your 5-digit zip code.",
+                    "properties": [
+                        {
+                            "name": "FullName",
+                            "value": "S5_ZipCode"
+                        },
+                        {
+                            "name": "Logic",
+                            "value": "Show to all."
+                        },
+                        {
+                            "name": "MobileKeypad",
+                            "value": "numeric"
+                        },
+                        {
+                            "name": "ProgrammerComment",
+                            "value": "Programmer Comment: term immediately after 3 incorrect attempts"
+                        },
+                        {
+                            "name": "RI",
+                            "value": "ZipRI"
+                        },
+                        {
+                            "name": "RespondentLogic",
+                            "value": "Show to respondent."
+                        },
+                        {
+                            "name": "ShortName",
+                            "value": "S5"
+                        }
+                    ],
+                    "scripting": "ZipCode \"Please enter your 5-digit zip code.\"\r\n    [\r\n        ShortName = \"S5\",\r\n        FullName = \"S5_ZipCode\",\r\n        Logic = \"Show to all.\",\r\n        RespondentLogic = \"Show to respondent.\",\r\n        ProgrammerComment = \"Programmer Comment: term immediately after 3 incorrect attempts\",\r\n        MobileKeypad = \"numeric\",\r\n        RI = \"ZipRI\"\r\n    ]\r\ntext [5..5]\r\nhelperfields (\r\n    StandardTexts - block fields\r\n    (\r\n        Errors - block fields\r\n        (\r\n            InvalidText \"Please enter a 5-digit zip code.\"\r\n            info;\r\n\r\n            TooLitleText \"Please enter a 5-digit zip code.\"\r\n            info;\r\n\r\n        );\r\n\r\n    );\r\n) validation(\"\\d{5}\");"
+                },
+                {
+                    "name": "ZipCode.StandardTexts",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "3"
+                        },
+                        {
+                            "name": "type",
+                            "value": "block"
+                        },
+                        {
+                            "name": "is_helper_field",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "",
+                    "properties": [],
+                    "scripting": "StandardTexts - block fields\r\n(\r\n    Errors - block fields\r\n    (\r\n        InvalidText \"Please enter a 5-digit zip code.\"\r\n        info;\r\n\r\n        TooLitleText \"Please enter a 5-digit zip code.\"\r\n        info;\r\n\r\n    );\r\n\r\n);"
+                },
+                {
+                    "name": "ZipCode.StandardTexts.Errors",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "3"
+                        },
+                        {
+                            "name": "type",
+                            "value": "block"
+                        }
+                    ],
+                    "label": "",
+                    "properties": [],
+                    "scripting": "Errors - block fields\r\n(\r\n    InvalidText \"Please enter a 5-digit zip code.\"\r\n    info;\r\n\r\n    TooLitleText \"Please enter a 5-digit zip code.\"\r\n    info;\r\n\r\n);"
+                },
+                {
+                    "name": "ZipCode.StandardTexts.Errors.InvalidText",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/info"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "0"
+                        },
+                        {
+                            "name": "has_case_data",
+                            "value": "False"
+                        }
+                    ],
+                    "label": "Please enter a 5-digit zip code.",
+                    "properties": [],
+                    "scripting": "InvalidText \"Please enter a 5-digit zip code.\"\r\ninfo;"
+                },
+                {
+                    "name": "ZipCode.StandardTexts.Errors.TooLitleText",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/info"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "0"
+                        },
+                        {
+                            "name": "has_case_data",
+                            "value": "False"
+                        }
+                    ],
+                    "label": "Please enter a 5-digit zip code.",
+                    "properties": [],
+                    "scripting": "TooLitleText \"Please enter a 5-digit zip code.\"\r\ninfo;"
+                },
+                {
+                    "name": "BrandLoop",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "1"
+                        },
+                        {
+                            "name": "type",
+                            "value": "array"
+                        },
+                        {
+                            "name": "is_grid",
+                            "value": "False"
+                        }
+                    ],
+                    "label": "Ask about brands",
+                    "properties": [
+                        {
+                            "name": "FullName",
+                            "value": "BrandLoop"
+                        },
+                        {
+                            "name": "ShortName",
+                            "value": "BrandLoop"
+                        }
+                    ],
+                    "scripting": "BrandLoop \"Ask about brands\"\r\n    [\r\n        ShortName = \"BrandLoop\",\r\n        FullName = \"BrandLoop\"\r\n    ]\r\nloop\r\n{\r\n    SL_BrandList inline -\r\n    {\r\n    }\r\n} fields -\r\n(\r\n    Hey \"Hey\"\r\n    text [0..254];\r\n\r\n    LTR \"How likely are you to recommend\"\r\n        [\r\n            ShortName = \"M1\",\r\n            FullName = \"M1_LTR\"\r\n        ]\r\n    categorical\r\n    {\r\n        _1 \"1\",\r\n        _2 \"2\",\r\n        _3 \"3\",\r\n        _4 \"4\",\r\n        _5 \"5\"\r\n    };\r\n\r\n    Attributes \"Which of the below\"\r\n        [\r\n            ShortName = \"M2\",\r\n            FullName = \"M2_Attributes\"\r\n        ]\r\n    loop\r\n    {\r\n        SL_Attributes use \\\\.SL_Attributes -\r\n    } fields -\r\n    (\r\n        GV \"How are you\"\r\n        categorical\r\n        {\r\n            Yes \"Yes\",\r\n            No \"No\"\r\n        };\r\n\r\n    ) expand grid;\r\n\r\n    NumLoop -\r\n        [\r\n            ShortName = \"M3\",\r\n            FullName = \"M3_NumLoop\"\r\n        ]\r\n    loop [1..3] fields -\r\n    (\r\n        Num \"Num\"\r\n        long;\r\n\r\n    ) expand;\r\n\r\n    Ethnicity \"Which race(s) or ethnicity do you consider yourself to be?\"\r\n        [\r\n            ShortName = \"M6\",\r\n            FullName = \"M6_Ethnicity\",\r\n            Logic = \"Show to all.\",\r\n            RespondentLogic = \"Show to respondent.\",\r\n            RI = \"standard\"\r\n        ]\r\n    categorical [1..]\r\n    {\r\n        AmericanIndianAlaskan \"American Indian or Alaskan Native\",\r\n        AsianIncludesAsian \"Asian (includes Asian Indian, Chinese, Filipino, Japanese, Korean, and Vietnamese)\",\r\n        BlackAA \"Black or African American\",\r\n        HispAndorLatino \"Hispanic and/or Latino\",\r\n        MiddleEasternNorth \"Middle Eastern or North African\",\r\n        NativeHawaiianPacific \"Native Hawaiian or Pacific Islander (includes Samoan, Guamanian, and Chamorro)\",\r\n        WhiteCauc \"White or Caucasian\",\r\n        OtherSpecNotListed \"Other not listed (specify)\" other(use OtherSpecNotListed ) fix,\r\n        PreferNotSay \"Prefer not to say\" fix exclusive\r\n    } ran\r\n    helperfields (\r\n        OtherSpecNotListed \"\"\r\n        text;\r\n    );\r\n\r\n) expand;"
+                },
+                {
+                    "name": "BrandLoop.Hey",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/text"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "2"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "0"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "254"
+                        }
+                    ],
+                    "label": "Hey",
+                    "properties": [],
+                    "scripting": "Hey \"Hey\"\r\ntext [0..254];"
+                },
+                {
+                    "name": "BrandLoop.LTR",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/categorical"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "3"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "None"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "None"
+                        }
+                    ],
+                    "label": "How likely are you to recommend",
+                    "properties": [
+                        {
+                            "name": "FullName",
+                            "value": "M1_LTR"
+                        },
+                        {
+                            "name": "ShortName",
+                            "value": "M1"
+                        }
+                    ],
+                    "scripting": "LTR \"How likely are you to recommend\"\r\n    [\r\n        ShortName = \"M1\",\r\n        FullName = \"M1_LTR\"\r\n    ]\r\ncategorical\r\n{\r\n    _1 \"1\",\r\n    _2 \"2\",\r\n    _3 \"3\",\r\n    _4 \"4\",\r\n    _5 \"5\"\r\n};"
+                },
+                {
+                    "name": "BrandLoop.LTR.categories[_1]",
+                    "label": "1",
+                    "properties": [],
+                    "scripting": "_1 \"1\""
+                },
+                {
+                    "name": "BrandLoop.LTR.categories[_2]",
+                    "label": "2",
+                    "properties": [],
+                    "scripting": "_2 \"2\""
+                },
+                {
+                    "name": "BrandLoop.LTR.categories[_3]",
+                    "label": "3",
+                    "properties": [],
+                    "scripting": "_3 \"3\""
+                },
+                {
+                    "name": "BrandLoop.LTR.categories[_4]",
+                    "label": "4",
+                    "properties": [],
+                    "scripting": "_4 \"4\""
+                },
+                {
+                    "name": "BrandLoop.LTR.categories[_5]",
+                    "label": "5",
+                    "properties": [],
+                    "scripting": "_5 \"5\""
+                },
+                {
+                    "name": "BrandLoop.Attributes",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "1"
+                        },
+                        {
+                            "name": "type",
+                            "value": "array"
+                        },
+                        {
+                            "name": "is_grid",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "Which of the below",
+                    "properties": [
+                        {
+                            "name": "FullName",
+                            "value": "M2_Attributes"
+                        },
+                        {
+                            "name": "ShortName",
+                            "value": "M2"
+                        }
+                    ],
+                    "scripting": "Attributes \"Which of the below\"\r\n    [\r\n        ShortName = \"M2\",\r\n        FullName = \"M2_Attributes\"\r\n    ]\r\nloop\r\n{\r\n    SL_Attributes use \\\\.SL_Attributes -\r\n} fields -\r\n(\r\n    GV \"How are you\"\r\n    categorical\r\n    {\r\n        Yes \"Yes\",\r\n        No \"No\"\r\n    };\r\n\r\n) expand grid;"
+                },
+                {
+                    "name": "BrandLoop.Attributes.categories[SL_Attributes]",
+                    "label": "",
+                    "properties": [],
+                    "scripting": "SL_Attributes use \\\\.SL_Attributes -"
+                },
+                {
+                    "name": "BrandLoop.Attributes.GV",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/categorical"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "3"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "None"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "None"
+                        }
+                    ],
+                    "label": "How are you",
+                    "properties": [],
+                    "scripting": "GV \"How are you\"\r\ncategorical\r\n{\r\n    Yes \"Yes\",\r\n    No \"No\"\r\n};"
+                },
+                {
+                    "name": "BrandLoop.Attributes.GV.categories[Yes]",
+                    "label": "Yes",
+                    "properties": [],
+                    "scripting": "Yes \"Yes\""
+                },
+                {
+                    "name": "BrandLoop.Attributes.GV.categories[No]",
+                    "label": "No",
+                    "properties": [],
+                    "scripting": "No \"No\""
+                },
+                {
+                    "name": "BrandLoop.NumLoop",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "1"
+                        },
+                        {
+                            "name": "type",
+                            "value": "array"
+                        },
+                        {
+                            "name": "is_grid",
+                            "value": "False"
+                        }
+                    ],
+                    "label": "",
+                    "properties": [
+                        {
+                            "name": "FullName",
+                            "value": "M3_NumLoop"
+                        },
+                        {
+                            "name": "ShortName",
+                            "value": "M3"
+                        }
+                    ],
+                    "scripting": "NumLoop -\r\n    [\r\n        ShortName = \"M3\",\r\n        FullName = \"M3_NumLoop\"\r\n    ]\r\nloop [1..3] fields -\r\n(\r\n    Num \"Num\"\r\n    long;\r\n\r\n) expand;"
+                },
+                {
+                    "name": "BrandLoop.NumLoop.categories[1]",
+                    "label": "1",
+                    "properties": [],
+                    "scripting": "(-2147352567, 'Exception occurred.', (0, None, None, None, 0, -2147467263), None)"
+                },
+                {
+                    "name": "BrandLoop.NumLoop.categories[2]",
+                    "label": "2",
+                    "properties": [],
+                    "scripting": "(-2147352567, 'Exception occurred.', (0, None, None, None, 0, -2147467263), None)"
+                },
+                {
+                    "name": "BrandLoop.NumLoop.categories[3]",
+                    "label": "3",
+                    "properties": [],
+                    "scripting": "(-2147352567, 'Exception occurred.', (0, None, None, None, 0, -2147467263), None)"
+                },
+                {
+                    "name": "BrandLoop.NumLoop.Num",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/long"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "1"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "None"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "None"
+                        }
+                    ],
+                    "label": "Num",
+                    "properties": [],
+                    "scripting": "Num \"Num\"\r\nlong;"
+                },
+                {
+                    "name": "BrandLoop.Ethnicity",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/categorical"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "3"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "1"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "None"
+                        }
+                    ],
+                    "label": "Which race(s) or ethnicity do you consider yourself to be?",
+                    "properties": [
+                        {
+                            "name": "FullName",
+                            "value": "M6_Ethnicity"
+                        },
+                        {
+                            "name": "Logic",
+                            "value": "Show to all."
+                        },
+                        {
+                            "name": "RI",
+                            "value": "standard"
+                        },
+                        {
+                            "name": "RespondentLogic",
+                            "value": "Show to respondent."
+                        },
+                        {
+                            "name": "ShortName",
+                            "value": "M6"
+                        }
+                    ],
+                    "scripting": "Ethnicity \"Which race(s) or ethnicity do you consider yourself to be?\"\r\n    [\r\n        ShortName = \"M6\",\r\n        FullName = \"M6_Ethnicity\",\r\n        Logic = \"Show to all.\",\r\n        RespondentLogic = \"Show to respondent.\",\r\n        RI = \"standard\"\r\n    ]\r\ncategorical [1..]\r\n{\r\n    AmericanIndianAlaskan \"American Indian or Alaskan Native\",\r\n    AsianIncludesAsian \"Asian (includes Asian Indian, Chinese, Filipino, Japanese, Korean, and Vietnamese)\",\r\n    BlackAA \"Black or African American\",\r\n    HispAndorLatino \"Hispanic and/or Latino\",\r\n    MiddleEasternNorth \"Middle Eastern or North African\",\r\n    NativeHawaiianPacific \"Native Hawaiian or Pacific Islander (includes Samoan, Guamanian, and Chamorro)\",\r\n    WhiteCauc \"White or Caucasian\",\r\n    OtherSpecNotListed \"Other not listed (specify)\" other(use OtherSpecNotListed ) fix,\r\n    PreferNotSay \"Prefer not to say\" fix exclusive\r\n} ran\r\nhelperfields (\r\n    OtherSpecNotListed \"\"\r\n    text;\r\n);"
+                },
+                {
+                    "name": "BrandLoop.Ethnicity.categories[AmericanIndianAlaskan]",
+                    "label": "American Indian or Alaskan Native",
+                    "properties": [],
+                    "scripting": "AmericanIndianAlaskan \"American Indian or Alaskan Native\""
+                },
+                {
+                    "name": "BrandLoop.Ethnicity.categories[AsianIncludesAsian]",
+                    "label": "Asian (includes Asian Indian, Chinese, Filipino, Japanese, Korean, and Vietnamese)",
+                    "properties": [],
+                    "scripting": "AsianIncludesAsian \"Asian (includes Asian Indian, Chinese, Filipino, Japanese, Korean, and Vietnamese)\""
+                },
+                {
+                    "name": "BrandLoop.Ethnicity.categories[BlackAA]",
+                    "label": "Black or African American",
+                    "properties": [],
+                    "scripting": "BlackAA \"Black or African American\""
+                },
+                {
+                    "name": "BrandLoop.Ethnicity.categories[HispAndorLatino]",
+                    "label": "Hispanic and/or Latino",
+                    "properties": [],
+                    "scripting": "HispAndorLatino \"Hispanic and/or Latino\""
+                },
+                {
+                    "name": "BrandLoop.Ethnicity.categories[MiddleEasternNorth]",
+                    "label": "Middle Eastern or North African",
+                    "properties": [],
+                    "scripting": "MiddleEasternNorth \"Middle Eastern or North African\""
+                },
+                {
+                    "name": "BrandLoop.Ethnicity.categories[NativeHawaiianPacific]",
+                    "label": "Native Hawaiian or Pacific Islander (includes Samoan, Guamanian, and Chamorro)",
+                    "properties": [],
+                    "scripting": "NativeHawaiianPacific \"Native Hawaiian or Pacific Islander (includes Samoan, Guamanian, and Chamorro)\""
+                },
+                {
+                    "name": "BrandLoop.Ethnicity.categories[WhiteCauc]",
+                    "label": "White or Caucasian",
+                    "properties": [],
+                    "scripting": "WhiteCauc \"White or Caucasian\""
+                },
+                {
+                    "name": "BrandLoop.Ethnicity.categories[OtherSpecNotListed]",
+                    "label": "Other not listed (specify)",
+                    "properties": [],
+                    "scripting": "OtherSpecNotListed \"Other not listed (specify)\" other(use OtherSpecNotListed ) fix"
+                },
+                {
+                    "name": "BrandLoop.Ethnicity.categories[PreferNotSay]",
+                    "label": "Prefer not to say",
+                    "properties": [],
+                    "scripting": "PreferNotSay \"Prefer not to say\" fix exclusive"
+                },
+                {
+                    "name": "BrandLoop.Ethnicity.OtherSpecNotListed",
+                    "attributes": [
+                        {
+                            "name": "object_type_value",
+                            "value": "0"
+                        },
+                        {
+                            "name": "type",
+                            "value": "plain/text"
+                        },
+                        {
+                            "name": "data_type",
+                            "value": "2"
+                        },
+                        {
+                            "name": "minvalue",
+                            "value": "None"
+                        },
+                        {
+                            "name": "maxvalue",
+                            "value": "None"
+                        },
+                        {
+                            "name": "is_helper_field",
+                            "value": "True"
+                        }
+                    ],
+                    "label": "",
+                    "properties": [],
+                    "scripting": "OtherSpecNotListed \"\"\r\ntext;"
+                }
+            ]
+        },
+        {
+            "name": "pages",
+            "content": [
+                {
+                    "name": "PaAGE_Test",
+                    "label": "Test page",
+                    "properties": [
+                        {
+                            "name": "IsTestPage",
+                            "value": "True"
+                        },
+                        {
+                            "name": "Tested",
+                            "value": "999"
+                        }
+                    ],
+                    "scripting": "PaAGE_Test \"Test page\"\r\n    [\r\n        IsTestPage = true,\r\n        Tested = 999\r\n    ]\r\npage(\r\n    BrandLoop\r\n);"
+                },
+                {
+                    "name": "PaAGE_Test.BrandLoop",
+                    "label": "Ask about brands",
+                    "properties": [
+                        {
+                            "name": "FullName",
+                            "value": "BrandLoop"
+                        },
+                        {
+                            "name": "ShortName",
+                            "value": "BrandLoop"
+                        }
+                    ],
+                    "scripting": "BrandLoop \"Ask about brands\"\r\n    [\r\n        ShortName = \"BrandLoop\",\r\n        FullName = \"BrandLoop\"\r\n    ]\r\nloop\r\n{\r\n    SL_BrandList inline -\r\n    {\r\n    }\r\n} fields -\r\n(\r\n    Hey \"Hey\"\r\n    text [0..254];\r\n\r\n    LTR \"How likely are you to recommend\"\r\n        [\r\n            ShortName = \"M1\",\r\n            FullName = \"M1_LTR\"\r\n        ]\r\n    categorical\r\n    {\r\n        _1 \"1\",\r\n        _2 \"2\",\r\n        _3 \"3\",\r\n        _4 \"4\",\r\n        _5 \"5\"\r\n    };\r\n\r\n    Attributes \"Which of the below\"\r\n        [\r\n            ShortName = \"M2\",\r\n            FullName = \"M2_Attributes\"\r\n        ]\r\n    loop\r\n    {\r\n        SL_Attributes use \\\\.SL_Attributes -\r\n    } fields -\r\n    (\r\n        GV \"How are you\"\r\n        categorical\r\n        {\r\n            Yes \"Yes\",\r\n            No \"No\"\r\n        };\r\n\r\n    ) expand grid;\r\n\r\n    NumLoop -\r\n        [\r\n            ShortName = \"M3\",\r\n            FullName = \"M3_NumLoop\"\r\n        ]\r\n    loop [1..3] fields -\r\n    (\r\n        Num \"Num\"\r\n        long;\r\n\r\n    ) expand;\r\n\r\n    Ethnicity \"Which race(s) or ethnicity do you consider yourself to be?\"\r\n        [\r\n            ShortName = \"M6\",\r\n            FullName = \"M6_Ethnicity\",\r\n            Logic = \"Show to all.\",\r\n            RespondentLogic = \"Show to respondent.\",\r\n            RI = \"standard\"\r\n        ]\r\n    categorical [1..]\r\n    {\r\n        AmericanIndianAlaskan \"American Indian or Alaskan Native\",\r\n        AsianIncludesAsian \"Asian (includes Asian Indian, Chinese, Filipino, Japanese, Korean, and Vietnamese)\",\r\n        BlackAA \"Black or African American\",\r\n        HispAndorLatino \"Hispanic and/or Latino\",\r\n        MiddleEasternNorth \"Middle Eastern or North African\",\r\n        NativeHawaiianPacific \"Native Hawaiian or Pacific Islander (includes Samoan, Guamanian, and Chamorro)\",\r\n        WhiteCauc \"White or Caucasian\",\r\n        OtherSpecNotListed \"Other not listed (specify)\" other(use OtherSpecNotListed ) fix,\r\n        PreferNotSay \"Prefer not to say\" fix exclusive\r\n    } ran\r\n    helperfields (\r\n        OtherSpecNotListed \"\"\r\n        text;\r\n    );\r\n\r\n) expand;"
+                }
+            ]
+        },
+        {
+            "name": "routing",
+            "content": [
+                {
+                    "name": "",
+                    "label": ""
+                }
+            ]
+        }
+    ]
+}

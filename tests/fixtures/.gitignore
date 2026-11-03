@@ -1,0 +1,4 @@
+# These are committed example/test fixtures. The parent ".gitignore" ignores
+# "report.*" (reports generated from real data); re-include the diff-output fixtures
+# whose real filenames start with "report.diff.".
+!report.diff.*

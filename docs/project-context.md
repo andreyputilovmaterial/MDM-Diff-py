@@ -1,6 +1,15 @@
 # Project Context — MDM-Diff-py
 
 > Last updated: 2026-11-03
+> (2026-11-03) Spread the synthetic example/test fixtures from
+> `tests-real-sensitive-data/testsuite/` into each program's `tests/fixtures/` (root
+> diff tool, `mdmreadpy`, `mdmreportpy`, `mdmexcelreportpy`) and added
+> `tests/test_diff_fixtures.py` (root) plus `tests/test_fixtures.py` in each submodule.
+> Each folder has a `README.md`; the folders holding diff outputs add a `.gitignore`
+> that re-includes `report.diff.*` (the repo-wide `report.*` rule would otherwise drop
+> the diff fixtures). The other format readers still need real sample input files
+> (`.xlsx`/`.sav`/…) — a follow-up. No git commits made yet (pending review).
+
 > (2026-11-03) Documented diff-on-diff (diffing a diff) in `docs/diff-engine.md`
 > (duplicate `src/diff_engine/README.md`), with a pointer from `docs/architecture.md`. The
 > new "Diff-on-diff" section describes the two global techniques: (1) role relocation via
