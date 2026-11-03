@@ -1,6 +1,15 @@
 # Project Context — MDM-Diff-py
 
 > Last updated: 2026-11-03
+> (2026-11-03) Fixed the Windows `build.bat` failure (`'Where-Object' is not recognized
+> …`) in the "Collect optional per-reader/per-reporter requirements" step. The step passed
+> a multi-line, `^`-continued, double-quoted PowerShell `-Command` string containing `|`
+> pipes, which cmd.exe treated as command separators. Replaced the
+> `Where-Object … | ForEach-Object …` pipeline with a `foreach` loop and
+> `New-Item … | Out-Null` with `$null = New-Item` (no pipes left in the snippet), in
+> `build.bat` and the `mdmreadpy` submodule's `build.bat`. Added `.gitattributes`
+> (`*.bat text eol=crlf`, `*.sh text eol=lf`) to root and the `mdmreadpy` submodule so
+> Windows checkouts get CRLF line endings.
 > (2026-11-03) Removed the legacy `DiffItem*` proxy layer from
 > `src/diff_engine/diff_functions.py` (issue #10). Row-name diffing now works with
 > `SequenceMatcher` opcodes directly internally and returns the public `RowDiff(name,
