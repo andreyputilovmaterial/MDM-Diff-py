@@ -1,6 +1,16 @@
 # Project Context — MDM-Diff-py
 
 > Last updated: 2026-11-03
+> (2026-11-03) Distribution is now a two-file layout (one launcher BAT + the bundle).
+> Added `src_dev_build/inline_run_init.py`, a build-time helper that parses the root and
+> `src/lib/**/requirements.txt` files into explicit `pip install "pkg1" "pkg2"` rows and
+> inlines the `run_init` venv-setup preamble into each `dist/*.bat` launcher (its marked
+> `=== BEGIN/END GENERATED DEPENDENCIES ===` section is regenerated with the explicit rows).
+> `build.sh`/`build.bat` no longer emit `dist/requirements.txt`,
+> `dist/optional_dependencies/`, or `dist/run_init.*`; the repo's `requirements.txt` files
+> remain the single source of truth for the package lists. Added
+> `tests/test_inline_run_init.py`. `run_init.sh` mirrors the BAT version (`.sh` launchers
+> are not produced yet, so its inlining path is currently unused).
 > (2026-11-03) Fixed `run_init.bat` optional-dependency install noise. `for /r "src\lib"
 > %%f in (requirements.txt)` yields a path for every directory even where
 > `requirements.txt` doesn't exist, so `pip install -r` failed with `[Errno 2] No such file

@@ -12,9 +12,11 @@ A new iteration of diff between MDD files, Excel files (wow!), SPSS (inluding on
 3. Run the BAT file. Everything below the `EXECUTION` banner runs automatically.
 
 On the first run the BAT prepares a local Python environment (`.venv`) and installs the
-dependencies it needs — you only need Python installed. Each file type pulls in its own
-pip packages automatically; only comparing MDDs additionally requires IBM/Unicom
-Professional on Windows.
+dependencies it needs — you only need Python installed. The BAT is self-contained: the
+package list is embedded in it at build time (no separate `requirements.txt` or setup
+script), so the BAT plus `mdmtoolsap_bundle.py` is everything you need. Each file type
+pulls in its own pip packages automatically; only comparing MDDs additionally requires
+IBM/Unicom Professional on Windows.
 
 ### On dependencies
 
@@ -72,8 +74,8 @@ Short version:
 
 - **Build:** `build.bat` (Windows) or `build.sh` (macOS/Linux) use the vendored
   `pinliner` fork to produce `dist/mdmtoolsap_bundle.py`, rename the BAT launchers,
-  and collect each reader's/reporter's `requirements.txt` into
-  `dist/optional_dependencies/`.
+  and inline the venv setup plus each reader's/reporter's pip packages (parsed from
+  the repo's `requirements.txt` files at build time) directly into each launcher.
 - **Launch from source:** either run an entry-point module directly
   (`python src/diff.py ...`) or the universal dispatcher
   (`python src/launcher.py --program <name> ...`).

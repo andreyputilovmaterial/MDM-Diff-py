@@ -93,7 +93,6 @@ for pair in $RUN_SCRIPT_PAIRS; do
     file="dist/$dst"
     sed -i.bak \
         -e 's#\.\.\\\.venv\\Scripts\\python\.exe#.venv\\Scripts\\python.exe#g' \
-        -e 's#\.\.\\run_init\.bat#run_init.bat#g' \
         -e 's#\.\./dist/mdmtoolsap_bundle\.py#mdmtoolsap_bundle.py#g' \
         -e 's#dist/mdmtoolsap_bundle\.py#mdmtoolsap_bundle.py#g' \
         "$file"
@@ -117,35 +116,15 @@ cp dist/mdmtoolsap_bundle.py tests-real-sensitive-data/current/ 2>/dev/null || e
 
 echo "-"
 echo "-"
-echo "Bring LICENSE, README.md and requirements.txt to dist..."
-if [ ! -f requirements.txt ]; then
-    printf "%s\n" "# Runtime dependencies, one per line." > requirements.txt
-fi
+echo "Bring LICENSE and README.md to dist..."
 cp LICENSE dist/LICENSE
 cp README.md dist/README.md
-cp requirements.txt dist/requirements.txt
 echo "Done"
 
 echo "-"
 echo "-"
-echo "Collect optional per-reader/per-reporter requirements into dist/optional_dependencies/"
-mkdir -p dist/optional_dependencies
-for requirements in $(find src/lib -type f -name 'requirements.txt' -not -path '*/.git/*' -not -path '*/dist/*' -not -path '*/GENERATED/*' | sort); do
-    rel="${requirements#src/}"
-    dest="dist/optional_dependencies/$rel"
-    mkdir -p "$(dirname "$dest")"
-    echo "copying optional requirements: $requirements -> $dest"
-    cp "$requirements" "$dest"
-done
-echo "Done"
-
-echo "-"
-echo "-"
-echo "Copy and adapt run_init scripts to dist..."
-sed -e 's#src/lib#optional_dependencies#g' run_init.sh > dist/run_init.sh
-sed -e 's#src\\lib#optional_dependencies#g' run_init.bat > dist/run_init.bat
-chmod +x dist/run_init.sh
-chmod +x dist/run_init.bat
+echo "Inline run_init (venv setup + explicit pip installs) into dist launchers..."
+python src_dev_build/inline_run_init.py || fail
 echo "Done"
 
 echo "-"

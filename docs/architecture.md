@@ -66,17 +66,21 @@ producer/consumer view, but the two files above are authoritative for the common
 
 `build.bat` (Windows) / `build.sh` (macOS/Linux) use the vendored `pinliner` fork to
 produce a single-file `dist/mdmtoolsap_bundle.py`, patch it to call
-`src.launcher.main()`, and copy LICENSE/README/requirements into `dist/`. BAT launchers
+`src.launcher.main()`, and copy LICENSE/README into `dist/`. BAT launchers
 in `src_bat_scripts/` drive specific workflows; they are copied (and renamed) into
 `dist/`, and during that copy the bundle path is rewritten to `mdmtoolsap_bundle.py`
 and the launcher python is switched to the venv python (`.venv\Scripts\python.exe`).
 
-The build also collects every `requirements.txt` under `src/lib/` (each reader's and
-reporter's own dependencies) into `dist/optional_dependencies/`, preserving their path
-under `src/`, and copies `run_init.bat`/`run_init.sh` into `dist/`. `run_init` creates
-a local `.venv`, installs the root `requirements.txt`, then installs the optional
-requirements best-effort (a missing optional package only disables the corresponding
-reader/reporter).
+`src_dev_build/inline_run_init.py` then turns each launcher into a self-contained,
+two-file distribution: it parses the root `requirements.txt` and every
+`requirements.txt` under `src/lib/` (each reader's/reporter's own dependencies) into
+explicit `pip install "pkg1" "pkg2"` rows, regenerates the marked dependency section of
+`run_init.bat`/`run_init.sh`, and splices that venv-setup preamble directly into each
+launcher (replacing the `CALL "run_init.bat"` line). The result is a `dist/` that ships
+only the launchers, the bundle, and LICENSE/README — no `requirements.txt`,
+`optional_dependencies/`, or `run_init.*` files. The venv setup creates a local
+`.venv`; the optional packages are installed best-effort (a missing optional package
+only disables the corresponding reader/reporter).
 
 The build requires the vendored `pinliner` fork (`src_dev_build/lib/pinliner`, a git
 submodule with local fixes) — use this copy rather than the upstream package. The only

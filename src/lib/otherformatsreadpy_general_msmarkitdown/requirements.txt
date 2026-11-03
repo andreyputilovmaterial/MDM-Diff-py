@@ -4,8 +4,8 @@
 # This reader delegates to Microsoft's MarkItDown library, installed from PyPI as
 # a normal pip dependency (NOT vendored into the bundle). MarkItDown has a heavy
 # dependency tree (openai, azure-ai-documentintelligence, etc.), so it is
-# installed best-effort by run_init.bat/run_init.sh: a missing/failed install
-# must not break the rest of the tool. If markitdown is unavailable, this reader
-# raises a readable error when used.
+# installed best-effort by the launcher (inlined from this list at build time): a
+# missing/failed install must not break the rest of the tool. If markitdown is
+# unavailable, this reader raises a readable error when used.
 
 markitdown[pdf,xlsx,docx,pptx,xls,outlook]

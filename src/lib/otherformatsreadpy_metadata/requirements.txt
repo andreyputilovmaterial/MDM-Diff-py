@@ -3,7 +3,6 @@
 #
 # This reader uses the Python standard library plus the vendored mdmparser
 # submodule (lib/mdmparser, which is itself stdlib-only). This file exists so
-# build.bat/build.sh's optional-dependency discovery still collects it into
-# dist/optional_dependencies/ and documents that this reader is intentionally
-# self-contained (a comment-only requirements file is a no-op for
-# `pip install -r`).
+# build.bat/build.sh's optional-dependency discovery still finds it and documents
+# that this reader is intentionally self-contained (a comment-only requirements
+# file contributes no `pip install` rows).

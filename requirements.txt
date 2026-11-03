@@ -8,9 +8,8 @@
 #
 # Optional, platform-specific, and heavy dependencies are intentionally NOT listed
 # here. Each reader/reporter declares its own requirements in a requirements.txt
-# under src/lib/; build.bat/build.sh collect those into
-# dist/optional_dependencies/ and run_init.bat/run_init.sh install them
-# best-effort. A missing optional dependency only disables the program that needs
-# it, and only when you actually run it (e.g. pywin32 for MDD on Windows,
-# markitdown for office documents, pandas/numpy/openpyxl for Excel, pyreadstat
-# for SPSS).
+# under src/lib/; at build time build.bat/build.sh parse those into explicit
+# `pip install` rows and inline them (best-effort) into each distributed launcher.
+# A missing optional dependency only disables the program that needs it, and only
+# when you actually run it (e.g. pywin32 for MDD on Windows, markitdown for office
+# documents, pandas/numpy/openpyxl for Excel, pyreadstat for SPSS).

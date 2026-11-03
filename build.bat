@@ -106,7 +106,6 @@ ForEach ($pair in $runScripts.GetEnumerator()) { ^
     $file = (Join-Path $dest $pair.Value); ^
     $c = (Get-Content $file -Encoding 'Default'); ^
     $c = $c.Replace('..\.venv\Scripts\python.exe', '.venv\Scripts\python.exe'); ^
-    $c = $c.Replace('..\run_init.bat', 'run_init.bat'); ^
     $c = $c -replace '((?:..[\\/])?dist[/\\])?mdmtoolsap_bundle.py', 'mdmtoolsap_bundle.py'; ^
     ForEach ($pair2 in $runScripts.GetEnumerator()) { ^
         $c = $c -replace ('\b'+$pair2.Key+'\b'),  $pair2.Value; ^
@@ -137,43 +136,16 @@ IF errorlevel 1 (
 
 ECHO -
 ECHO -
-ECHO Bring LICENSE, README.md and requirements.txt to dist...
-IF NOT EXIST requirements.txt (
-    ECHO # Runtime dependencies, one per line. > requirements.txt
-)
+ECHO Bring LICENSE and README.md to dist...
 COPY /Y LICENSE dist\LICENSE
 COPY /Y README.md dist\README.md
-COPY /Y requirements.txt dist\requirements.txt
 ECHO Done
 
 ECHO -
 ECHO -
-ECHO Collect optional per-reader/per-reporter requirements into dist\optional_dependencies...
-powershell -NoProfile -Command ^
-"$srcRoot = (Resolve-Path 'src').Path; ^
-$destRoot = 'dist\optional_dependencies'; ^
-$files = Get-ChildItem -Path (Join-Path $srcRoot 'lib') -Recurse -Filter 'requirements.txt' -File; ^
-foreach ($f in $files) { ^
-    if ($f.FullName.Contains('\dist\') -or $f.FullName.Contains('\.git\') -or $f.FullName.Contains('\GENERATED\')) { continue }; ^
-    $rel = $f.FullName.Substring($srcRoot.Length + 1); ^
-    $dest = Join-Path $destRoot $rel; ^
-    $destDir = Split-Path -Parent $dest; ^
-    if (-not (Test-Path $destDir)) { $null = New-Item -ItemType Directory -Path $destDir -Force }; ^
-    Copy-Item $f.FullName $dest -Force; ^
-    Write-Host ('copying optional requirements: ' + $rel) ^
-}; "
-ECHO Done
-
-ECHO -
-ECHO -
-ECHO Copy and adapt run_init scripts to dist...
-powershell -NoProfile -Command ^
-"$c = Get-Content 'run_init.bat' -Encoding 'Default'; ^
-$c = $c -replace 'src\\lib', 'optional_dependencies'; ^
-Set-Content 'dist\run_init.bat' $c -Encoding 'Default'; ^
-$c = Get-Content 'run_init.sh' -Encoding 'Default'; ^
-$c = $c -replace 'src/lib', 'optional_dependencies'; ^
-Set-Content 'dist\run_init.sh' $c -Encoding 'Default'; "
+ECHO Inline run_init - venv setup + explicit pip installs - into dist launchers...
+python src_dev_build\inline_run_init.py
+if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && exit /b %errorlevel% )
 ECHO Done
 
 ECHO -
