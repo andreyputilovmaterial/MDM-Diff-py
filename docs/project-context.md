@@ -1,6 +1,12 @@
 # Project Context — MDM-Diff-py
 
 > Last updated: 2026-11-03
+> (2026-11-03) Fixed `run_init.bat` optional-dependency install noise. `for /r "src\lib"
+> %%f in (requirements.txt)` yields a path for every directory even where
+> `requirements.txt` doesn't exist, so `pip install -r` failed with `[Errno 2] No such file
+> or directory` on those bogus paths. Added an `if exist "%%f"` guard inside the loop in
+> `run_init.bat` (root and the `mddtoschema` / `mdmreadpy` / `mdmreportpy` submodules; the
+> `.sh` scripts already use `find -type f`, which only lists real files).
 > (2026-11-03) Fixed the Windows `build.bat` failure (`'Where-Object' is not recognized
 > …`) in the "Collect optional per-reader/per-reporter requirements" step. The step passed
 > a multi-line, `^`-continued, double-quoted PowerShell `-Command` string containing `|`
