@@ -18,6 +18,7 @@ if __name__ == '__main__':
         did_change,
         with_appended_part,
     )
+    from diff_engine.contracts import ROW_STATUS_KEEP, ROW_STATUS_REMOVE
     from helper_utility.perfmonitor import PerformanceMonitor
     from helper_make_diffflag_field_text import make_diffflag_text
     from helper_make_diff_output_filename import make_output_fname
@@ -31,6 +32,7 @@ elif '.' in __name__:
         did_change,
         with_appended_part,
     )
+    from .diff_engine.contracts import ROW_STATUS_KEEP, ROW_STATUS_REMOVE
     from .helper_utility.perfmonitor import PerformanceMonitor
     from .helper_make_diffflag_field_text import make_diffflag_text
     from .helper_make_diff_output_filename import make_output_fname
@@ -44,6 +46,7 @@ else:
         did_change,
         with_appended_part,
     )
+    from diff_engine.contracts import ROW_STATUS_KEEP, ROW_STATUS_REMOVE
     from helper_utility.perfmonitor import PerformanceMonitor
     from helper_make_diffflag_field_text import make_diffflag_text
     from helper_make_diff_output_filename import make_output_fname
@@ -329,10 +332,10 @@ def find_diff(data_left,data_right,config):
             }))
             if config['verbose_logging'] and config['verbose_logging']>0:
                 print('calculating diffs within each row...')
-            for row_diff_item in report_rows_diff:
+            for row_diff in report_rows_diff:
                 try:
                     
-                    row_name = row_diff_item.line
+                    row_name = row_diff.name
                     next(performance_counter)
                     row = {}
                     row['name'] = row_name
@@ -348,21 +351,21 @@ def find_diff(data_left,data_right,config):
                     if 'input_is_diff' in config and config['input_is_diff']:
                         row_changed = False # on "diff" mode - only indicate if something changed in any col; do not trigger this if whole row is new (added/inserted), or removed/deleted - it is still a weak indication if something changed
                     elif 'config_row_diff_ordered' in config and config['config_row_diff_ordered']:
-                        if not (row_diff_item.flag == 'keep'):
+                        if not (row_diff.status == ROW_STATUS_KEEP):
                             row_changed = True
                     else:
                         row_changed = not ( is_included_in_left == is_included_in_right )
                     flag = make_diffflag_text(
                         is_included_in_left,
                         is_included_in_right,
-                        row_diff_item.flag,
+                        row_diff.status,
                         config=config
                     )
                     col_any_changed = False
                     row['flagdiff'] = {'role':'context','text':flag}
                     file_l_rowdata = {}
                     file_r_rowdata = {}
-                    if( ( (is_included_in_left) and (is_included_in_right) ) and (row_diff_item.flag == 'remove') and ('config_do_not_show_content_rows_moved_from' in config and config['config_do_not_show_content_rows_moved_from']) ):
+                    if( ( (is_included_in_left) and (is_included_in_right) ) and (row_diff.status == ROW_STATUS_REMOVE) and ('config_do_not_show_content_rows_moved_from' in config and config['config_do_not_show_content_rows_moved_from']) ):
                         # skip for rows moved at their old position
                         pass
                     else:
@@ -419,7 +422,7 @@ def find_diff(data_left,data_right,config):
                         pass
                     # elif (config['format']=='structural') and not row_changed:
                     #     pass # skip - do not add unchanged rows in structural diff format
-                    # elif( ( (is_included_in_left) and (is_included_in_right) ) and (row_diff_item.flag in ['remove','insert']) and not col_any_changed and ('config_do_not_include_rows_moved' in config and config['config_do_not_include_rows_moved']) ):
+                    # elif( ( (is_included_in_left) and (is_included_in_right) ) and (row_diff.status in ['remove','insert']) and not col_any_changed and ('config_do_not_include_rows_moved' in config and config['config_do_not_include_rows_moved']) ):
                     #     pass # skip if set in config
                     else:
                         if row_changed:

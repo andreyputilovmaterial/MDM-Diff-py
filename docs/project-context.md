@@ -1,6 +1,15 @@
 # Project Context — MDM-Diff-py
 
 > Last updated: 2026-11-03
+> (2026-11-03) Removed the legacy `DiffItem*` proxy layer from
+> `src/diff_engine/diff_functions.py` (issue #10). Row-name diffing now works with
+> `SequenceMatcher` opcodes directly internally and returns the public `RowDiff(name,
+> status)` contract from a new `src/diff_engine/contracts.py`
+> (`ROW_STATUS_KEEP` / `ROW_STATUS_INSERT` / `ROW_STATUS_REMOVE`); `src/diff.py` consumes
+> `.name` / `.status` instead of `.line` / `.flag`. Inlined the opcode loops in the two
+> text diff functions and added `TestFinddiffRowNamesRespectingGroups` to
+> `tests/test_diff_engine_richtext.py`.
+
 > (2026-11-03) Fixed `mdmreportpy.produce_html` so it no longer crashes when
 > `config['script_version']` is missing (e.g. `config={}`). The version is now
 > resolved once via `(config.get('script_version') or '').strip() or '?'`, used in the

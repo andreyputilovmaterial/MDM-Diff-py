@@ -4,8 +4,6 @@
 
 
 # from collections import namedtuple
-from dataclasses import dataclass
-from typing import ClassVar, Callable, Any
 from difflib import SequenceMatcher
 
 from itertools import zip_longest
@@ -34,6 +32,12 @@ from .common_functions import (
 )
 from .difflib_wrapper import (
     TextWithRolesSequenceMatcher,
+)
+from .contracts import (
+    RowDiff,
+    ROW_STATUS_KEEP,
+    ROW_STATUS_INSERT,
+    ROW_STATUS_REMOVE,
 )
 
 
@@ -64,177 +68,6 @@ def diff_normalize(input: list[str],flags = None) -> list[str]:
     return result
 
 
-
-
-
-
-
-# TODO: stop working through these proxies DiffItemXxx - I think this is unnecessary, we can work with SequenceMatcher results directly (logged as issue #10)
-# temporary repeating similar definitions from diff.py so that I can combine rows and it looks similar
-@dataclass(frozen=True)
-class DiffItemAbstract:
-    """Legacy helper
-    Should be removed in future implementation. It was needed to work throug DiffItemXxx classes.
-    There is no good reason to use these classes. We can work with SequenceMatcher results directly.
-    I have an open issue, like a task, to review and delete this"""
-    line: str
-    flag: ClassVar[str] = '???'
-    def __str__(self):
-        return f'{self.flag}: {self.line}'
-
-@dataclass(frozen=True)
-class DiffItemKeep(DiffItemAbstract):
-    """Legacy helper
-    Should be removed in future implementation. It was needed to work throug DiffItemXxx classes.
-    There is no good reason to use these classes. We can work with SequenceMatcher results directly.
-    I have an open issue, like a task, to review and delete this"""
-    flag: ClassVar[str] = 'keep'
-
-@dataclass(frozen=True)
-class DiffItemInsert(DiffItemAbstract):
-    """Legacy helper
-    Should be removed in future implementation. It was needed to work throug DiffItemXxx classes.
-    There is no good reason to use these classes. We can work with SequenceMatcher results directly.
-    I have an open issue, like a task, to review and delete this"""
-    flag: ClassVar[str] = 'insert'
-
-@dataclass(frozen=True)
-class DiffItemRemove(DiffItemAbstract):
-    """Legacy helper
-    Should be removed in future implementation. It was needed to work throug DiffItemXxx classes.
-    There is no good reason to use these classes. We can work with SequenceMatcher results directly.
-    I have an open issue, like a task, to review and delete this"""
-    flag: ClassVar[str] = 'remove'
-
-def as_diff_items_grouped(opcodes, a, b):
-    """Legacy helper
-    Should be removed in future implementation. It was needed to work throug DiffItemXxx classes.
-    There is no good reason to use these classes. We can work with SequenceMatcher results directly.
-    I have an open issue, like a task, to review and delete this"""
-    # TODO: looks like it is not used
-    result = []
-    for tag, i1, i2, j1, j2 in opcodes:
-        line = None
-        if tag=='equal':
-            line = a[i1:i2]
-            result += [DiffItemKeep(line)]
-        elif tag == 'replace':
-            line = a[i1:i2]
-            result += [DiffItemRemove(line)]
-            line = b[j1:j2]
-            result += [DiffItemInsert(line)]
-        elif tag == 'insert':
-            line = b[j1:j2]
-            result += [DiffItemInsert(line)]
-        elif tag == 'delete':
-            line = a[i1:i2]
-            result += [DiffItemRemove(line)]
-        else:
-            raise Exception(f'Finding combined compiled output file name: Unrecognized piece from diff chunk {tag}')
-    return result
-
-def as_diff_items_concatenated(opcodes, a, b):
-    """Legacy helper
-    Should be removed in future implementation. It was needed to work throug DiffItemXxx classes.
-    There is no good reason to use these classes. We can work with SequenceMatcher results directly.
-    I have an open issue, like a task, to review and delete this"""
-    result = []
-    for tag, i1, i2, j1, j2 in opcodes:
-        line = None
-        if tag=='equal':
-            chunk_ar = a[i1:i2]
-            line = None
-            for piece in chunk_ar:
-                if line is None:
-                    line = piece
-                else:
-                    line += piece
-            result += [DiffItemKeep(line)]
-        elif tag == 'replace':
-            chunk_ar = a[i1:i2]
-            line = None
-            for piece in chunk_ar:
-                if line is None:
-                    line = piece
-                else:
-                    line += piece
-            result += [DiffItemRemove(line)]
-            chunk_ar = b[j1:j2]
-            line = None
-            for piece in chunk_ar:
-                if line is None:
-                    line = piece
-                else:
-                    line += piece
-            result += [DiffItemInsert(line)]
-        elif tag == 'insert':
-            chunk_ar = b[j1:j2]
-            line = None
-            for piece in chunk_ar:
-                if line is None:
-                    line = piece
-                else:
-                    line += piece
-            result += [DiffItemInsert(line)]
-        elif tag == 'delete':
-            chunk_ar = a[i1:i2]
-            line = None
-            for piece in chunk_ar:
-                if line is None:
-                    line = piece
-                else:
-                    line += piece
-            result += [DiffItemRemove(line)]
-        else:
-            raise Exception(f'Finding combined compiled output file name: Unrecognized piece from diff chunk {tag}')
-    return result
-
-def as_diff_items_individual(opcodes, a, b):
-    """Legacy helper
-    Should be removed in future implementation. It was needed to work throug DiffItemXxx classes.
-    There is no good reason to use these classes. We can work with SequenceMatcher results directly.
-    I have an open issue, like a task, to review and delete this"""
-    result = []
-    for tag, i1, i2, j1, j2 in opcodes:
-        line = None
-        if tag=='equal':
-            line = a[i1:i2]
-            for l in line:
-                result += [DiffItemKeep(l)]
-        elif tag == 'replace':
-            line = a[i1:i2]
-            for l in line:
-                result += [DiffItemRemove(l)]
-            line = b[j1:j2]
-            for l in line:
-                result += [DiffItemInsert(l)]
-        elif tag == 'insert':
-            line = b[j1:j2]
-            for l in line:
-                result += [DiffItemInsert(l)]
-        elif tag == 'delete':
-            line = a[i1:i2]
-            for l in line:
-                result += [DiffItemRemove(l)]
-        else:
-            raise Exception(f'Finding combined compiled output file name: Unrecognized piece from diff chunk {tag}')
-    return result
-
-def as_diff_items(*args,**argv):
-    """Legacy helper
-    Should be removed in future implementation. It was needed to work throug DiffItemXxx classes.
-    There is no good reason to use these classes. We can work with SequenceMatcher results directly.
-    I have an open issue, like a task, to review and delete this"""
-    return as_diff_items_individual(*args,**argv)
-
-
-
-
-
-
-
-
-
 def diff_make_combined_list(a,b):
     """Merge two sequences using diff semantics"""
     sm = SequenceMatcher(None,a,b)
@@ -254,13 +87,6 @@ def diff_make_combined_list(a,b):
     return result
 
 
-
-
-
-
-
-
-
 class MDMDiffWrappersGroupingMissingParentException(Exception):
     """Diff: diff item names with groupings: every group must include a parent element"""
 def finddiff_row_names_respecting_groups(rows_l: list[str], rows_r: list[str], delimiter, level=None, flags : dict|None = None):
@@ -273,7 +99,8 @@ def finddiff_row_names_respecting_groups(rows_l: list[str], rows_r: list[str], d
     - flags that affect behavior (a config object of type dict)
 
     returns:
-    - its results (to be clearified later # TODO:)
+    - a list of RowDiff objects, in the combined order, each carrying the row
+      name and a ROW_STATUS_* status (keep / insert / remove)
 
     This fn has couple config options
     The most important is hierarchical format and delimiter params
@@ -373,34 +200,50 @@ def finddiff_row_names_respecting_groups(rows_l: list[str], rows_r: list[str], d
         for g in dict.keys(groups_r_defs):
             grouping_found = grouping_found or (len(groups_r_defs[g])>1)
         _diff = SequenceMatcher( None, diff_normalize(rows_ungrouped_l,flags=flags),diff_normalize(rows_ungrouped_r,flags=flags))
-        # TODO: stop working through these proxies DiffItemXxx - I think this is unnecessary, we can work with SequenceMatcher results directly (logged as issue #10)
-        diff_results = as_diff_items( _diff.get_opcodes(), rows_ungrouped_l, rows_ungrouped_r )
+        diff_results = []
+        for tag, i1, i2, j1, j2 in _diff.get_opcodes():
+            if tag=='equal':
+                for name in rows_ungrouped_l[i1:i2]:
+                    diff_results.append(RowDiff(name, ROW_STATUS_KEEP))
+            elif tag == 'replace':
+                for name in rows_ungrouped_l[i1:i2]:
+                    diff_results.append(RowDiff(name, ROW_STATUS_REMOVE))
+                for name in rows_ungrouped_r[j1:j2]:
+                    diff_results.append(RowDiff(name, ROW_STATUS_INSERT))
+            elif tag == 'insert':
+                for name in rows_ungrouped_r[j1:j2]:
+                    diff_results.append(RowDiff(name, ROW_STATUS_INSERT))
+            elif tag == 'delete':
+                for name in rows_ungrouped_l[i1:i2]:
+                    diff_results.append(RowDiff(name, ROW_STATUS_REMOVE))
+            else:
+                raise Exception(f'Finding combined compiled list of compared collections: Unrecognized tag from SequenceMatcher {tag}')
         if not grouping_found:
             return diff_results
         else:
             diff_results_grouping_expanded = []
             for diff_item in diff_results:
-                if not (diff_item.line in dict.keys(groups_l_defs)) and not (diff_item.line in dict.keys(groups_r_defs)):
+                if not (diff_item.name in dict.keys(groups_l_defs)) and not (diff_item.name in dict.keys(groups_r_defs)):
                     diff_results_grouping_expanded.append(diff_item)
                 else:
-                    if diff_item.flag=='remove':
+                    if diff_item.status=='remove':
                         diff_results_grouping_expanded.append(diff_item)
                     else:
-                        rows_subgroup_l = groups_l_defs[diff_item.line] if diff_item.line in dict.keys(groups_l_defs) else ['']
-                        rows_subgroup_r = groups_r_defs[diff_item.line] if diff_item.line in dict.keys(groups_r_defs) else ['']
-                        diff_within_group_missing_parent_part = finddiff_row_names_respecting_groups(rows_subgroup_l,rows_subgroup_r,delimiter,level=diff_item.line,flags=flags)
+                        rows_subgroup_l = groups_l_defs[diff_item.name] if diff_item.name in dict.keys(groups_l_defs) else ['']
+                        rows_subgroup_r = groups_r_defs[diff_item.name] if diff_item.name in dict.keys(groups_r_defs) else ['']
+                        diff_within_group_missing_parent_part = finddiff_row_names_respecting_groups(rows_subgroup_l,rows_subgroup_r,delimiter,level=diff_item.name,flags=flags)
                         diff_within_group = []
                         item_first_meaning_parent_group = True
                         for diff_item_within_group in diff_within_group_missing_parent_part:
                             item_add = None
-                            name_with_parent_part_added = '{parent}{delimiter}{field}'.format(parent=diff_item.line,field=diff_item_within_group.line,delimiter=delimiter) if len(diff_item_within_group.line)>0 else diff_item.line
+                            name_with_parent_part_added = '{parent}{delimiter}{field}'.format(parent=diff_item.name,field=diff_item_within_group.name,delimiter=delimiter) if len(diff_item_within_group.name)>0 else diff_item.name
                             diff_item_which_flag_we_grab = diff_item if item_first_meaning_parent_group else diff_item_within_group
-                            if diff_item_which_flag_we_grab.flag=='keep':
-                                item_add = DiffItemKeep(name_with_parent_part_added)
-                            elif diff_item_which_flag_we_grab.flag=='insert':
-                                item_add = DiffItemInsert(name_with_parent_part_added)
-                            elif diff_item_which_flag_we_grab.flag=='remove':
-                                item_add = DiffItemRemove(name_with_parent_part_added)
+                            if diff_item_which_flag_we_grab.status=='keep':
+                                item_add = RowDiff(name_with_parent_part_added, ROW_STATUS_KEEP)
+                            elif diff_item_which_flag_we_grab.status=='insert':
+                                item_add = RowDiff(name_with_parent_part_added, ROW_STATUS_INSERT)
+                            elif diff_item_which_flag_we_grab.status=='remove':
+                                item_add = RowDiff(name_with_parent_part_added, ROW_STATUS_REMOVE)
                             else:
                                 raise AttributeError('which diff flag???')
                             diff_within_group.append(item_add)
@@ -486,23 +329,20 @@ def finddiff_values_text_formatsidebyside( cmpdata_l, cmpdata_r, config ):
     else:
         cmpdata_l_into_lines = [ ('' if linenumber==0 else '\n') + (line if len(line)>0 else ' ') for linenumber,line in enumerate(text_split_lines(cmpdata_l)) ]
         cmpdata_r_into_lines = [ ('' if linenumber==0 else '\n') + (line if len(line)>0 else ' ') for linenumber,line in enumerate(text_split_lines(cmpdata_r)) ]
-        diff_data = SequenceMatcher(None,cmpdata_l_into_lines,cmpdata_r_into_lines).get_opcodes()
-        # TODO: stop working through these proxies DiffItemXxx - I think this is unnecessary, we can work with SequenceMatcher results directly (logged as issue #10)
-        diff_data = as_diff_items_concatenated( diff_data, cmpdata_l_into_lines, cmpdata_r_into_lines )
         diff_data_l_and_r_by_lines = []
-        for part in diff_data:
-            if part.flag=='keep':
-                diff_data_l_and_r_by_lines.append({'l':part.line,'r':part.line})
-            elif part.flag=='insert':
-                if( (len(diff_data_l_and_r_by_lines)>0) and (diff_data_l_and_r_by_lines[-1]['r']=='') ):
-                    diff_data_l_and_r_by_lines[-1]['r'] = part.line
-                else:
-                    diff_data_l_and_r_by_lines.append({'l':'','r':part.line})
-            elif part.flag=='remove':
-                if( (len(diff_data_l_and_r_by_lines)>0) and (diff_data_l_and_r_by_lines[-1]['l']=='') ):
-                    diff_data_l_and_r_by_lines[-1]['l'] = part.line
-                else:
-                    diff_data_l_and_r_by_lines.append({'l':part.line,'r':''})
+        for tag, i1, i2, j1, j2 in SequenceMatcher(None,cmpdata_l_into_lines,cmpdata_r_into_lines).get_opcodes():
+            line_l = ''.join(cmpdata_l_into_lines[i1:i2])
+            line_r = ''.join(cmpdata_r_into_lines[j1:j2])
+            if tag=='equal':
+                diff_data_l_and_r_by_lines.append({'l':line_l,'r':line_r})
+            elif tag=='insert':
+                diff_data_l_and_r_by_lines.append({'l':'','r':line_r})
+            elif tag=='delete':
+                diff_data_l_and_r_by_lines.append({'l':line_l,'r':''})
+            elif tag=='replace':
+                diff_data_l_and_r_by_lines.append({'l':line_l,'r':line_r})
+            else:
+                raise Exception(f'Finding combined compiled output file name: Unrecognized piece from diff chunk {tag}')
         result_left = []
         result_right = []
         for linenumber,part in enumerate(diff_data_l_and_r_by_lines):
@@ -511,25 +351,36 @@ def finddiff_values_text_formatsidebyside( cmpdata_l, cmpdata_r, config ):
             #     result_right['parts'].append( '\n' )
             cmpdata_l_into_pieces = text_split_words(part['l'])
             cmpdata_r_into_pieces = text_split_words(part['r'])
-            # TODO: stop working through these proxies DiffItemXxx - I think this is unnecessary, we can work with SequenceMatcher results directly (logged as issue #10)
-            diff_data = as_diff_items_concatenated( SequenceMatcher(None,cmpdata_l_into_pieces,cmpdata_r_into_pieces).get_opcodes(), cmpdata_l_into_pieces, cmpdata_r_into_pieces )
-            for part in diff_data:
-                result_piece_left = []
-                result_piece_right = []
-                if part.flag=='keep':
-                    result_piece_left.append(as_segment_context(part.line))
-                    result_piece_right.append(as_segment_context(part.line))
-                elif part.flag=='insert':
-                    txt_lines = part.line.split('\n')
-                    result_piece_left.append( as_segment_change('\n '.join('' for p in txt_lines),op='added') )
-                    result_piece_right.append( as_segment_change('\n'.join((p if len(p)>0 else ' ') for p in txt_lines),op='added') )
-                elif part.flag=='remove':
-                    txt_lines = part.line.split('\n')
-                    result_piece_left.append( as_segment_change('\n'.join((p if len(p)>0 else ' ') for p in txt_lines),op='removed') )
-                    result_piece_right.append( as_segment_change('\n '.join('' for p in txt_lines),op='removed') )
-                result_piece_left, result_piece_right = fill_same_number_linebreaks(result_piece_left,result_piece_right)
-                result_left += result_piece_left
-                result_right += result_piece_right
+            for tag, i1, i2, j1, j2 in SequenceMatcher(None,cmpdata_l_into_pieces,cmpdata_r_into_pieces).get_opcodes():
+                parts = []
+                if tag=='equal':
+                    parts.append(('keep', ''.join(cmpdata_l_into_pieces[i1:i2])))
+                elif tag=='insert':
+                    parts.append(('insert', ''.join(cmpdata_r_into_pieces[j1:j2])))
+                elif tag=='delete':
+                    parts.append(('remove', ''.join(cmpdata_l_into_pieces[i1:i2])))
+                elif tag=='replace':
+                    parts.append(('remove', ''.join(cmpdata_l_into_pieces[i1:i2])))
+                    parts.append(('insert', ''.join(cmpdata_r_into_pieces[j1:j2])))
+                else:
+                    raise Exception(f'Finding combined compiled output file name: Unrecognized piece from diff chunk {tag}')
+                for flag, line in parts:
+                    result_piece_left = []
+                    result_piece_right = []
+                    if flag=='keep':
+                        result_piece_left.append(as_segment_context(line))
+                        result_piece_right.append(as_segment_context(line))
+                    elif flag=='insert':
+                        txt_lines = line.split('\n')
+                        result_piece_left.append( as_segment_change('\n '.join('' for p in txt_lines),op='added') )
+                        result_piece_right.append( as_segment_change('\n'.join((p if len(p)>0 else ' ') for p in txt_lines),op='added') )
+                    elif flag=='remove':
+                        txt_lines = line.split('\n')
+                        result_piece_left.append( as_segment_change('\n'.join((p if len(p)>0 else ' ') for p in txt_lines),op='removed') )
+                        result_piece_right.append( as_segment_change('\n '.join('' for p in txt_lines),op='removed') )
+                    result_piece_left, result_piece_right = fill_same_number_linebreaks(result_piece_left,result_piece_right)
+                    result_left += result_piece_left
+                    result_right += result_piece_right
         assert (result_left, result_right) == fill_same_number_linebreaks(result_left,result_right), 'Warning: num of linebreaks does not match' # TODO: remove this line, for speed
     # Also pad the "one side empty vs multi-line" cases (the branches above
     # return early without aligning), so left and right always occupy the same
@@ -974,38 +825,46 @@ def finddiff_values_text_formatcombined( cmpdata_l, cmpdata_r, config ):
     else:
         cmpdata_l_into_lines = [ ('' if linenumber==0 else '\n') + (line if len(line)>0 else ' ') for linenumber,line in enumerate(text_split_lines(cmpdata_l)) ]
         cmpdata_r_into_lines = [ ('' if linenumber==0 else '\n') + (line if len(line)>0 else ' ') for linenumber,line in enumerate(text_split_lines(cmpdata_r)) ]
-        diff_data = SequenceMatcher(None,cmpdata_l_into_lines,cmpdata_r_into_lines).get_opcodes()
-        # TODO: stop working through these proxies DiffItemXxx - I think this is unnecessary, we can work with SequenceMatcher results directly (logged as issue #10)
-        diff_data = as_diff_items_concatenated( diff_data, cmpdata_l_into_lines, cmpdata_r_into_lines )
         diff_data_l_and_r_by_lines = []
-        for part in diff_data:
-            if part.flag=='keep':
-                diff_data_l_and_r_by_lines.append({'l':part.line,'r':part.line})
-            elif part.flag=='insert':
-                if( (len(diff_data_l_and_r_by_lines)>0) and (diff_data_l_and_r_by_lines[-1]['r']=='') ):
-                    diff_data_l_and_r_by_lines[-1]['r'] = part.line
-                else:
-                    diff_data_l_and_r_by_lines.append({'l':'','r':part.line})
-            elif part.flag=='remove':
-                if( (len(diff_data_l_and_r_by_lines)>0) and (diff_data_l_and_r_by_lines[-1]['l']=='') ):
-                    diff_data_l_and_r_by_lines[-1]['l'] = part.line
-                else:
-                    diff_data_l_and_r_by_lines.append({'l':part.line,'r':''})
+        for tag, i1, i2, j1, j2 in SequenceMatcher(None,cmpdata_l_into_lines,cmpdata_r_into_lines).get_opcodes():
+            line_l = ''.join(cmpdata_l_into_lines[i1:i2])
+            line_r = ''.join(cmpdata_r_into_lines[j1:j2])
+            if tag=='equal':
+                diff_data_l_and_r_by_lines.append({'l':line_l,'r':line_r})
+            elif tag=='insert':
+                diff_data_l_and_r_by_lines.append({'l':'','r':line_r})
+            elif tag=='delete':
+                diff_data_l_and_r_by_lines.append({'l':line_l,'r':''})
+            elif tag=='replace':
+                diff_data_l_and_r_by_lines.append({'l':line_l,'r':line_r})
+            else:
+                raise Exception(f'Finding combined compiled output file name: Unrecognized piece from diff chunk {tag}')
         result = {'parts':[]}
         for linenumber,part in enumerate(diff_data_l_and_r_by_lines):
             # if linenumber>0:
             #     result['parts'].append( '\n' )
             cmpdata_l_into_pieces = text_split_words(part['l'])
             cmpdata_r_into_pieces = text_split_words(part['r'])
-            # TODO: stop working through these proxies DiffItemXxx - I think this is unnecessary, we can work with SequenceMatcher results directly (logged as issue #10)
-            diff_data = as_diff_items_concatenated( SequenceMatcher(None,cmpdata_l_into_pieces,cmpdata_r_into_pieces).get_opcodes(), cmpdata_l_into_pieces, cmpdata_r_into_pieces )
-            for part in diff_data:
-                if part.flag=='keep':
-                    result['parts'].append(as_segment_context(part.line))
-                elif part.flag=='insert':
-                    result['parts'].append(as_segment_change(part.line,op='added'))
-                elif part.flag=='remove':
-                    result['parts'].append(as_segment_change(part.line,op='removed'))
+            for tag, i1, i2, j1, j2 in SequenceMatcher(None,cmpdata_l_into_pieces,cmpdata_r_into_pieces).get_opcodes():
+                parts = []
+                if tag=='equal':
+                    parts.append(('keep', ''.join(cmpdata_l_into_pieces[i1:i2])))
+                elif tag=='insert':
+                    parts.append(('insert', ''.join(cmpdata_r_into_pieces[j1:j2])))
+                elif tag=='delete':
+                    parts.append(('remove', ''.join(cmpdata_l_into_pieces[i1:i2])))
+                elif tag=='replace':
+                    parts.append(('remove', ''.join(cmpdata_l_into_pieces[i1:i2])))
+                    parts.append(('insert', ''.join(cmpdata_r_into_pieces[j1:j2])))
+                else:
+                    raise Exception(f'Finding combined compiled output file name: Unrecognized piece from diff chunk {tag}')
+                for flag, line in parts:
+                    if flag=='keep':
+                        result['parts'].append(as_segment_context(line))
+                    elif flag=='insert':
+                        result['parts'].append(as_segment_change(line,op='added'))
+                    elif flag=='remove':
+                        result['parts'].append(as_segment_change(line,op='removed'))
     return result
 
 def finddiff_values_list_formatcombined( cmpdata_l, cmpdata_r, config ):

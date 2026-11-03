@@ -29,6 +29,12 @@ from src.diff_engine.common_functions import (
     get_segment_payload,
     ErrorCantSplitAtomicPiece,
 )
+from src.diff_engine.contracts import (
+    RowDiff,
+    ROW_STATUS_KEEP,
+    ROW_STATUS_INSERT,
+    ROW_STATUS_REMOVE,
+)
 from src.helper_utility.perfmonitor import PerformanceMonitor
 
 
@@ -552,6 +558,41 @@ class TestKnownPropertyListEmptyValueIssue(unittest.TestCase):
         # Currently the left side collapses to [] and line counts mismatch (1 vs 2).
         self.assertEqual(as_plain_text(l_res), '[ k = "" ]')
         self.assertEqual(count_linebreaks(l_res), count_linebreaks(r_res))
+
+
+class TestFinddiffRowNamesRespectingGroups(unittest.TestCase):
+    """``finddiff_row_names_respecting_groups`` returns the public ``RowDiff``
+    contract — a list of ``RowDiff(name, status)`` objects in combined order —
+    rather than leaking ``SequenceMatcher`` opcodes or proxy objects."""
+
+    def _pairs(self, rows):
+        return [(r.name, r.status) for r in rows]
+
+    def test_returns_row_diff_objects(self):
+        result = diff_functions.finddiff_row_names_respecting_groups(
+            ['a', 'b', 'c'], ['a', 'x', 'c'], delimiter=None)
+        self.assertTrue(all(isinstance(r, RowDiff) for r in result))
+
+    def test_non_grouped_keep_insert_remove(self):
+        result = diff_functions.finddiff_row_names_respecting_groups(
+            ['a', 'b', 'c'], ['a', 'x', 'c'], delimiter=None)
+        self.assertEqual(self._pairs(result), [
+            ('a', ROW_STATUS_KEEP),
+            ('b', ROW_STATUS_REMOVE),
+            ('x', ROW_STATUS_INSERT),
+            ('c', ROW_STATUS_KEEP),
+        ])
+
+    def test_grouped_removed_subgroup(self):
+        result = diff_functions.finddiff_row_names_respecting_groups(
+            ['', 'g', 'g.a', 'g.b'], ['', 'g', 'g.a'], delimiter='.')
+        self.assertTrue(all(isinstance(r, RowDiff) for r in result))
+        self.assertEqual(self._pairs(result), [
+            ('', ROW_STATUS_KEEP),
+            ('g', ROW_STATUS_KEEP),
+            ('g.a', ROW_STATUS_KEEP),
+            ('g.b', ROW_STATUS_REMOVE),
+        ])
 
 
 if __name__ == '__main__':

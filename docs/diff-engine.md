@@ -314,9 +314,9 @@ no-duplication guarantee (issue #24), and the multi-step `as_format` conversion.
 
 - `diff_normalize()` raises `NotImplementedError` for `ignorewhitespace` and
   `ignoreaccents` (only `ignorecase` is implemented).
-- The legacy `DiffItemKeep`/`DiffItemInsert`/`DiffItemRemove` dataclasses are a historical
-  proxy layer the code still routes opcodes through; they are slated for removal (tracked
-  as issue #10) in favor of working with `SequenceMatcher` results directly.
+- Row-level diffing (`finddiff_row_names_respecting_groups`) returns `RowDiff(name, status)`
+  objects (see `src/diff_engine/contracts.py`) rather than exposing `SequenceMatcher`
+  opcodes; `status` is `ROW_STATUS_KEEP` / `ROW_STATUS_INSERT` / `ROW_STATUS_REMOVE`.
 - `(propertylist)` and `(dict)` blocks are atomic with respect to text slicing; a
   character diff spanning them raises `ErrorCantSplitAtomicPiece`.
 - Multi-line text where the two sides differ in line count can pick up spurious spaces
