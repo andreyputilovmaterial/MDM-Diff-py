@@ -1,6 +1,11 @@
 # Project Context — MDM-Diff-py
 
 > Last updated: 2026-11-04
+> (2026-11-04) Added `src/lib/otherformatsreadpy_excel/README.md` (reader purpose,
+> the tabular-input vs keyed-output gap, heuristic index-row/index-column detection,
+> and the two failure modes: unexpected input layout and O(n²) unique-key generation
+> with ~1M rows) plus matching loop-level comments in `read_excel_general.py` and
+> `read_excel_lrw.py`.
 > (2026-11-04) Adopted `docs/maintenance-log.md` and applied its entry-point import
 > convention across the toolchain (mdmreportpy → mdmreadpy → mddtoschema/mdmexcelreportpy →
 > root). Entry-point modules now select imports on `__package__` (two-branch) instead of the

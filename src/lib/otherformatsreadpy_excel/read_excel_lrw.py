@@ -368,6 +368,9 @@ def read_excel(filename):
             # - ideally banner point names are unique - but unfortunately we know we can't guarantee it - we hope qa reports if we are using the same name, but there's no guarantee
             # - we should detect the row with stat testing letters and skip it
             # as everything here is not a 100% rule, are assigning scores for every rule, and then we pick the row with the highest points
+            # This is the index/header-row detection: the reader hinges on finding this
+            # row correctly, and because the number of pre-header rows is not fixed the
+            # detection is heuristic - an unexpected layout can make it pick the wrong row.
             banner_lines_scores = {}
             for i,linenumber in enumerate(range(linenumber_banner_begins,linenumber_banner_ends+1)):
 
@@ -767,6 +770,9 @@ def read_excel(filename):
             
             # go! main part! read data!
             CellItem = 0
+            # Names already emitted for this sheet; used to guarantee every row has a
+            # unique key. See the uniqueness check in the loop below (O(n^2) in the row
+            # count).
             row_names_already_used = []
             for linenumber in range_lines_to_work_with:
 
@@ -803,6 +809,13 @@ def read_excel(filename):
                     part_main = row_name,
                     part_unique = ( (' ({qualifier} {d}'.format(qualifier=('CellItem' if not(row_name=='axis(banner)') else 'BannerLine #'),d=CellItem)) if not('{c}'.format(c=CellItem)=='0') else '' )
                 )
+                # Uniqueness check: the output report must be keyed, so every row needs
+                # a unique name. We test each candidate against every name already
+                # emitted and, on collision, append a "[Duplicate #<n>]" suffix with an
+                # increasing counter. This is O(n^2) in the number of rows - with
+                # ~1,000,000 rows in a sheet this loop (not the actual reading) can
+                # dominate the runtime. It is the price of "detect the index column,
+                # then make unique keys".
                 if row_name_suggested in row_names_already_used:
                     row_name_override_suggest = None
                     row_name_override_counter = 2

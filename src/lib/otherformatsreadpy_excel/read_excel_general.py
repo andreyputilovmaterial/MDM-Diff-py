@@ -160,6 +160,10 @@ def trim_rows(df):
 # it is very common that the first row is banner
 # but not always
 # the condition is the following: no blank values and no duplicates
+# This is the header-row heuristic. The number of pre-header rows is not fixed, so a
+# row is scored instead of assumed; find_data_areas_within_sheet() picks the row with
+# the highest score as the actual header (index) row. An unexpected number of
+# pre-header rows can make that pick wrong.
 def is_row_valid_header(row):
     return assess_row_as_header(row)>.94
 
@@ -179,8 +183,11 @@ def assess_row_as_header(row):
 
 
 # first we find areas with data on the sheet
-# sometimes a sheet includes seveval blocks of data
+# sometimes a sheet includes several blocks of data (several independent tables)
 # even Grant is using it in mapping, painless, flatout, reshape...
+# This is one of the hard input forms: a sheet that is not a single clean table but
+# multiple tables stacked and/or placed side by side. Each detected block is later
+# turned into its own section.
 def find_data_areas_within_sheet(df_thissheet):
     # chectsheet: get contents of (x,y): df_thissheet.iloc[x,y]
 
@@ -369,7 +376,17 @@ def read_excel(filename):
                 # detect types of columns - which are blank, or contain unique identifiers
                 columns_data = gather_columns_info(df)
 
-                # in ID for index col
+                # Heuristically detect the index column.
+                # The input is just tabular data and may or may not have an index
+                # column, but the output report must be keyed (every row needs a
+                # unique `name`). So we guess:
+                #   * column 0 is unique                      -> it is the index
+                #   * column 0 is a unique numeric counter and
+                #     column 1 is a unique non-numeric label  -> column 1 is the index
+                # If neither holds there is no index column and rows are named
+                # "Line #<n>" below. This guess is only a heuristic and is the main
+                # thing that can go wrong (unexpected number of pre-header rows, or
+                # several tables within a single sheet).
                 idcol = -1
                 if len(columns_data)>0 and columns_data[0]['is_unique']:
                     idcol = 0
@@ -400,6 +417,11 @@ def read_excel(filename):
                         resulting_tab_def['column_headers'][c] = c
                 
                 # ok, process data!
+                # Key the rows. When an index column was detected (`idcol >= 0`) we
+                # reuse its cell value as the row's unique `name`; otherwise we fall
+                # back to a positional "Line #<n>". No uniqueness check is done here:
+                # if the "unique" index column actually contains repeated values, the
+                # keys collide. (The LRW reader enforces uniqueness, at O(n^2) cost.)
                 for rownumber in range(header_index+1,len(df)):
                     r = df.iloc[rownumber,0:]
                     if len(r)>0:
