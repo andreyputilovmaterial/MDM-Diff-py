@@ -65,8 +65,9 @@ producer/consumer view, but the two files above are authoritative for the common
 ## Build & distribution
 
 `build.bat` (Windows) / `build.sh` (macOS/Linux) use the vendored `pinliner` fork to
-produce a single-file `dist/mdmtoolsap_bundle.py`, patch it to call
-`src.launcher.main()`, and copy LICENSE/README into `dist/`. BAT launchers
+produce a single-file `dist/mdmtoolsap_bundle.py` with a `--main src.launcher
+--main-attr main` entry point (the bundle runs `launcher.main()` when executed), and
+copy LICENSE/README into `dist/`. BAT launchers
 in `src_bat_scripts/` drive specific workflows; they are copied (and renamed) into
 `dist/`, and during that copy the bundle path is rewritten to `mdmtoolsap_bundle.py`
 and the launcher python is switched to the venv python (`.venv\Scripts\python.exe`).
@@ -94,24 +95,24 @@ the bundle.
 Every part that ships a `launcher.py` (`src/`, `mdmreadpy`, `mdmreportpy`,
 `mdmexcelreportpy`, `mddtoschema`) can be started three equivalent ways:
 
-1. **Single-file bundle** (distribution). `pinliner` bundles the tree and the build
-   appends `from src import launcher; launcher.main()`. Run it with the venv Python:
+1. **Single-file bundle** (distribution). `pinliner` bundles the tree with a
+   `--main src.launcher --main-attr main` entry point. Run it with the venv Python:
 
    ```
    .venv\Scripts\python.exe mdmtoolsap_bundle.py --program <name> [args]
    ```
 
-2. **Direct module invocation** (development). Run an entry-point module directly:
+2. **Direct module invocation** (development). Run an entry-point module with `-m`:
 
    ```
-   python src/diff.py [args]          # e.g. the diff tool
-   python src/lib/mdmreadpy/src/read_mdd.py --mdd file.mdd
+   python -m src.diff [args]          # e.g. the diff tool
+   python -m src.lib.mdmreadpy.src.read_mdd --mdd file.mdd
    ```
 
-3. **Launcher proxy** (development). Run the universal dispatcher directly:
+3. **Launcher proxy** (development). Run the universal dispatcher with `-m`:
 
    ```
-   python src/launcher.py --program <name> [args]
+   python -m src.launcher --program <name> [args]
    ```
 
 The three root-level BAT examples in `src_bat_scripts/` map one-to-one onto these:

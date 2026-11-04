@@ -1,6 +1,14 @@
 # Project Context — MDM-Diff-py
 
-> Last updated: 2026-11-03
+> Last updated: 2026-11-04
+> (2026-11-04) Adopted `docs/maintenance-log.md` and applied its entry-point import
+> convention across the toolchain (mdmreportpy → mdmreadpy → mddtoschema/mdmexcelreportpy →
+> root). Entry-point modules now select imports on `__package__` (two-branch) instead of the
+> old three-branch `__name__` split. Updated the pinliner submodule to `7152465` and switched
+> `build.sh`/`build.bat` to `--main src.launcher --main-attr main` (no more appending
+> `launcher.main()`). Plain-script invocation is dropped — use `python -m src.<module>`.
+> Updated `docs/architecture.md`, `.clinerules/02-python-portability.md`, `README.md`, and
+> `tests/test_done_program.py`.
 > (2026-11-03) Distribution is now a two-file layout (one launcher BAT + the bundle).
 > Added `src_dev_build/inline_run_init.py`, a build-time helper that parses the root and
 > `src/lib/**/requirements.txt` files into explicit `pip install "pkg1" "pkg2"` rows and
@@ -282,9 +290,9 @@ Submodules (see `.gitmodules`):
 ## 3. Build & distribution
 
 `build.bat` (root) uses the vendored `pinliner` fork to produce a single-file
-`dist/mdmtoolsap_bundle.py`, patches it to call `src.launcher.main()`, and copies
-LICENSE/README/requirements into `dist/`. BAT launchers in `src_bat_scripts/` and
-`dist/` drive specific workflows (read, report, diff, aligned diffs, …).
+`dist/mdmtoolsap_bundle.py` with a `--main src.launcher --main-attr main` entry point,
+and copies LICENSE/README/requirements into `dist/`. BAT launchers in `src_bat_scripts/`
+and `dist/` drive specific workflows (read, report, diff, aligned diffs, …).
 
 Static assets (HTML/CSS/JS templates, the git `_VERSION` string) are embedded via the
 `GENERATED/` folder technique described in `.clinerules/02-python-portability.md`.

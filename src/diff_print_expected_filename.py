@@ -7,14 +7,11 @@ import sys # for error reporting, to print to stderr
 
 
 
-if __name__ == '__main__':
-    # run as a program
-    from helper_make_diff_output_filename import make_output_fname
-elif '.' in __name__:
-    # package
+if __package__:
+    # package context
     from .helper_make_diff_output_filename import make_output_fname
 else:
-    # included with no parent package
+    # flat context: no parent package
     from helper_make_diff_output_filename import make_output_fname
 
 

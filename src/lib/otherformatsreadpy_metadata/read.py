@@ -7,16 +7,12 @@ from datetime import datetime, timezone
 
 
 
-if __name__ == '__main__':
-    # run as a program
-    import reader_plain
-    import reader_tablescripts
-elif '.' in __name__:
-    # package
+if __package__:
+    # package context
     from . import reader_plain
     from . import reader_tablescripts
 else:
-    # included with no parent package
+    # flat context: no parent package
     import reader_plain
     import reader_tablescripts
 

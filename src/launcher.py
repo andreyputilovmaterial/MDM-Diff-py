@@ -30,16 +30,13 @@ def _import_module(flat_name):
     # optional third-party dependencies (pandas, numpy, xlsxwriter, pydantic,
     # pywin32, markitdown, ...). `flat_name` is the module's dotted path below
     # the launcher package, e.g. 'lib.otherformatsreadpy_excel.read_excel_entry'
-    # or 'diff'. Mirrors the three-way conditional import used by entry-point
-    # scripts.
-    if __name__ == '__main__':
-        # run as a program
-        return importlib.import_module(flat_name)
-    elif '.' in __name__:
-        # package
+    # or 'diff'. Imports are selected on `__package__` (set reliably by the
+    # import system in every case), not `__name__`.
+    if __package__:
+        # package context: `python -m src.launcher`, or imported via the bundle
         return importlib.import_module('.' + flat_name, package=__package__)
     else:
-        # included with no parent package
+        # flat context: inlined with no parent package
         return importlib.import_module(flat_name)
 
 

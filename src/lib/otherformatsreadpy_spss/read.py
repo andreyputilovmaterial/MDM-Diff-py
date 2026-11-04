@@ -7,14 +7,11 @@ from datetime import datetime, timezone
 
 
 
-if __name__ == '__main__':
-    # run as a program
-    import helper_utility_performancemonitor
-elif '.' in __name__:
-    # package
+if __package__:
+    # package context
     from . import helper_utility_performancemonitor
 else:
-    # included with no parent package
+    # flat context: no parent package
     import helper_utility_performancemonitor
 
 

@@ -41,23 +41,11 @@ ECHO Done
 
 ECHO -
 ECHO -
-ECHO Produce distributable .py bundle - calling pinliner...
+ECHO Produce distributable .py bundle - calling pinliner (with --main entry point)...
 REM REM :: comment: please delete .pyc files before every call of the mdmtoolsap_bundle - this is implemented in my fork of the pinliner
 @REM python src_dev_build\lib\pinliner\pinliner\pinliner.py src -o dist/mdmtoolsap_bundle.py --verbose
-python src_dev_build\lib\pinliner\pinliner\pinliner.py src -o dist/mdmtoolsap_bundle.py
+python src_dev_build\lib\pinliner\pinliner\pinliner.py src -o dist/mdmtoolsap_bundle.py --main src.launcher --main-attr main
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && exit /b %errorlevel% )
-ECHO Done
-
-ECHO -
-ECHO -
-ECHO Patching mdmtoolsap_bundle.py...
-ECHO # ... >> dist/mdmtoolsap_bundle.py
-ECHO # print('within mdmtoolsap_bundle') >> dist/mdmtoolsap_bundle.py
-REM REM :: no need for this, the root package is loaded automatically
-@REM ECHO # import mdmtoolsap_bundle >> dist/mdmtoolsap_bundle.py
-ECHO from src import launcher >> dist/mdmtoolsap_bundle.py
-ECHO launcher.main() >> dist/mdmtoolsap_bundle.py
-ECHO # print('out of mdmtoolsap_bundle') >> dist/mdmtoolsap_bundle.py
 ECHO Done
 
 ECHO -

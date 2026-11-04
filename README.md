@@ -76,9 +76,9 @@ Short version:
   `pinliner` fork to produce `dist/mdmtoolsap_bundle.py`, rename the BAT launchers,
   and inline the venv setup plus each reader's/reporter's pip packages (parsed from
   the repo's `requirements.txt` files at build time) directly into each launcher.
-- **Launch from source:** either run an entry-point module directly
-  (`python src/diff.py ...`) or the universal dispatcher
-  (`python src/launcher.py --program <name> ...`).
+- **Launch from source:** either run an entry-point module directly with `-m`
+  (`python -m src.diff ...`) or the universal dispatcher
+  (`python -m src.launcher --program <name> ...`).
 - **Optional helpers:** `csscompressor`/`rjsmin` minify the HTML report's embedded
   CSS/JS. They are optional and end users don't need them.
 

@@ -9,22 +9,8 @@ import sys # for error reporting, to print to stderr
 
 
 
-if __name__ == '__main__':
-    # run as a program
-    from GENERATED._VERSION import _VERSION as script_version
-    from diff_engine import diff_functions
-    from diff_engine.common_functions import (
-        normalize_input_relocate_diff_markers,
-        did_change,
-        with_appended_part,
-    )
-    from diff_engine.contracts import ROW_STATUS_KEEP, ROW_STATUS_REMOVE
-    from helper_utility.perfmonitor import PerformanceMonitor
-    from helper_make_diffflag_field_text import make_diffflag_text
-    from helper_make_diff_output_filename import make_output_fname
-    from helper_assess_difficulty import assess_difficulty
-elif '.' in __name__:
-    # package
+if __package__:
+    # package context: `python -m src.diff`, or imported via the pinliner bundle
     from .GENERATED._VERSION import _VERSION as script_version
     from .diff_engine import diff_functions
     from .diff_engine.common_functions import (
@@ -38,7 +24,7 @@ elif '.' in __name__:
     from .helper_make_diff_output_filename import make_output_fname
     from .helper_assess_difficulty import assess_difficulty
 else:
-    # included with no parent package
+    # flat context: inlined with no parent package
     from GENERATED._VERSION import _VERSION as script_version
     from diff_engine import diff_functions
     from diff_engine.common_functions import (

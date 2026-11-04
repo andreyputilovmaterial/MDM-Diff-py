@@ -10,16 +10,12 @@ import numpy as np # needed for correct handling of pandas types when converting
 
 
 
-if __name__ == '__main__':
-    # run as a program
-    import read_excel_lrw
-    import read_excel_general
-elif '.' in __name__:
-    # package
+if __package__:
+    # package context
     from . import read_excel_lrw
     from . import read_excel_general
 else:
-    # included with no parent package
+    # flat context: no parent package
     import read_excel_lrw
     import read_excel_general
 

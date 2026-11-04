@@ -1,4 +1,4 @@
-"""Smoke test: ``src/launcher.py --program done`` must print ``done`` in green.
+"""Smoke test: ``python -m src.launcher --program done`` must print ``done`` in green.
 
 The ``done`` program is intentionally dependency-free: it must run in a freshly
 cloned repository, before any build step (so ``src/GENERATED/`` does not exist)
@@ -12,7 +12,6 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-LAUNCHER = ROOT / "src" / "launcher.py"
 
 GREEN = "\033[32m"
 RESET = "\033[0m"
@@ -21,7 +20,7 @@ RESET = "\033[0m"
 class TestDoneProgram(unittest.TestCase):
     def test_done_program_prints_green_done(self):
         proc = subprocess.run(
-            [sys.executable, str(LAUNCHER), "--program", "done"],
+            [sys.executable, "-m", "src.launcher", "--program", "done"],
             cwd=str(ROOT),
             capture_output=True,
             text=True,
