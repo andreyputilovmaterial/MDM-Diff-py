@@ -1,6 +1,13 @@
 # Project Context — MDM-Diff-py
 
-> Last updated: 2026-11-04
+> Last updated: 2026-11-05
+> (2026-11-05) Fixed a Markdown rendering bug in `docs/maintenance-log.md`: in the
+> entry-point-imports "Repeat" list, `<attr>` sat outside the backtick code span, so
+> Markdown treated it as an unknown HTML tag and dropped it from the rendered text.
+> Folded the whole pinliner command into one code span (`--main <module> --main-attr
+> <attr>`). The same stale line still exists in the `mddtoschema` / `mdmexcelreportpy` /
+> `mdmreadpy` / nested `mdmreportpy` submodule copies (separate repos, not yet touched).
+>
 > (2026-11-04) Moved `csscompressor` / `rjsmin` out of the runtime dependency lists.
 > They only minify the HTML report's embedded CSS/JS at build time; the result is embedded
 > into `mdmreportpy`'s `GENERATED/TEMPLATE.py`, which the distributed bundle uses at runtime,

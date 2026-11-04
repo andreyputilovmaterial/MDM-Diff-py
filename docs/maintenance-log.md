@@ -193,9 +193,9 @@ python pinliner/pinliner.py src -o dist/apqa_bundle.py --main src.launcher --mai
 3. **All other modules** should use plain relative imports only; if a non-entry
    module uses `src.*` absolute imports or `__package__`/`__name__` branching,
    change it to plain relative imports.
-4. The **bundle entry point** should come from pinliner `--main <module>`
-   --main-attr <attr>` (default attr `main`); the build script should **not**
-   append `launcher.main()`. If it does, remove that call.
+4. The **bundle entry point** should come from pinliner
+   `--main <module> --main-attr <attr>` (default attr `main`); the build script
+   should **not** append `launcher.main()`. If it does, remove that call.
 5. **Plain-script invocation** (`python pkg/module.py`) should stay unsupported:
    no `sys.path` hacks or `pkg.*` absolute imports to make it work — use `-m`
    instead. If such bootstraps or imports exist, remove them.
