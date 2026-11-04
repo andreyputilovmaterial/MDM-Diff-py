@@ -79,8 +79,10 @@ Short version:
 - **Launch from source:** either run an entry-point module directly with `-m`
   (`python -m src.diff ...`) or the universal dispatcher
   (`python -m src.launcher --program <name> ...`).
-- **Optional helpers:** `csscompressor`/`rjsmin` minify the HTML report's embedded
-  CSS/JS. They are optional and end users don't need them.
+- **Build-time helpers (not shipped, not installed by the launchers):**
+  `csscompressor`/`rjsmin` minify the HTML report's embedded CSS/JS when the template is
+  built. They are development dependencies declared in `mdmreportpy`'s
+  `requirements-dev.txt`, and end users never need them.
 
 ### Documentation
 

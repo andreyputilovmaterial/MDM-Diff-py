@@ -74,21 +74,24 @@ and the launcher python is switched to the venv python (`.venv\Scripts\python.ex
 
 `src_dev_build/inline_run_init.py` then turns each launcher into a self-contained,
 two-file distribution: it parses the root `requirements.txt` and every
-`requirements.txt` under `src/lib/` (each reader's/reporter's own dependencies) into
-explicit `pip install "pkg1" "pkg2"` rows, regenerates the marked dependency section of
-`run_init.bat`/`run_init.sh`, and splices that venv-setup preamble directly into each
-launcher (replacing the `CALL "run_init.bat"` line). The result is a `dist/` that ships
-only the launchers, the bundle, and LICENSE/README — no `requirements.txt`,
-`optional_dependencies/`, or `run_init.*` files. The venv setup creates a local
-`.venv`; the optional packages are installed best-effort (a missing optional package
-only disables the corresponding reader/reporter).
+`requirements.txt` under `src/lib/` (each reader's/reporter's own *runtime*
+dependencies) into explicit `pip install "pkg1" "pkg2"` rows, regenerates the marked
+dependency section of `run_init.bat`/`run_init.sh`, and splices that venv-setup preamble
+directly into each launcher (replacing the `CALL "run_init.bat"` line). Build/dev-only
+dependencies live in `requirements-dev.txt`, which the helper intentionally does not
+scan, so they are never shipped. The result is a `dist/` that ships only the launchers,
+the bundle, and LICENSE/README — no `requirements.txt`, `optional_dependencies/`, or
+`run_init.*` files. The venv setup creates a local `.venv`; the optional packages are
+installed best-effort (a missing optional package only disables the corresponding
+reader/reporter).
 
 The build requires the vendored `pinliner` fork (`src_dev_build/lib/pinliner`, a git
 submodule with local fixes) — use this copy rather than the upstream package. The only
-optional helpers are `csscompressor` and `rjsmin`, declared in `mdmreportpy`'s
-`requirements.txt`; they minify the HTML report's embedded CSS/JS when present (the
-report renders un-minified with a one-time warning otherwise) and are not needed to run
-the bundle.
+build-time helpers are `csscompressor` and `rjsmin`, declared in `mdmreportpy`'s
+`requirements-dev.txt` (not `requirements.txt`, so they are not inlined into the
+distributed launchers); they minify the HTML report's embedded CSS/JS when the template
+is built, and the build falls back to un-minified assets (with a one-time warning) when
+they are missing.
 
 ## Three ways to launch a program
 

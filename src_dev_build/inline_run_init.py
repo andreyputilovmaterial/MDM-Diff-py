@@ -22,6 +22,12 @@ At build time this script parses those lists and turns them into explicit
 ``pip install "pkg1" "pkg2"`` rows, so no ``requirements.txt`` (and no
 ``optional_dependencies/``) needs to ship.
 
+Build/dev-only dependencies are intentionally **not** scanned: they live in a
+``requirements-dev.txt`` (e.g. ``mdmreportpy``'s ``csscompressor`` / ``rjsmin``, which
+minify the embedded CSS/JS only when the template is built). This script only looks for
+``requirements.txt``, so anything declared in ``requirements-dev.txt`` is never shipped
+in the distributed launchers.
+
 ``run_init.bat`` / ``run_init.sh`` remain the single source of truth for the venv-setup
 logic. They contain a clearly delimited section
 

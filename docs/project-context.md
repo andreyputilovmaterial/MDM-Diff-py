@@ -1,6 +1,16 @@
 # Project Context — MDM-Diff-py
 
 > Last updated: 2026-11-04
+> (2026-11-04) Moved `csscompressor` / `rjsmin` out of the runtime dependency lists.
+> They only minify the HTML report's embedded CSS/JS at build time; the result is embedded
+> into `mdmreportpy`'s `GENERATED/TEMPLATE.py`, which the distributed bundle uses at runtime,
+> so they must not be installed by end users. In `mdmreportpy` they moved from
+> `requirements.txt` to a new `requirements-dev.txt` (build/dev-only); `requirements.txt` is
+> now comment-only. `src_dev_build/inline_run_init.py` only scans `requirements.txt`, so the
+> dev helpers are no longer inlined into the `dist/*.bat` launchers. Added a maintenance-log
+> entry documenting the runtime-vs-dev separation and the "clean/review generated files" task.
+>
+
 > (2026-11-04) Made `docs/maintenance-log.md` entries declarative (requirement-first)
 > and moved the invocation-modes vs import-selection clarification into the
 > entry-point-imports entry. Applied the same edit in the `mddtoschema`,
@@ -379,6 +389,12 @@ Static assets (HTML/CSS/JS templates, the git `_VERSION` string) are embedded vi
    now passes header values through the same `finddiff_values_general_format*` path
    used for cell values, and appends `(Left file)` / `(Right file)` as a separate
    `parts` chunk via `with_appended_part` in `src/diff_engine/common_functions.py`.
+5. **Clean & review generated files for dependency separation.** *(Recorded as a
+   maintenance task — see `docs/maintenance-log.md`.)* Verify `dist/` ships only the
+   launchers + bundle + LICENSE/README; that `build.bat`/`build.sh` fully clear `dist/`
+   (so stale `optional_dependencies/` / `requirements.txt` from older builds don't
+   linger); and that only runtime deps (`requirements.txt`) are inlined while build/dev
+   deps (`requirements-dev.txt`) stay out of the distributable.
 
 ## 7. Open questions
 

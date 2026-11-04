@@ -29,6 +29,61 @@ like the `Input` example; anything that does not match should be updated.
 
 ---
 
+## Dependency separation: runtime `requirements.txt` (inlined) vs build/dev `requirements-dev.txt` (not shipped)
+
+- **Requested:** 2026-11-04
+- **Implemented:** 2026-11-04
+- **Where:** build scripts + `requirements*.txt` files + `src_dev_build/inline_run_init.py`
+  (and the same shape in the `mdmreadpy` / `mdmreportpy` submodules).
+
+### What & why
+
+The distributed launchers install, best-effort, the pip packages each reader/reporter
+needs at runtime, inlined from `requirements.txt` files at build time. Build/dev-only
+packages (here `csscompressor` / `rjsmin`, which minify the HTML report's embedded
+CSS/JS only when the template is compiled) were declared in `mdmreportpy`'s
+`requirements.txt` and so got inlined into every launcher, forcing end users to install
+packages they never need at runtime.
+
+The fix is a naming/separation convention, not new machinery: `requirements.txt` holds
+only runtime dependencies (the ones that must ship), and build/dev-only dependencies
+move to `requirements-dev.txt`, which the discovery/inlining step does not scan.
+
+### Input (before)
+
+```text
+# src/lib/mdmreadpy/src/lib/mdmreportpy/requirements.txt
+csscompressor
+rjsmin
+```
+
+### Output (after)
+
+```text
+# .../requirements.txt        -> comment-only (no runtime deps)
+# .../requirements-dev.txt    -> csscompressor / rjsmin (build-time only)
+```
+
+### Repeat
+
+1. `requirements.txt` should contain only runtime dependencies that the distributed
+   launchers must install; if a build/dev-only package is listed there, move it to a
+   dev requirements file.
+2. Build/dev-only dependencies should live in a file the discovery step does not scan
+   (here `requirements-dev.txt`); if the inliner picks them up, rename/adjust so it
+   only reads `requirements.txt`.
+3. `dist/` should ship only the launchers, the bundle, and LICENSE/README; the build
+   scripts should clear `dist/` fully on every run (`rm -rf dist` /
+   `RMDIR /S /Q dist` + `MKDIR dist`) so stale generated files (e.g. an old
+   `optional_dependencies/` or `requirements.txt`) do not linger. A plain
+   `DEL /F /Q dist\*` is not enough — it leaves subdirectories behind.
+4. After each build, review the generated/distributed files for dependencies: no
+   build/dev dependency should appear in the inlined install rows, and no stale
+   dependency file should remain in `dist/`.
+
+---
+
+
 ## Entry-point imports: replace the three-branch `__name__` split with a two-branch `__package__` split
 
 - **Requested:** 2026-11-04 18:09 MSK
