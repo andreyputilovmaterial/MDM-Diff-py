@@ -14,24 +14,18 @@
 
 Each entry is a section whose heading reads like a commit subject: it states the
 **intent** of the change and **where** the change happens (component/module).
-Inside, answer the questions needed to repeat the same update elsewhere:
+The body states the **requirement first** — how the code should be — and only
+then the change that reaches it. The point is that an agent can *verify* the
+requirement against any project, even when its current code does not look exactly
+like the `Input` example; anything that does not match should be updated.
 
 - **When** — date/time requested and implemented.
 - **What & why** — the request and the reasoning behind the chosen approach.
-- **Input** — a sample of the code/file **before** the change.
+- **Input** — a sample of the code/file **before** the change (one of several
+  possible shapes; the real "before" may differ).
 - **Output** — a sample of the code/file **after** the change.
-- **Repeat** — a checklist of the exact steps to apply the same convention in
-  another project.
-
-Two concepts are easy to conflate, so they are spelled out separately:
-
-- **Invocation modes** — the ways to *start* the program:
-  1. from the **bundle** (`python apqa_bundle.py --program X`),
-  2. through the **launcher** (`python -m src.launcher --program X`),
-  3. **directly** at a starter module (`python -m src.main_ui_program …`).
-- **Import selection** — how an entry-point module's `import` statements branch
-  on the import context (package vs flat), set by Python via `__package__`. It
-  is **not** a 1:1 map of the invocation modes.
+- **Repeat** — the requirement to verify in another project, each item stated
+  declaratively ("… should be …"); if the code does not match, change it to do so.
 
 ---
 
@@ -46,19 +40,29 @@ Two concepts are easy to conflate, so they are spelled out separately:
 
 The launcher and the starter modules it dispatches to are the only files that
 are *invoked* (as `__main__` via `-m`, or imported by the bundle); every other
-module is only ever imported. The old code selected imports with a
-**three-branch `__name__` split**:
+module is only ever imported. Two concepts are easy to conflate here, so they
+are spelled out separately:
+
+- **Invocation modes** — the ways to *start* the program:
+  1. from the **bundle** (`python apqa_bundle.py --program X`),
+  2. through the **launcher** (`python -m src.launcher --program X`),
+  3. **directly** at a starter module (`python -m src.main_ui_program …`).
+- **Import selection** — how the `import` statements of an entry-point module
+  branch on the import context (package vs flat), set by Python via `__package__`.
+  It is **not** a 1:1 map of the invocation modes.
+
+The old code selected imports with a **three-branch `__name__` split**:
 
 - `if __name__ == '__main__'` — "run as a program",
 - `elif '.' in __name__` — "imported as a package",
 - `else` — "inlined with no parent package".
 
-That three-branch split is confusing for two reasons: it is **not** the same as
-the three invocation modes, and its `__main__` branch meant different things in
-different projects (see the three "before" variants below). In practice the
-`__main__` branch and the `else` branch always used the **same** flat imports, so
-they collapse into one; the only real distinction is *inside a package* vs *no
-parent package*, which `__package__` encodes directly.
+That three-branch split is confusing because it is **not** the same as the
+invocation modes, and its `__main__` branch meant different things in different
+projects (see the three "before" variants below). In practice the `__main__`
+branch and the `else` branch always used the **same** flat imports, so they
+collapse into one; the only real distinction is *inside a package* vs *no parent
+package*, which `__package__` encodes directly.
 
 Plain-script invocation (`python src/X.py`, without `-m`) is **dropped**: making
 it work required a `sys.path` bootstrap and non-relative `src.*` imports, which
@@ -123,16 +127,23 @@ python pinliner/pinliner.py src -o dist/apqa_bundle.py --main src.launcher --mai
 ### Repeat
 
 1. **Entry-point modules** (the launcher and every module it dispatches to via
-   `--program`) select imports on `__package__`:
+   `--program`) should select imports on `__package__` — never on `__name__`:
    - `__package__` truthy → relative imports (`from .X import …`).
    - `__package__` falsy → flat imports (`from X import …`).
-2. Give each starter module an `if __name__ == '__main__':` block that calls its
-   entry function, so `python -m pkg.module` works.
-3. **All other modules** use plain relative imports only.
-4. **Bundle entry point** comes from pinliner `--main <module> --main-attr <attr>`
-   (default attr `main`); the build script must **not** append `launcher.main()`.
-5. **Drop plain-script support**: do not add `sys.path` hacks or `pkg.*` absolute
-   imports to make `python pkg/module.py` work — use `-m` instead.
+   If a module still branches on `__name__` (in any of the "before" variants),
+   replace that split with the two-branch `__package__` check above.
+2. Each starter module should have an `if __name__ == '__main__':` block that
+   calls its entry function, so `python -m pkg.module` works; if it is missing,
+   add it.
+3. **All other modules** should use plain relative imports only; if a non-entry
+   module uses `src.*` absolute imports or `__package__`/`__name__` branching,
+   change it to plain relative imports.
+4. The **bundle entry point** should come from pinliner `--main <module>`
+   --main-attr <attr>` (default attr `main`); the build script should **not**
+   append `launcher.main()`. If it does, remove that call.
+5. **Plain-script invocation** (`python pkg/module.py`) should stay unsupported:
+   no `sys.path` hacks or `pkg.*` absolute imports to make it work — use `-m`
+   instead. If such bootstraps or imports exist, remove them.
 
 
 ---
@@ -163,7 +174,7 @@ No dedicated file existed; structural notes were mixed into
 format guide, and one section per structural change (**newest first**) — each
 section headed like
 a commit subject (intent + where) and answering When / What & why / Input /
-Output / Repeat:
+Output / Repeat (requirement-first):
 
 ```markdown
 # Maintenance log
@@ -174,7 +185,7 @@ Output / Repeat:
 - **What & why** — the request and the reasoning.
 - **Input** — a sample of the code/file before the change.
 - **Output** — a sample of the code/file after the change.
-- **Repeat** — steps to apply the same convention in another project.
+- **Repeat** — the requirement, stated first ("… should be …"); change anything that does not match.
 
 ---
 
@@ -189,12 +200,12 @@ Output / Repeat:
 ### Output (after)
 ...
 ### Repeat
-...
+... (each item: requirement first, then "if it does not match, change …")
 ```
 
 ### Repeat
 
-1. Create `docs/maintenance-log.md` in the repo's docs folder.
-2. Add the scoping header + "How to read an entry" guide.
-3. Add one section per structural change, **newest first**, in this exact shape.
+1. The repo should have a `docs/maintenance-log.md`; create it in the docs folder of the repo if it is missing.
+2. It should open with the scoping header and a "How to read an entry" guide; add them if they are missing.
+3. It should contain one section per structural change, **newest first**, each in the exact shape defined above; add or adjust entries to match.
 

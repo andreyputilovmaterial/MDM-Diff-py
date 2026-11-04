@@ -1,6 +1,10 @@
 # Project Context — MDM-Diff-py
 
 > Last updated: 2026-11-04
+> (2026-11-04) Made `docs/maintenance-log.md` entries declarative (requirement-first)
+> and moved the invocation-modes vs import-selection clarification into the
+> entry-point-imports entry. Applied the same edit in the `mddtoschema`,
+> `mdmexcelreportpy`, `mdmreadpy`, and nested `mdmreportpy` submodules.
 > (2026-11-04) Added `src/lib/otherformatsreadpy_excel/README.md` (reader purpose,
 > the tabular-input vs keyed-output gap, heuristic index-row/index-column detection,
 > and the two failure modes: unexpected input layout and O(n²) unique-key generation
