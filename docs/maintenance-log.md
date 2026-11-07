@@ -29,6 +29,52 @@ like the `Input` example; anything that does not match should be updated.
 
 ---
 
+## Build scripts: do not update git submodules recursively; recursive `build.sh` calls stay
+
+- **Requested:** 2026-11-07
+- **Implemented:** 2026-11-07
+- **Where:** `build.sh` / `build.bat` (and `run_init.*`) of any project that has git
+  submodules and shares this repo's build shape.
+
+### What & why
+
+Decision: a build script must not refresh submodule git state — no
+`git submodule update --init --recursive`, `git submodule update`, `--recursive`,
+`--recurse-submodules`, `git submodule foreach`, or `git pull` inside a submodule.
+Submodule pointers are advanced only by committing the new pointer in the parent repo
+after the submodule commit has been pushed — never by a build step.
+
+A build script may still recursively call a submodule's own build script
+(`cd <submodule> && bash build.sh` / `PUSHD <submodule> & CALL build.bat`). That is a
+separate, allowed pattern and must stay.
+
+### Input (before)
+
+```bash
+# build.sh — NOT allowed
+git submodule update --init --recursive
+```
+
+### Output (after)
+
+```bash
+# build.sh — submodules are pinned by git; build them by recursing instead
+cd src/lib/foo && bash build.sh
+```
+
+### Repeat
+
+1. `build.sh` / `build.bat` / `run_init.*` should contain no `git submodule update`,
+   `--init --recursive`, `--recurse-submodules`, or `git submodule foreach`; if any of
+   these appear, remove them.
+2. Recursive calls into a submodule's own build script (`cd <submodule> && bash
+   build.sh` / `CALL build.bat`) should remain — do not remove them.
+3. A submodule version should be advanced only by committing its new pointer in the
+   parent repo after the submodule commit is pushed, never by a build script.
+
+---
+
+
 ## Dependency separation: runtime `requirements.txt` (inlined) vs build/dev `requirements-dev.txt` (not shipped)
 
 - **Requested:** 2026-11-04

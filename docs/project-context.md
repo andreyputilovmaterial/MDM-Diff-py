@@ -1,6 +1,14 @@
 # Project Context — MDM-Diff-py
 
-> Last updated: 2026-11-05
+> Last updated: 2026-11-07
+> (2026-11-07) Decision: build scripts must not update git submodules recursively
+> (no `git submodule update --init --recursive` / `--recursive` /
+> `--recurse-submodules` / `git submodule foreach` / `git pull` in a submodule).
+> Submodule pointers are advanced only by committing the new pointer in the parent
+> repo after the submodule commit is pushed. Recursive calls into a submodule's own
+> `build.sh`/`build.bat` (`cd <submodule> && bash build.sh`) remain. Recorded as a
+> maintenance task in `docs/maintenance-log.md` (root + `mddtoschema` / `mdmreadpy` /
+> `mdmreportpy`).
 > (2026-11-05) Fixed a Markdown rendering bug in `docs/maintenance-log.md`: in the
 > entry-point-imports "Repeat" list, `<attr>` sat outside the backtick code span, so
 > Markdown treated it as an unknown HTML tag and dropped it from the rendered text.
