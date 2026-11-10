@@ -1,6 +1,13 @@
 # Project Context — MDM-Diff-py
 
-> Last updated: 2026-11-07
+> Last updated: 2026-11-10
+> (2026-11-10) Pinned the ms-markitdown reader's `markitdown` dependency to
+> `>=0.1.8` in `src/lib/otherformatsreadpy_general_msmarkitdown/requirements.txt`.
+> Older versions wrongly guessed an ASCII charset for long files, causing
+> `UnicodeDecodeError: 'ascii' codec can't decode byte 0xe2 ...` when converting
+> UTF-8 text files; fixed in markitdown 0.1.8 (microsoft/markitdown PR #2360,
+> "Mitigate UnicodeDecodeError due to wrong ASCII charset guess for long files").
+> Same pin as the `gitgui` project's textconv markitdown processor.
 > (2026-11-07) Decision: build scripts must not update git submodules recursively
 > (no `git submodule update --init --recursive` / `--recursive` /
 > `--recurse-submodules` / `git submodule foreach` / `git pull` in a submodule).

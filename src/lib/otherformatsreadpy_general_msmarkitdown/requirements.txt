@@ -7,5 +7,10 @@
 # installed best-effort by the launcher (inlined from this list at build time): a
 # missing/failed install must not break the rest of the tool. If markitdown is
 # unavailable, this reader raises a readable error when used.
+#
+# Version is pinned at >=0.1.8: older versions wrongly guessed an ASCII charset
+# for long files, causing "UnicodeDecodeError: 'ascii' codec can't decode byte
+# 0xe2 ..." when converting UTF-8 text files. Fixed in markitdown 0.1.8
+# (microsoft/markitdown PR #2360).
 
-markitdown[pdf,xlsx,docx,pptx,xls,outlook]
+markitdown[pdf,xlsx,docx,pptx,xls,outlook]>=0.1.8
