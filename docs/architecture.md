@@ -25,7 +25,7 @@ Every reader produces the same JSON "report" shape, and every reporter consumes 
 - **Translation overlay helper** — `MDM-TranslationOverlayHelper`
   (<https://github.com/andreyputilovmaterial/MDM-TranslationOverlayHelper.git>).
 - **Universal dispatcher** — `src/launcher.py` (`--program ...`).
-- **Schema generator** — `src/mddtoschema` (MDD → JSON schema; distinct from the
+- **Schema generator** — `src/mddtoschema` (MDD → JSON schema (planned, unfinished concept); distinct from the
   reader).
 
 For example, the MDD diff workflow is:
@@ -38,8 +38,12 @@ MDD B --mdmreadpy--> JSON B --/
 
 ## Data format — source of truth
 
-The **report JSON format** and the **rich-text content format** are specified once, in
-`mdmreportpy`, and are the master definition for the whole toolchain:
+The **report JSON format** and the **rich-text content format** are this toolchain's
+*own* interchange contract, not part of any input format. MDD in particular is a
+proprietary Unicom/IBM market-research format, read only by `src/lib/mdmreadpy`; the
+JSON/rich-text formats have nothing to do with MDD itself. The toolchain-internal
+formats are specified once, in `mdmreportpy`, and are the master definition for the
+whole toolchain:
 
 - `src/lib/mdmreadpy/src/lib/mdmreportpy/docs/report-json-format.md` — the JSON
   "report" shape.
@@ -50,6 +54,10 @@ Every reader (the MDD reader and the `otherformatsreadpy_*` readers), the diff t
 (`src/diff.py` / `src/diff_engine`), and every reporter (`mdmreportpy`,
 `mdmexcelreportpy`) defer to those two files. Per-tool docs may describe their own
 producer/consumer view, but the two files above are authoritative for the common shape.
+
+The MDD input format itself (its object model — questions/fields, labels, categories,
+shared lists, question types) is described separately in
+`src/lib/mdmreadpy/docs/mdd-model.md`.
 
 ## Submodules (`.gitmodules`)
 

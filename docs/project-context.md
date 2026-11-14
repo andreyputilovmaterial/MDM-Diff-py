@@ -1,6 +1,12 @@
 # Project Context — MDM-Diff-py
 
 > Last updated: 2026-11-15
+> (2026-11-15) Clarified the data-format boundary in `docs/architecture.md`: the report
+> JSON and rich-text formats are the toolchain's *own* interchange contract, not the MDD
+> format; MDD is a proprietary Unicom/IBM format read only by `mdmreadpy`. Added
+> `mdmreadpy/docs/mdd-model.md` describing the MDD input format's principles (objects,
+> labels, properties/modifiers, question types, loops/grids, categories, shared lists),
+> linked from `mdmreadpy/docs/architecture.md`.
 > (2026-11-15) Upgraded the commit rules in `.clinerules/` (root + the andreyputilovmaterial
 > submodules `mdmreadpy` / `mddtoschema` / `mdmexcelreportpy` / `mdmparser` / nested
 > `mdmreportpy`) to match `apqa`'s `2x-` pattern: `08-commit-messages` →
