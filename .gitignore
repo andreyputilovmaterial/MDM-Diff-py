@@ -41,5 +41,8 @@ Icon?
 # Optional: Windows shortcuts
 *.lnk
 
+# Provisional planning notes (e.g. .roadmap-reorder-arguments.md)
+.roadmap-*
+
 # Keep .gitignore itself
 !.gitignore

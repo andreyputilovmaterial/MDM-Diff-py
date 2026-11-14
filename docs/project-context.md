@@ -1,6 +1,11 @@
 # Project Context — MDM-Diff-py
 
-> Last updated: 2026-11-14
+> Last updated: 2026-11-15
+> (2026-11-15) Added `.roadmap-*` to `.gitignore` (root + the andreyputilovmaterial
+> submodules `mdmreadpy` / `mddtoschema` / `mdmexcelreportpy` / `mdmparser` / nested
+> `mdmreportpy`) so provisional planning notes like `.roadmap-reorder-arguments.md`
+> never appear as untracked files or get committed. Excluded `pinliner` and the frozen
+> Myers `diff-lib`.
 > (2026-11-14) Added `docs/logs-of-issues.md` — the log for bugs and fixes. It is
 > updated only on explicit user request, never proactively.
 > (2026-11-10) Pinned the ms-markitdown reader's `markitdown` dependency to
