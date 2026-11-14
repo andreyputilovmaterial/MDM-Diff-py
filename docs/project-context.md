@@ -1,6 +1,12 @@
 # Project Context — MDM-Diff-py
 
 > Last updated: 2026-11-15
+> (2026-11-15) Upgraded the commit rules in `.clinerules/` (root + the andreyputilovmaterial
+> submodules `mdmreadpy` / `mddtoschema` / `mdmexcelreportpy` / `mdmparser` / nested
+> `mdmreportpy`) to match `apqa`'s `2x-` pattern: `08-commit-messages` →
+> `20-git-commit-messages-wording`, `11-submodules-commits` →
+> `21-git-submodules-commits-order`, `09-github-issues` → `29-github-issues`, plus the new
+> `22-when-making-commits`.
 > (2026-11-15) Added `.roadmap-*` to `.gitignore` (root + the andreyputilovmaterial
 > submodules `mdmreadpy` / `mddtoschema` / `mdmexcelreportpy` / `mdmparser` / nested
 > `mdmreportpy`) so provisional planning notes like `.roadmap-reorder-arguments.md`
@@ -401,10 +407,11 @@ Static assets (HTML/CSS/JS templates, the git `_VERSION` string) are embedded vi
 - `.clinerules/03-code-style-errors.md` — fail early, readable errors, no over-validation.
 - `.clinerules/04-testing.md` — test new features, guard regressions.
 - `.clinerules/05-diff-older-frozen.md` — `src/diff_older/` is a frozen historical capture; do not edit.
-- `.clinerules/08-commit-messages.md` — commit subject/body style.
-- `.clinerules/09-github-issues.md` — fetch open issues at commit/push time and add
+- `.clinerules/20-git-commit-messages-wording.md` — commit subject/body wording.
+- `.clinerules/21-git-submodules-commits-order.md` — submodule commits must exist on their remote.
+- `.clinerules/22-when-making-commits.md` — only commit when asked; split unrelated changes.
+- `.clinerules/29-github-issues.md` — fetch open issues at commit/push time and add
   `Closes #N` / `Fixes #N` / `Resolves #N` references.
-- `.clinerules/11-submodules-commits.md` — submodule commits must exist on their remote.
 
 ## 6. Current focus / roadmap
 

@@ -1,4 +1,6 @@
-# Submodules & commits
+# Commit process involving changes in submodules
+
+These rules apply when a commit needs to be made that includes changed code in submodules or a changed submodule pointer. The rule: if a submodule pointer is going to be added to a commit in the parent repository, the commit it points to must already exist in that submodule's remote. Never record a submodule commit in history that was not pushed to its remote.
 
 - Constraint: every submodule commit that becomes part of this (outer)
   repository's history must exist on that submodule's own remote.
