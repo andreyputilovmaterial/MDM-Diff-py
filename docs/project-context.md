@@ -1,6 +1,8 @@
 # Project Context — MDM-Diff-py
 
-> Last updated: 2026-11-10
+> Last updated: 2026-11-14
+> (2026-11-14) Added `docs/logs-of-issues.md` — the log for bugs and fixes. It is
+> updated only on explicit user request, never proactively.
 > (2026-11-10) Pinned the ms-markitdown reader's `markitdown` dependency to
 > `>=0.1.8` in `src/lib/otherformatsreadpy_general_msmarkitdown/requirements.txt`.
 > Older versions wrongly guessed an ASCII charset for long files, causing
@@ -276,6 +278,9 @@
 > **Convention:** read this file at the start of every task and update it at the end,
 > so it stays the permanently updated context of the current work (see
 > `.clinerules/00-project-context.md`).
+>
+> **Issues log:** `docs/logs-of-issues.md` is the log for bugs and fixes. Update it
+> only on explicit user request — never proactively.
 
 ## 1. What this project is
 
