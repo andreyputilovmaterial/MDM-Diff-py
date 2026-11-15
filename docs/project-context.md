@@ -1,6 +1,16 @@
 # Project Context — MDM-Diff-py
 
 > Last updated: 2026-11-15
+> (2026-11-15) Corrected `mdmreadpy/docs/mdd-model.md`: "scalar" vs "non-scalar" is
+> about the stored response, not whether a field has sub-fields. Any field can carry
+> **helper fields** (`.HelperFields`) — nested sub-fields such as an `OtherSpec` text
+> field attached to a categorical "Gender" question's "Other not listed" category — and
+> helper fields are full fields that can themselves nest categories/subfields/helper
+> fields. They are flattened as extra rows marked `is_helper_field`. Also added a
+> "Terminology" note: "scalar"/"non-scalar" and "modifiers" are the author's own
+> descriptive words, not confirmed official MDD terms. Noted that helper fields were
+> verified on a loop, so non-scalar fields carry them too (the reader processes helper
+> fields uniformly on every field type).
 > (2026-11-15) Added `.clinerules/23-git-tag-messages.md` — a style guide for annotated
 > tag messages. Do not repeat the tag name as the message; write a user-facing summary
 > plus `Added`/`Changed`/`Fixed`/`Removed` bullets (Keep a Changelog / Conventional
