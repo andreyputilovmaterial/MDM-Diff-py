@@ -15,7 +15,7 @@ Every reader produces the same JSON "report" shape, and every reporter consumes 
 - **Readers** live under `src/lib/otherformatsreadpy_*` and `src/lib/mdmreadpy`.
 - **MDD reader** — `src/lib/mdmreadpy` (`read_mdd.py`), drives the COM API of
   IBM/Unicom Professional (Windows + Professional required).
-- **Diff tool** — `src/diff_engine` (current) / `src/diff_older` (legacy). Reads one or
+- **Diff tool** — `src/diff_engine`. Reads one or
   two JSON reports and writes a new JSON report. A diff report is itself a valid input, so
   two diffs can be diffed again (diff-on-diff). Internals are documented in
   `docs/diff-engine.md` (duplicated at `src/diff_engine/README.md`), including the

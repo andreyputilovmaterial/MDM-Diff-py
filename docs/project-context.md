@@ -1,6 +1,11 @@
 # Project Context — MDM-Diff-py
 
 > Last updated: 2026-11-15
+> (2026-11-15) Removed `src/diff_older` (frozen legacy diff implementation) and its
+> `diff-lib` submodule. The launcher's `--program diff_obsolete` now fails with a clear
+> error that support was dropped from tag `v2.020.001` (use `--program diff` instead).
+> Deleted the now-obsolete `.clinerules/05-diff-older-frozen.md` and the `diff_obsolete`
+> debug configs in `.vscode/launch.json`.
 > (2026-11-15) Clarified the data-format boundary in `docs/architecture.md`: the report
 > JSON and rich-text formats are the toolchain's *own* interchange contract, not the MDD
 > format; MDD is a proprietary Unicom/IBM format read only by `mdmreadpy`. Added
@@ -333,7 +338,7 @@ Every reader produces the same JSON "report" shape, and every reporter consumes 
   `src/lib/mdmexcelreportpy`.
 - **Translation overlay helper** — `MDM-TranslationOverlayHelper`
   (<https://github.com/andreyputilovmaterial/MDM-TranslationOverlayHelper.git>).
-- **Diffing** lives in `src/diff_engine` (current) and `src/diff_older` (legacy).
+- **Diffing** lives in `src/diff_engine`.
 - **`src/launcher.py`** is the universal dispatcher (`--program ...`) used by the
   bundled `mdmtoolsap_bundle.py`.
 - **`src/mddtoschema`** derives a JSON *schema* from an MDD (a sibling of the reader,
@@ -412,7 +417,6 @@ Static assets (HTML/CSS/JS templates, the git `_VERSION` string) are embedded vi
 - `.clinerules/02-python-portability.md` — pinliner/`GENERATED` constraints.
 - `.clinerules/03-code-style-errors.md` — fail early, readable errors, no over-validation.
 - `.clinerules/04-testing.md` — test new features, guard regressions.
-- `.clinerules/05-diff-older-frozen.md` — `src/diff_older/` is a frozen historical capture; do not edit.
 - `.clinerules/20-git-commit-messages-wording.md` — commit subject/body wording.
 - `.clinerules/21-git-submodules-commits-order.md` — submodule commits must exist on their remote.
 - `.clinerules/22-when-making-commits.md` — only commit when asked; split unrelated changes.

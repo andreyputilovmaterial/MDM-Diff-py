@@ -9,8 +9,8 @@ import importlib
 
 
 
-# Entry-point modules (``diff``, ``diff_obsolete``, ``diff_print_expected_filename``,
-# the readers/reporters, and the generated version string) are imported lazily inside
+# Entry-point modules (``diff``, ``diff_print_expected_filename``, the readers/reporters,
+# and the generated version string) are imported lazily inside
 # their ``call_*`` handlers via :func:`_import_module`. This keeps the launcher
 # loadable without any third-party dependencies or build artifacts (no ``GENERATED/``
 # directory), so ``--program done`` works as a smoke test in a fresh checkout.
@@ -52,8 +52,11 @@ def _import_version():
 
 
 def call_diff_obsolete_program(*argcs,**kwargs):
-    diff_obsolete = _import_module('diff_older.diff_obsolete')
-    return diff_obsolete.entry_point(*argcs,**kwargs)
+    raise RuntimeError(
+        "The 'diff_obsolete' program is no longer supported: src/diff_older was "
+        "removed and its support was dropped from tag v2.020.001. "
+        "Use the 'diff' program instead."
+    )
 
 def call_diff_program(*argcs,**kwargs):
     diff = _import_module('diff')

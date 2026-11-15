@@ -1,9 +1,6 @@
 [submodule "lib/MDD-read-py"]
 	path = src/lib/mdmreadpy
 	url = https://github.com/andreyputilovmaterial/MDM-Read-py.git
-[submodule "lib/diff-lib"]
-	path = src/diff_older/lib/difflib
-	url = https://github.com/andreyputilovmaterial/diff-lib.git
 [submodule "src_dev_build/pinliner"]
 	path = src_dev_build/lib/pinliner
 	url = https://github.com/The-city-not-present/pinliner.git

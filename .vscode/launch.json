@@ -29,30 +29,12 @@
             "justMyCode": true
         },
         {
-            "name": "Python: diff output filename test (obsolete program for cmp)",
-            "type": "python",
-            "request": "launch",
-            "program": "src/launcher.py",
-            "console": "integratedTerminal",
-            "args": ["--program","diff_obsolete","--cmp-scheme-left", "\"tests-real-sensitive-data\\current\\test_data\\p2301763.mdd.json\"", "--cmp-scheme-right", "\"tests-real-sensitive-data\\current\\test_data\\p2401215.mdd.json\"", "--norun-special-onlyprintoutputfilename"],
-            "justMyCode": true
-        },
-        {
             "name": "Python: Diff Test (MDD)",
             "type": "python",
             "request": "launch",
             "program": "src/launcher.py",
             "console": "integratedTerminal",
             "args": ["--program","diff","--cmp-scheme-left","\"tests-real-sensitive-data\\current\\test_data\\p2301763_prevauto_20240111_clean.mdd.json\"","--cmp-scheme-right","\"tests-real-sensitive-data\\current\\test_data\\p2401215_auto_20241106_clean.mdd.json\""],
-            "justMyCode": true
-        },
-        {
-            "name": "Python: OLD Diff Test to compare (MDD)",
-            "type": "python",
-            "request": "launch",
-            "program": "src/launcher.py",
-            "console": "integratedTerminal",
-            "args": ["--program","diff_obsolete","--cmp-scheme-left","\"tests-real-sensitive-data\\current\\test_data\\p2600752_auto_20260406.mdd.json\"","--cmp-scheme-right","\"tests-real-sensitive-data\\current\\test_data\\p2600752_auto_20260410.mdd.json\""],
             "justMyCode": true
         },
         {
