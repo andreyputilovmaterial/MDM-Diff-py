@@ -1,6 +1,12 @@
 # Project Context — MDM-Diff-py
 
 > Last updated: 2026-11-15
+> (2026-11-15) Added `.clinerules/23-git-tag-messages.md` — a style guide for annotated
+> tag messages. Do not repeat the tag name as the message; write a user-facing summary
+> plus `Added`/`Changed`/`Fixed`/`Removed` bullets (Keep a Changelog / Conventional
+> Commits style). The "what's new" baseline is the last tag of the previous `<version>`
+> (the middle part of `v<major>.<version>.<revision>`): `v2.021.004` is described
+> relative to the last `v2.020.*` tag, not relative to `v2.021.003`.
 > (2026-11-15) Removed `src/diff_older` (frozen legacy diff implementation) and its
 > `diff-lib` submodule. The launcher's `--program diff_obsolete` now fails with a clear
 > error that support was dropped from tag `v2.020.001` (use `--program diff` instead).
@@ -420,6 +426,8 @@ Static assets (HTML/CSS/JS templates, the git `_VERSION` string) are embedded vi
 - `.clinerules/20-git-commit-messages-wording.md` — commit subject/body wording.
 - `.clinerules/21-git-submodules-commits-order.md` — submodule commits must exist on their remote.
 - `.clinerules/22-when-making-commits.md` — only commit when asked; split unrelated changes.
+- `.clinerules/23-git-tag-messages.md` — annotated tag messages: user-facing summary +
+  category bullets; baseline is the previous `<version>` line, not the previous revision.
 - `.clinerules/29-github-issues.md` — fetch open issues at commit/push time and add
   `Closes #N` / `Fixes #N` / `Resolves #N` references.
 
